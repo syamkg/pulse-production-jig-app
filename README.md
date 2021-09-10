@@ -1,2 +1,12 @@
-# pulse-production-jig
-Test Jig Software that runs Functional Tests and loads Production Firmware
+
+
+Running:
+
+```bash
+sudo apt install python3-tk
+python3 -m venv .venv
+source ./.venv/bin/activate
+python3 -m pip install -r requirements.txt
+./main.py
+```
+
