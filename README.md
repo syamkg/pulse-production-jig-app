@@ -3,10 +3,7 @@
 Running:
 
 ```bash
-sudo apt install python3-tk
-python3 -m venv .venv
-source ./.venv/bin/activate
-python3 -m pip install -r requirements.txt
-./main.py
+docker buildx build --platform linux/arm/v7 -t pulse-jig .
+docker run --platform linux/arm/v7 -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -u $(id -u ${USER}):$(id -g ${USER}) pulse-jig
 ```
 
