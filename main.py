@@ -16,8 +16,8 @@ from pulse_jig.functional_test import FunctionalTest
 import threading
 
 
-def tester_thread(window):
-    ft = FunctionalTest('/dev/cu.usbmodem1202')
+def tester_thread(window: sg.Window):
+    ft = FunctionalTest('/dev/cu.usbmodem11202')
 
     def handler(event, data):
         window.write_event_value(event, data)
@@ -26,8 +26,8 @@ def tester_thread(window):
     ft.run()
 
 
-def generate_qrcode(text):
-    img = qrcode.make(text)
+def generate_qrcode(serial: str):
+    img = qrcode.make(serial)
     bio = io.BytesIO()
     img.get_image().save(bio, format='PNG')
     return bio.getvalue()
@@ -36,7 +36,6 @@ def generate_qrcode(text):
 class App:
     def __init__(self):
         self.window = None
-        self.qr_code = None
 
     def _init_gui(self):
         sg.theme('Black')
@@ -93,6 +92,11 @@ class App:
         self.window['-QRCODE-'].update(data=None)
         self.window['-PASSFAIL-'].update('', background_color="black")
 
+    def _state_serial_detected(self, serial):
+        self.window['-STATE-'].update("Serial Detected, Waiting for PCB...")
+        self.window['-QRCODE-'].update(data=generate_qrcode(serial))
+        self.window['-PASSFAIL-'].update('', background_color="black")
+
     def run(self):
         self._init_gui()
 
@@ -117,6 +121,8 @@ class App:
                 self._state_test_passed(data['test_passed'])
             if event == "test_finished":
                 self._state_test_finished()
+            if event == "serial_detected":
+                self._state_serial_detected(data['serial_detected'])
 
         self.window.close()
 

@@ -46,28 +46,28 @@ class FunctionalTest:
         self.machine = Machine(
             model=self,
             states=[
-                'initial',
+                'stopped',
                 'wait_for_serial',
                 'wait_for_pcb',
-                'run_test'
+                'running_test'
             ],
-            initial='initial')
+            initial='stopped')
 
         self.machine.add_transition(
             'start',
-            'initial',
+            'stopped',
             'wait_for_serial',
         )
 
         self.machine.add_transition(
-            'lost_serial_connection',
+            'serial_lost',
             '*',
             'wait_for_serial',
-            before='close_port'
+            after='_close_port'
         )
 
         self.machine.add_transition(
-            'got_serial_connection',
+            'serial_found',
             'wait_for_serial',
             'wait_for_pcb',
         )
@@ -75,18 +75,18 @@ class FunctionalTest:
         self.machine.add_transition(
             'got_pcb',
             'wait_for_pcb',
-            'run_test',
+            'running_test',
         )
 
         self.machine.add_transition(
             'test_successful',
-            'run_test',
+            'running_test',
             'wait_for_pcb'
         )
 
         self.machine.add_transition(
             'test_failed',
-            'run_test',
+            'running_test',
             'wait_for_pcb'
         )
 
@@ -97,17 +97,19 @@ class FunctionalTest:
             after='display_serial'
         )
 
-    def close_port(self):
+    def _close_port(self):
         self.port.close()
-
-    def add_listener(self, listener):
-        self.listeners.append(listener)
 
     def _send_event(self, event, data={}):
         for listener in self.listeners:
             listener(event, data)
 
+    def add_listener(self, listener):
+        self.listeners.append(listener)
+
     def run(self):
+        self.start()
+
         def fn_not_found():
             raise RuntimeError("Could not find state handler")
 
@@ -117,9 +119,6 @@ class FunctionalTest:
             if fn:
                 logging.info(f"running state {self.state}")
                 fn()
-
-    def initial(self):
-        self.start()
 
     def display_serial(self, serial):
         logging.info(f"display_serial({serial})")
@@ -131,7 +130,7 @@ class FunctionalTest:
             try:
                 logging.debug("checking serial connection")
                 self.port.open()
-                self.got_serial_connection()
+                self.serial_found()
                 return
             except serial.serialutil.SerialException:
                 time.sleep(1)
@@ -151,12 +150,12 @@ class FunctionalTest:
                     time.sleep(1)
             except OSError as err:
                 if err.errno == 6:
-                    self.lost_serial_connection()
+                    self.serial_lost()
                     return
                 else:
                     raise err
 
-    def run_test(self) -> bool:
+    def running_test(self) -> bool:
         self.load_test_firmware()
         self.reset_device()
 
@@ -192,9 +191,8 @@ class FunctionalTest:
             return False
         except serial.serialutil.SerialException as err:
             logging.error(err)
-            self.lost_serial_connection()
+            self.serial_lost()
             return False
-
 
         self.load_production_firmware()
         self.reset_device()
