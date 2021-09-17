@@ -1,84 +1,130 @@
 #!/usr/bin/env python
-
 '''
-This is a placeholder application demonstrating how PySimpleGUI can accept controls from both a user
-and a TBD test harness. It has the currently understood wait/test/display QR loop.
+This is a placeholder application demonstrating how PySimpleGUI can accept
+controls from both a user and a TBD test harness. It has the currently
+understood wait/test/display QR loop.
 
-It runs fullscreen with no capability to exit and is intended to be run on boot on an RPI with a touchscreen.
+It runs fullscreen with no capability to exit and is intended to be run on
+boot on an RPI with a touchscreen.
 '''
 
 import PySimpleGUI as sg
 import qrcode
-import time
 import io
 import uuid
+from pulse_jig.functional_test import FunctionalTest
+import threading
 
-sg.theme('Black')
 
-layout = [
-  [ sg.Text(key='-STATUS-') ],
-  [ sg.Text(key='-PASSFAIL-', font='Helvetica 20 bold') ],
-  [ sg.Image(key='-QRCODE-') ]
-]
+def tester_thread(window):
+    ft = FunctionalTest('/dev/cu.usbmodem1202')
 
-window = sg.Window(
-  'Pulse Production Jig',
-  layout,
-  element_justification='center',
-  finalize=True
-)
-window.maximize()
+    def handler(event, data):
+        window.write_event_value(event, data)
 
-def testing_result(run):
-  success = run % 2
-  serial = str(uuid.uuid4()) if success else None 
-  return (success, serial)
+    ft.add_listener(handler)
+    ft.run()
+
 
 def generate_qrcode(text):
-  img = qrcode.make(text)
-  bio = io.BytesIO()
-  img.get_image().save(bio, format='PNG')
-  return bio.getvalue()
-
-def state_waiting():
-  window['-STATUS-'].update('Waiting for device')
-  window.refresh()
-
-def state_testing():
-  window['-STATUS-'].update('Running tests')
-  window.refresh()
-
-def state_fail():
-  window['-PASSFAIL-'].update('Fail', text_color='red')
-  window['-QRCODE-'].update(None)
-  window.refresh()
-
-def state_success(serial):
-  window['-PASSFAIL-'].update('Pass', text_color='green')
-  window['-QRCODE-'].update(data=generate_qrcode(serial))
-  window.refresh()
-
-def perform_device_testing(count):
-  state_waiting()
-  time.sleep(1) # pretend to do something...
-  state_testing()
-  time.sleep(1)
-  (success, serial) = testing_result(count)
-  state_success(serial) if success else state_fail()
+    img = qrcode.make(text)
+    bio = io.BytesIO()
+    img.get_image().save(bio, format='PNG')
+    return bio.getvalue()
 
 
-count=0
-while True:
-  # perform a blocking read for 10ms so that when we're not running the tests
-  # a user can interact with the program
-  event, values = window.read(timeout=10)
-  if event == sg.WIN_CLOSED:
-    break
-  # if other GUI interaction events: ...
+class App:
+    def __init__(self):
+        self.window = None
+        self.qr_code = None
 
-  # perform device testing loop
-  perform_device_testing(count)
-  count += 1
+    def _init_gui(self):
+        sg.theme('Black')
+        layout = [
+            [
+                sg.Frame("State",
+                         layout=[[sg.Text(key='-STATE-', font='Helvetica 20 bold')]],
+                         expand_x=True),
+                sg.Frame("Test Status",
+                         layout=[[sg.Text(key='-PASSFAIL-', font='Helvetica 20 bold')]],
+                         expand_x=False)
+            ],
+            [sg.Frame("QRCode",
+                      layout=[[sg.Image(key='-QRCODE-', expand_x=True, expand_y=True)]],
+                      element_justification="center",
+                      vertical_alignment='center',
+                      expand_x=True,
+                      expand_y=True)
+             ]]
+
+        self.window = sg.Window(
+            'Pulse Production Jig',
+            layout,
+            element_justification='center',
+            finalize=True,
+            size=(600, 480))
+        self.window.maximize()
+
+    def _state_wait_for_serial(self):
+        self.window['-STATE-'].update("Waiting for serial...")
+        self.window.refresh()
+
+    def _state_wait_for_pcb(self):
+        self.window['-STATE-'].update("Waiting for PCB...")
+        self.window.refresh()
+
+    def _state_test_running(self):
+        self.window['-STATE-'].update("Running test...")
+        self.window.refresh()
+
+    def _state_test_passed(self, serial):
+        self.window['-PASSFAIL-'].update('Pass', background_color='green')
+        self.window['-QRCODE-'].update(data=generate_qrcode(serial))
+        self.window['-STATE-'].update("Disconnect PCB...")
+        self.window.refresh()
+
+    def _state_test_failed(self, serial):
+        self.window['-PASSFAIL-'].update('Failed', background_color='Red')
+        self.window['-QRCODE-'].update(data=None)
+        self.window['-STATE-'].update("Disconnect PCB...")
+        self.window.refresh()
+
+    def _state_test_finished(self):
+        self.window['-QRCODE-'].update(data=None)
+        self.window['-PASSFAIL-'].update('', background_color="black")
+
+    def run(self):
+        self._init_gui()
+
+        threading.Thread(
+            target=tester_thread,
+            args=(self.window,),
+            daemon=True).start()
+
+        while True:
+            event, data = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            if event == "wait_for_serial":
+                self._state_wait_for_serial()
+            if event == "wait_for_pcb":
+                self._state_wait_for_pcb()
+            if event == "run_test":
+                self._state_test_running()
+            if event == "test_failed":
+                self._state_test_failed()
+            if event == "test_passed":
+                self._state_test_passed(data['test_passed'])
+            if event == "test_finished":
+                self._state_test_finished()
+
+        self.window.close()
 
 
-window.close()
+def main():
+    app = App()
+    app.run()
+
+
+if __name__ == '__main__':
+    main()
