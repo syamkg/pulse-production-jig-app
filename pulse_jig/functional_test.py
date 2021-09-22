@@ -2,186 +2,48 @@ from pulse_jig.jig_client import JigClient, JigClientException
 import logging
 import time
 import serial
-import os
-from transitions import Machine
 import re
 import gpiozero
 import shutil
 from pathlib import Path
 import threading
 import uuid
+from typing import Tuple
 
 
-class FunctionalTestFailedException(Exception):
+class FunctionalTestFailure(Exception):
     """Exception raised when a the functional test fails
     for any expected reason"""
 
-
-class FakeGPIO:
-    def __init__(self, filename: str):
-        self.filename = filename
-        if not os.path.exists(self.filename):
-            os.mkfifo(self.filename)
-        fd = os.open(self.filename, os.O_RDONLY | os.O_NONBLOCK)
-        self.pipe = os.fdopen(fd, "rb")
-
-    def __del__(self):
-        self.pipe.close()
-        os.unlink(self.filename)
-
-    def test(self):
-        return self.pipe.read().strip() != b""
-
-    def wait(self):
-        while self.pipe.read().strip() == b"":
-            time.sleep(1)
+    def __init__(self, msg, *, serial_no=None, log=None):
+        super().__init__(msg)
+        self.msg = msg
+        self.serial_no = serial_no
+        self.log = log
 
 
 class FunctionalTest:
-    def __init__(self, dev):
-        self.port = serial.Serial()
-        self.port.port = dev
-        self.port.baudrate = 115200
-        self.listeners = []
-        self.reset_xdot_gpio = gpiozero.OutputDevice(21)
-        self.reset_xdot_gpio.on()
-        self.pcb_sense_gpio = gpiozero.Button(5, pull_up=True)
+    def __init__(self, port: serial.Serial):
+        self.port = port
+        self.reset_xdot_gpio = gpiozero.OutputDevice(21, initial_value=True)
         self.production_firmware = "firmware/prod-firmware"
         self.test_firmware = "firmware/test-firmware"
         self.xdot_volume = Path("/media/pi/XDOT")
 
-        self.machine = Machine(
-            model=self,
-            states=[
-                "stopped",
-                "waiting_for_serial",
-                "waiting_for_pcb",
-                "waiting_for_pcb_removal",
-                "running_test",
-            ],
-            initial="stopped",
-        )
-
-        self.machine.add_transition(
-            "start",
-            "stopped",
-            "waiting_for_serial",
-        )
-
-        self.machine.add_transition("stop", "*", "stopped")
-
-        self.machine.add_transition(
-            "serial_lost", "*", "waiting_for_serial", before="_close_port"
-        )
-
-        self.machine.add_transition(
-            "serial_found",
-            "waiting_for_serial",
-            "waiting_for_pcb",
-        )
-
-        self.machine.add_transition(
-            "pcb_connected",
-            "waiting_for_pcb",
-            "running_test",
-        )
-
-        self.machine.add_transition(
-            "test_successful", "running_test", "waiting_for_pcb_removal"
-        )
-
-        self.machine.add_transition(
-            "test_failed",
-            "running_test",
-            "waiting_for_pcb_removal",
-            before="_handle_test_failed",
-        )
-
-        self.machine.add_transition(
-            "serial_detected",
-            "waiting_for_pcb",
-            "waiting_for_pcb",
-            after="_handle_serial_detected",
-        )
-
-        self.machine.add_transition(
-            "pcb_removed", "waiting_for_pcb_removal", "waiting_for_pcb"
-        )
-
-    def _handle_test_failed(self, msg, *, log=None, serial_no=None):
-        logging.info(f"Test failed (serial_no={serial_no}): {msg}")
-        # self.record_test_failure(serial, msg, log)
-        self._send_event("test_failed", dict(msg=msg, serial=serial_no, log=log))
-
-    def _handle_serial_detected(self, serial):
-        self._send_event("serial_detected", serial)
-
-    def _close_port(self):
-        self.port.close()
-
-    def _send_event(self, event, data={}):
-        for listener in self.listeners:
-            listener(event, data)
-
-    def add_listener(self, listener):
-        self.listeners.append(listener)
-
-    def run(self):
-        self.start()
-
-        def fn_not_found():
-            raise RuntimeError("Could not find state handler: ")
-
-        while self.state != "stopped" and self.state != "test_failed":
-            self._send_event(self.state)
-            fn = getattr(self, self.state, fn_not_found)
-            if fn:
-                logging.info(f"{self.state}()")
-                fn()
-
-    def waiting_for_serial(self):
-        while True:
-            try:
-                self.port.open()
-                self.serial_found()
-                return
-            except serial.serialutil.SerialException:
-                time.sleep(1)
-
-    def waiting_for_pcb(self):
-        while True:
-            try:
-                if self.is_pcb_connected():
-                    self.pcb_connected()
-                    return
-                else:
-                    serial = self.check_for_serial()
-                    if serial:
-                        self.serial_detected(serial)
-                        return
-                    time.sleep(1)
-            except OSError as err:
-                # TODO improve
-                # 6 on macos
-                # 5 on pi
-                if err.errno == 6 or err.errno == 5:
-                    self.serial_lost()
-                    return
-                else:
-                    raise err
-
-    def running_test(self) -> bool:
+    def run(self) -> [str, str]:
         logging.debug("running_test() - loading test firmware")
-        self.load_test_firmware()
-        self.reset_device()
+        self.port.reset_output_buffer()
+        self.port.reset_input_buffer()
 
-        try:
-            self.port.reset_output_buffer()
-            self.port.reset_input_buffer()
-            client = JigClient(self.port, logger=logging.getLogger("JigClient"))
-        except serial.serialutil.SerialException:
-            self.test_failed("could not connect to serial device")
-            return
+        self._load_test_firmware()
+        self._reset_device()
+
+        client = JigClient(self.port, logger=logging.getLogger("JigClient"))
+
+        def run_test(cmd: str):
+            logging.info(f"running test for: {cmd}")
+            if not client.run_test_cmd(cmd):
+                raise FunctionalTestFailure(f"test failed: {cmd}")
 
         logging.debug("running_test() - skipping functional test firmware boot header")
         client.skip_boot_header()
@@ -194,11 +56,6 @@ class FunctionalTest:
                 client.write_eeprom("serial", serial_no)
                 logging.info(f"running_test() - serial generated: {serial_no}")
 
-            def run_test(cmd):
-                logging.info(f"running test for: {cmd}")
-                if not client.run_test_cmd(cmd):
-                    raise FunctionalTestFailedException(f"test failed: {cmd}")
-
             run_test("SELF_TEST")
             run_test("TEST_LORA_CONNECT")
 
@@ -206,35 +63,28 @@ class FunctionalTest:
                 run_test(f"TEST_PORT_I2C {port}")
                 run_test(f"TEST_PORT_SPI {port}")
                 run_test(f"TEST_PORT_GIN_GOUT_LOOP {port}")
-        except (FunctionalTestFailedException, JigClientException) as err:
-            self.test_failed(str(err), log=client.log, serial_no=serial_no)
-            return False
-        except serial.serialutil.SerialException as err:
-            logging.error(err)
-            self.serial_lost()
-            return False
+        except JigClientException as err:
+            raise FunctionalTestFailure(
+                f"test failed: {str(err)}", serial_no=serial_no, log=client.log
+            ) from err
 
         logging.debug("running_test() - loading production firmware")
-        self.load_production_firmware()
-        self.reset_device()
+        self._load_production_firmware()
+        self._reset_device()
 
         logging.info("running_test() - checking for serial")
-        detected_serial_no = self.check_for_serial(timeout=2, debug=True)
+        detected_serial_no = self._check_for_serial(timeout=2)
         # We should check the serial is the same as that we generated
         # but we can't do that until the firmware actually persists
         # the serial across restarts
         # if (detected_serial_no is not None) or (detected_serial_no != serial_no):
         if detected_serial_no is None:
-            self.test_failed("No serial detected", log=client.log, serial_no=serial_no)
-            return False
-
+            raise FunctionalTestFailure("detected serial mismatch")
         logging.info(f"running_test() - serial found: {detected_serial_no}")
-        self._send_event("test_passed", serial_no)
 
-        self.test_successful()
-        return True
+        return (serial_no, client.log)
 
-    def check_for_serial(self, timeout=0, debug=False):
+    def _check_for_serial(self, timeout=0):
         resp = ""
         end_time = time.monotonic() + timeout
         while timeout == 0 or end_time > time.monotonic():
@@ -247,22 +97,20 @@ class FunctionalTest:
                 break
         return None
 
-    def waiting_for_pcb_removal(self):
-        self.pcb_sense_gpio.wait_for_release()
-        self._send_event("pcb_removed")
-        self.pcb_removed()
-
-    def is_pcb_connected(self):
-        return self.pcb_sense_gpio.is_pressed
-
-    def reset_device(self):
+    def _reset_device(self):
         logging.debug("reset_device()")
         self.reset_xdot_gpio.off()
         time.sleep(0.5)
         self.reset_xdot_gpio.on()
 
-    def generate_serial(self):
+    def _generate_serial(self):
         return uuid.uuid4()
+
+    def _load_test_firmware(self):
+        self._load_firmware("firmware/test-firmware.bin")
+
+    def _load_production_firmware(self):
+        self._load_firmware("firmware/prod-firmware.bin")
 
     def _load_firmware(self, firmware):
         def do_copy():
@@ -278,9 +126,3 @@ class FunctionalTest:
         copy_thread.join()
         logging.debug("_load_firmware() - giving xdot 10 seconds")
         time.sleep(10)
-
-    def load_test_firmware(self):
-        self._load_firmware("firmware/test-firmware.bin")
-
-    def load_production_firmware(self):
-        self._load_firmware("firmware/prod-firmware.bin")

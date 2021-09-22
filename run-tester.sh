@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 source .venv/bin/activate
-python run-tester.py
+python jig-tester.py
