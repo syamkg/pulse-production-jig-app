@@ -8,10 +8,7 @@ class JigClientException(Exception):
 
 
 class JigClient:
-    def __init__(
-            self,
-            port: Union[str, serial.Serial],
-            logger = None):
+    def __init__(self, port: Union[str, serial.Serial], logger=None):
         if type(port) is str:
             self.port = serial.Serial(port, 115200)
         else:
@@ -39,10 +36,10 @@ class JigClient:
                 break
 
     def _readline(self) -> str:
-        line = self.port.readline().decode('utf-8')
+        line = self.port.readline().decode("utf-8")
         self.log += line
         line = line.rstrip(self.terminator)
-        if self.logger is not None and line != '':
+        if self.logger is not None and line != "":
             self.logger.debug("S: " + line)
         return line
 
@@ -50,28 +47,25 @@ class JigClient:
         if self.logger is not None:
             self.logger.debug("C: " + line)
         line += "\r"
-        self.port.write(f'{line}'.encode('utf-8'))
+        self.port.write(f"{line}".encode("utf-8"))
         self.log += line
 
     def _is_response_successful(self, body: str) -> bool:
-        return body.strip().split("\n")[-1] == 'PASS'
+        return body.strip().split("\n")[-1] == "PASS"
 
-    def send_command(
-            self,
-            cmd: str,
-            has_body=True) -> str:
+    def send_command(self, cmd: str, has_body=True) -> str:
         self.port.write_timeout = self.write_timeout
         self.port.timeout = self.ack_timeout
         self._writeline(cmd)
 
         # Parse command echo
         line = self._readline()
-        if line.lstrip(self.prompt) != f'{cmd}':
+        if line.lstrip(self.prompt) != f"{cmd}":
             raise JigClientException(f"Line not echoed back: {line}")
 
         # Parse command acknowledgement
         ack = self._readline()
-        if ack != '+OK':
+        if ack != "+OK":
             raise JigClientException(f"Command not acknowledged: {ack}")
 
         # Parse command body
@@ -93,10 +87,10 @@ class JigClient:
         return body
 
     def read_eeprom(self, key: str) -> bool:
-        return self.send_command(f'READ_EEPROM_KEY {key}')
+        return self.send_command(f"READ_EEPROM_KEY {key}")
 
     def write_eeprom(self, key: str, value: str) -> bool:
-        return self.send_command(f'WRITE_EEPROM {key}={value}')
+        return self.send_command(f"WRITE_EEPROM {key}={value}")
 
     def run_test_cmd(self, cmd: str) -> bool:
         resp = self.send_command(cmd)

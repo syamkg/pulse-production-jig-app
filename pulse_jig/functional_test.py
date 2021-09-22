@@ -13,8 +13,8 @@ import uuid
 
 
 class FunctionalTestFailedException(Exception):
-    '''Exception raised when a the functional test fails
-    for any expected reason'''
+    """Exception raised when a the functional test fails
+    for any expected reason"""
 
 
 class FakeGPIO:
@@ -22,20 +22,18 @@ class FakeGPIO:
         self.filename = filename
         if not os.path.exists(self.filename):
             os.mkfifo(self.filename)
-        fd = os.open(
-            self.filename,
-            os.O_RDONLY | os.O_NONBLOCK)
-        self.pipe = os.fdopen(fd, 'rb')
+        fd = os.open(self.filename, os.O_RDONLY | os.O_NONBLOCK)
+        self.pipe = os.fdopen(fd, "rb")
 
     def __del__(self):
         self.pipe.close()
         os.unlink(self.filename)
 
     def test(self):
-        return self.pipe.read().strip() != b''
+        return self.pipe.read().strip() != b""
 
     def wait(self):
-        while self.pipe.read().strip() == b'':
+        while self.pipe.read().strip() == b"":
             time.sleep(1)
 
 
@@ -55,74 +53,64 @@ class FunctionalTest:
         self.machine = Machine(
             model=self,
             states=[
-                'stopped',
-                'waiting_for_serial',
-                'waiting_for_pcb',
-                'waiting_for_pcb_removal',
-                'running_test'
+                "stopped",
+                "waiting_for_serial",
+                "waiting_for_pcb",
+                "waiting_for_pcb_removal",
+                "running_test",
             ],
-            initial='stopped')
-
-        self.machine.add_transition(
-            'start',
-            'stopped',
-            'waiting_for_serial',
+            initial="stopped",
         )
 
         self.machine.add_transition(
-            'stop',
-            '*',
-            'stopped'
+            "start",
+            "stopped",
+            "waiting_for_serial",
+        )
+
+        self.machine.add_transition("stop", "*", "stopped")
+
+        self.machine.add_transition(
+            "serial_lost", "*", "waiting_for_serial", after="_close_port"
         )
 
         self.machine.add_transition(
-            'serial_lost',
-            '*',
-            'waiting_for_serial',
-            after='_close_port'
+            "serial_found",
+            "waiting_for_serial",
+            "waiting_for_pcb",
         )
 
         self.machine.add_transition(
-            'serial_found',
-            'waiting_for_serial',
-            'waiting_for_pcb',
+            "pcb_connected",
+            "waiting_for_pcb",
+            "running_test",
         )
 
         self.machine.add_transition(
-            'pcb_connected',
-            'waiting_for_pcb',
-            'running_test',
+            "test_successful", "running_test", "waiting_for_pcb_removal"
         )
 
         self.machine.add_transition(
-            'test_successful',
-            'running_test',
-            'waiting_for_pcb_removal'
+            "test_failed",
+            "running_test",
+            "waiting_for_pcb_removal",
+            after="_handle_test_failed",
         )
 
         self.machine.add_transition(
-            'test_failed',
-            'running_test',
-            'waiting_for_pcb_removal',
-            after='_handle_test_failed'
+            "serial_detected",
+            "waiting_for_pcb",
+            "waiting_for_pcb",
+            after="display_serial",
         )
 
         self.machine.add_transition(
-            'serial_detected',
-            'waiting_for_pcb',
-            'waiting_for_pcb',
-            after='display_serial'
-        )
-
-        self.machine.add_transition(
-            'pcb_removed',
-            'waiting_for_pcb_removal',
-            'waiting_for_pcb'
+            "pcb_removed", "waiting_for_pcb_removal", "waiting_for_pcb"
         )
 
     def _handle_test_failed(self):
         logging.info("TEST FAILED")
-        self._send_event('test_failed')
+        self._send_event("test_failed")
 
     def _close_port(self):
         self.port.close()
@@ -140,7 +128,7 @@ class FunctionalTest:
         def fn_not_found():
             raise RuntimeError("Could not find state handler: ")
 
-        while self.state != 'stopped' and self.state != "test_failed":
+        while self.state != "stopped" and self.state != "test_failed":
             self._send_event(self.state)
             fn = getattr(self, self.state, fn_not_found)
             if fn:
@@ -149,7 +137,7 @@ class FunctionalTest:
 
     def display_serial(self, serial):
         logging.info(f"display_serial({serial})")
-        self._send_event('serial_detected', serial)
+        self._send_event("serial_detected", serial)
 
     def waiting_for_serial(self):
         while True:
@@ -190,23 +178,20 @@ class FunctionalTest:
         try:
             self.port.reset_output_buffer()
             self.port.reset_input_buffer()
-            client = JigClient(
-                self.port,
-                logger=logging.getLogger("JigClient"))
+            client = JigClient(self.port, logger=logging.getLogger("JigClient"))
         except serial.serialutil.SerialException:
             logging.error("could not connect to serial device")
             self.test_failed()
             return
 
-        logging.debug(
-            "running_test() - skipping functional test firmware boot header")
+        logging.debug("running_test() - skipping functional test firmware boot header")
         client.skip_boot_header()
 
         try:
-            serial_no = client.read_eeprom('serial')
-            if serial_no == '':
+            serial_no = client.read_eeprom("serial")
+            if serial_no == "":
                 serial_no = self.generate_serial()
-                client.write_eeprom('serial', serial_no)
+                client.write_eeprom("serial", serial_no)
                 logging.info(f"running_test() - serial generated: {serial_no}")
 
             def run_test(cmd):
@@ -239,13 +224,13 @@ class FunctionalTest:
         # We should check the serial is the same as that we generated
         # but we can't do that until the firmware actually persists
         # the serial across restarts
-        #if (detected_serial is not None) or (detected_serial != serial_no):
-        if (detected_serial is None):
+        # if (detected_serial is not None) or (detected_serial != serial_no):
+        if detected_serial is None:
             self.test_failed()
             return False
 
         logging.info(f"running_test() - serial found: {detected_serial}")
-        self._send_event('test_passed', serial_no)
+        self._send_event("test_passed", serial_no)
 
         self.test_successful()
         return True
@@ -255,9 +240,7 @@ class FunctionalTest:
         end_time = time.monotonic() + timeout
         while timeout == 0 or end_time > time.monotonic():
             while self.port.in_waiting > 0:
-                resp += self.port\
-                    .read(self.port.in_waiting)\
-                    .decode('utf-8')
+                resp += self.port.read(self.port.in_waiting).decode("utf-8")
             matches = re.search(r"^Serial: (.*)$", resp, re.MULTILINE)
             if matches:
                 return matches.group(1).strip()
@@ -267,7 +250,7 @@ class FunctionalTest:
 
     def waiting_for_pcb_removal(self):
         self.pcb_sense_gpio.wait_for_release()
-        self._send_event('pcb_removed')
+        self._send_event("pcb_removed")
         self.pcb_removed()
 
     def is_pcb_connected(self):
@@ -298,7 +281,7 @@ class FunctionalTest:
         time.sleep(10)
 
     def load_test_firmware(self):
-        self._load_firmware('firmware/test-firmware.bin')
+        self._load_firmware("firmware/test-firmware.bin")
 
     def load_production_firmware(self):
-        self._load_firmware('firmware/prod-firmware.bin')
+        self._load_firmware("firmware/prod-firmware.bin")
