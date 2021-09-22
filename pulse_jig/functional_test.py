@@ -71,7 +71,7 @@ class FunctionalTest:
         self.machine.add_transition("stop", "*", "stopped")
 
         self.machine.add_transition(
-            "serial_lost", "*", "waiting_for_serial", after="_close_port"
+            "serial_lost", "*", "waiting_for_serial", before="_close_port"
         )
 
         self.machine.add_transition(
@@ -94,23 +94,27 @@ class FunctionalTest:
             "test_failed",
             "running_test",
             "waiting_for_pcb_removal",
-            after="_handle_test_failed",
+            before="_handle_test_failed",
         )
 
         self.machine.add_transition(
             "serial_detected",
             "waiting_for_pcb",
             "waiting_for_pcb",
-            after="display_serial",
+            after="_handle_serial_detected",
         )
 
         self.machine.add_transition(
             "pcb_removed", "waiting_for_pcb_removal", "waiting_for_pcb"
         )
 
-    def _handle_test_failed(self):
-        logging.info("TEST FAILED")
-        self._send_event("test_failed")
+    def _handle_test_failed(self, msg, *, log=None, serial_no=None):
+        logging.info(f"Test failed (serial_no={serial_no}): {msg}")
+        # self.record_test_failure(serial, msg, log)
+        self._send_event("test_failed", dict(msg=msg, serial=serial_no, log=log))
+
+    def _handle_serial_detected(self, serial):
+        self._send_event("serial_detected", serial)
 
     def _close_port(self):
         self.port.close()
@@ -134,10 +138,6 @@ class FunctionalTest:
             if fn:
                 logging.info(f"{self.state}()")
                 fn()
-
-    def display_serial(self, serial):
-        logging.info(f"display_serial({serial})")
-        self._send_event("serial_detected", serial)
 
     def waiting_for_serial(self):
         while True:
@@ -180,13 +180,13 @@ class FunctionalTest:
             self.port.reset_input_buffer()
             client = JigClient(self.port, logger=logging.getLogger("JigClient"))
         except serial.serialutil.SerialException:
-            logging.error("could not connect to serial device")
-            self.test_failed()
+            self.test_failed("could not connect to serial device")
             return
 
         logging.debug("running_test() - skipping functional test firmware boot header")
         client.skip_boot_header()
 
+        serial_no = None
         try:
             serial_no = client.read_eeprom("serial")
             if serial_no == "":
@@ -207,8 +207,7 @@ class FunctionalTest:
                 run_test(f"TEST_PORT_SPI {port}")
                 run_test(f"TEST_PORT_GIN_GOUT_LOOP {port}")
         except (FunctionalTestFailedException, JigClientException) as err:
-            logging.error(err)
-            self.test_failed()
+            self.test_failed(str(err), log=client.log, serial_no=serial_no)
             return False
         except serial.serialutil.SerialException as err:
             logging.error(err)
@@ -220,16 +219,16 @@ class FunctionalTest:
         self.reset_device()
 
         logging.info("running_test() - checking for serial")
-        detected_serial = self.check_for_serial(timeout=2, debug=True)
+        detected_serial_no = self.check_for_serial(timeout=2, debug=True)
         # We should check the serial is the same as that we generated
         # but we can't do that until the firmware actually persists
         # the serial across restarts
-        # if (detected_serial is not None) or (detected_serial != serial_no):
-        if detected_serial is None:
-            self.test_failed()
+        # if (detected_serial_no is not None) or (detected_serial_no != serial_no):
+        if detected_serial_no is None:
+            self.test_failed("No serial detected", log=client.log, serial_no=serial_no)
             return False
 
-        logging.info(f"running_test() - serial found: {detected_serial}")
+        logging.info(f"running_test() - serial found: {detected_serial_no}")
         self._send_event("test_passed", serial_no)
 
         self.test_successful()
