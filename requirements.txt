@@ -12,3 +12,4 @@ pyserial==3.5
 pytest==6.2.5
 toml==0.10.2
 transitions==0.8.9
+gpiozero==1.6.2

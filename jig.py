@@ -6,9 +6,14 @@ from pulse_jig.functional_test import FunctionalTest
 
 @click.command()
 @click.argument('dev')
-def test_jig(dev: str):
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger('transitions').setLevel(logging.INFO)
+@click.option('--debug', '-d', default=False, is_flag=True)
+def test_jig(dev: str, debug: bool):
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger('transitions').setLevel(logging.INFO)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger('transitions').setLevel(logging.WARN)
     ft = FunctionalTest(dev)
     ft.run()
 

@@ -17,27 +17,38 @@ class JigClient:
         else:
             self.port = port
         self.write_timeout = 1
-        self.ack_timeout = 1
+        self.ack_timeout = 0.5
         self.body_timeout = 2
         self.last_error = None
         self.log = ""
         self.terminator = "\r\n"
+        self.prompt = "> "
         self.logger = logger
 
     def _is_end_of_body(self, line: str) -> None:
         return line == "."
+
+    def skip_boot_header(self) -> None:
+        self._read_until_prompt(2)
+
+    def _read_until_prompt(self, timeout) -> None:
+        self.port.timeout = 0.1
+        end_time = time.monotonic() + timeout
+        while time.monotonic() < end_time:
+            if self._readline() == self.prompt:
+                break
 
     def _readline(self) -> str:
         line = self.port.readline().decode('utf-8')
         self.log += line
         line = line.rstrip(self.terminator)
         if self.logger is not None:
-            self.logger.debug("recv: " + line)
+            self.logger.debug("S: " + line)
         return line
 
     def _writeline(self, line: str) -> None:
         if self.logger is not None:
-            self.logger.debug("sent: " + line)
+            self.logger.debug("C: " + line)
         line += "\r"
         self.port.write(f'{line}'.encode('utf-8'))
         self.log += line
@@ -55,7 +66,7 @@ class JigClient:
 
         # Parse command echo
         line = self._readline()
-        if line != f'{cmd}':
+        if line.lstrip(self.prompt) != f'{cmd}':
             raise JigClientException(f"Line not echoed back: {line}")
 
         # Parse command acknowledgement
@@ -68,7 +79,7 @@ class JigClient:
             lines = []
             timeout = time.monotonic() + self.body_timeout
             while time.monotonic() < timeout:
-                serial.timeout = timeout - time.monotonic()
+                self.port.timeout = timeout - time.monotonic()
                 line = self._readline()
                 if self._is_end_of_body(line):
                     break
@@ -83,6 +94,9 @@ class JigClient:
 
     def read_eeprom(self, key: str) -> bool:
         return self.send_command(f'READ_EEPROM_KEY {key}')
+
+    def write_eeprom(self, key: str, value: str) -> bool:
+        return self.send_command(f'WRITE_EEPROM {key}={value}')
 
     def run_test_cmd(self, cmd: str) -> bool:
         resp = self.send_command(cmd)

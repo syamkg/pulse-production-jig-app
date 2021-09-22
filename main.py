@@ -11,13 +11,14 @@ boot on an RPI with a touchscreen.
 import PySimpleGUI as sg
 import qrcode
 import io
-import uuid
 from pulse_jig.functional_test import FunctionalTest
 import threading
+import logging
+import click
 
 
-def tester_thread(window: sg.Window):
-    ft = FunctionalTest('/dev/cu.usbmodem11202')
+def tester_thread(window: sg.Window, dev: str):
+    ft = FunctionalTest(dev)
 
     def handler(event, data):
         window.write_event_value(event, data)
@@ -34,8 +35,9 @@ def generate_qrcode(serial: str):
 
 
 class App:
-    def __init__(self):
+    def __init__(self, dev: str):
         self.window = None
+        self.dev = dev
 
     def _init_gui(self):
         sg.theme('Black')
@@ -60,9 +62,10 @@ class App:
             'Pulse Production Jig',
             layout,
             element_justification='center',
-            finalize=True,
-            size=(600, 480))
+            resizable=True,
+            finalize=True)
         self.window.maximize()
+        self.window.refresh()
 
     def _state_wait_for_serial(self):
         self.window['-STATE-'].update("Waiting for serial...")
@@ -84,36 +87,38 @@ class App:
 
     def _state_test_failed(self, serial):
         self.window['-PASSFAIL-'].update('Failed', background_color='Red')
-        self.window['-QRCODE-'].update(data=None)
+        self.window['-QRCODE-'].update()
         self.window['-STATE-'].update("Disconnect PCB...")
         self.window.refresh()
 
     def _state_test_finished(self):
-        self.window['-QRCODE-'].update(data=None)
+        self.window['-QRCODE-'].update()
         self.window['-PASSFAIL-'].update('', background_color="black")
+        self.window.refresh()
 
     def _state_serial_detected(self, serial):
         self.window['-STATE-'].update("Serial Detected, Waiting for PCB...")
         self.window['-QRCODE-'].update(data=generate_qrcode(serial))
         self.window['-PASSFAIL-'].update('', background_color="black")
+        self.window.refresh()
 
     def run(self):
         self._init_gui()
 
         threading.Thread(
             target=tester_thread,
-            args=(self.window,),
+            args=(self.window, self.dev),
             daemon=True).start()
 
         while True:
-            event, data = self.window.read()
+            event, data = self.window.read(timeout=500)
             if event == sg.WIN_CLOSED:
                 break
-            if event == "wait_for_serial":
+            if event == "waiting_for_serial":
                 self._state_wait_for_serial()
-            if event == "wait_for_pcb":
+            if event == "waiting_for_pcb":
                 self._state_wait_for_pcb()
-            if event == "run_test":
+            if event == "running_test":
                 self._state_test_running()
             if event == "test_failed":
                 self._state_test_failed()
@@ -127,8 +132,17 @@ class App:
         self.window.close()
 
 
-def main():
-    app = App()
+@click.command()
+@click.argument('dev')
+@click.option('--debug', '-d', default=False, is_flag=True)
+def main(dev: str, debug: bool):
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger('transitions').setLevel(logging.INFO)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger('transitions').setLevel(logging.WARN)
+    app = App(dev)
     app.run()
 
 
