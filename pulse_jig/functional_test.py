@@ -58,6 +58,7 @@ class FunctionalTest:
                 'stopped',
                 'waiting_for_serial',
                 'waiting_for_pcb',
+                'waiting_for_pcb_removal',
                 'running_test'
             ],
             initial='stopped')
@@ -96,14 +97,14 @@ class FunctionalTest:
         self.machine.add_transition(
             'test_successful',
             'running_test',
-            'waiting_for_pcb'
+            'waiting_for_pcb_removal'
         )
 
         self.machine.add_transition(
             'test_failed',
             'running_test',
-            'waiting_for_pcb',
-            '_log_test_failed'
+            'waiting_for_pcb_removal',
+            after='_handle_test_failed'
         )
 
         self.machine.add_transition(
@@ -113,8 +114,15 @@ class FunctionalTest:
             after='display_serial'
         )
 
-    def _log_test_failed(self):
+        self.machine.add_transition(
+            'pcb_removed',
+            'waiting_for_pcb_removal',
+            'waiting_for_pcb'
+        )
+
+    def _handle_test_failed(self):
         logging.info("TEST FAILED")
+        self._send_event('test_failed')
 
     def _close_port(self):
         self.port.close()
@@ -136,7 +144,7 @@ class FunctionalTest:
             self._send_event(self.state)
             fn = getattr(self, self.state, fn_not_found)
             if fn:
-                logging.info(f"running state {self.state}")
+                logging.info(f"{self.state}()")
                 fn()
 
     def display_serial(self, serial):
@@ -144,7 +152,6 @@ class FunctionalTest:
         self._send_event('serial_detected', serial)
 
     def waiting_for_serial(self):
-        logging.info("waiting_for_serial()")
         while True:
             try:
                 self.port.open()
@@ -154,7 +161,6 @@ class FunctionalTest:
                 time.sleep(1)
 
     def waiting_for_pcb(self):
-        logging.info("waiting_for_pcb()")
         while True:
             try:
                 if self.is_pcb_connected():
@@ -177,6 +183,7 @@ class FunctionalTest:
                     raise err
 
     def running_test(self) -> bool:
+        logging.debug("running_test() - loading test firmware")
         self.load_test_firmware()
         self.reset_device()
 
@@ -191,7 +198,7 @@ class FunctionalTest:
             self.test_failed()
             return
 
-        logging.info(
+        logging.debug(
             "running_test() - skipping functional test firmware boot header")
         client.skip_boot_header()
 
@@ -223,6 +230,7 @@ class FunctionalTest:
             self.serial_lost()
             return False
 
+        logging.debug("running_test() - loading production firmware")
         self.load_production_firmware()
         self.reset_device()
 
@@ -239,10 +247,7 @@ class FunctionalTest:
         logging.info(f"running_test() - serial found: {detected_serial}")
         self._send_event('test_passed', serial_no)
 
-        logging.warn("waiting_for_pcb_removal()")
-        self.waiting_for_pcb_removal()
         self.test_successful()
-        self._send_event('test_finished')
         return True
 
     def check_for_serial(self, timeout=0, debug=False):
@@ -262,12 +267,14 @@ class FunctionalTest:
 
     def waiting_for_pcb_removal(self):
         self.pcb_sense_gpio.wait_for_release()
+        self._send_event('pcb_removed')
+        self.pcb_removed()
 
     def is_pcb_connected(self):
-        return self.pcb_sense_gpio.is_held
+        return self.pcb_sense_gpio.is_pressed
 
     def reset_device(self):
-        logging.info("reset_device()")
+        logging.debug("reset_device()")
         self.reset_xdot_gpio.off()
         time.sleep(0.5)
         self.reset_xdot_gpio.on()
@@ -291,9 +298,7 @@ class FunctionalTest:
         time.sleep(10)
 
     def load_test_firmware(self):
-        logging.info("load_test_firmware()")
         self._load_firmware('firmware/test-firmware.bin')
 
     def load_production_firmware(self):
-        logging.info("load_production_firmware()")
         self._load_firmware('firmware/prod-firmware.bin')

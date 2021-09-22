@@ -42,7 +42,7 @@ class JigClient:
         line = self.port.readline().decode('utf-8')
         self.log += line
         line = line.rstrip(self.terminator)
-        if self.logger is not None:
+        if self.logger is not None and line != '':
             self.logger.debug("S: " + line)
         return line
 

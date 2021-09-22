@@ -41,22 +41,31 @@ class App:
 
     def _init_gui(self):
         sg.theme('Black')
-        layout = [
-            [
-                sg.Frame("State",
-                         layout=[[sg.Text(key='-STATE-', font='Helvetica 20 bold')]],
-                         expand_x=True),
-                sg.Frame("Test Status",
-                         layout=[[sg.Text(key='-PASSFAIL-', font='Helvetica 20 bold')]],
-                         expand_x=False)
-            ],
-            [sg.Frame("QRCode",
-                      layout=[[sg.Image(key='-QRCODE-', expand_x=True, expand_y=True)]],
-                      element_justification="center",
-                      vertical_alignment='center',
-                      expand_x=True,
-                      expand_y=True)
-             ]]
+        layout = [[
+            sg.Column(
+                layout=[
+                    [sg.Frame("State",
+                             layout=[[sg.Text(key='-STATE-', font='Helvetica 20 bold')]],
+                             expand_x=True)],
+                    [sg.Frame("QRCode",
+                             layout=[[sg.Image(key='-QRCODE-', expand_x=True, expand_y=True)]],
+                             element_justification="center",
+                             vertical_alignment='center',
+                             expand_x=True,
+                             expand_y=True)
+                ]],
+                expand_y=True,
+                expand_x=True),
+            sg.Frame("Test Status",
+                     layout=[[sg.Text(
+                         key='-PASSFAIL-',
+                         font='Helvetica 20 bold',
+                         justification="center",
+                         expand_x=True,
+                         expand_y=True)]],
+                     expand_x=True,
+                     expand_y=True)
+            ]]
 
         self.window = sg.Window(
             'Pulse Production Jig',
@@ -85,13 +94,13 @@ class App:
         self.window['-STATE-'].update("Disconnect PCB...")
         self.window.refresh()
 
-    def _state_test_failed(self, serial):
+    def _state_test_failed(self):
         self.window['-PASSFAIL-'].update('Failed', background_color='Red')
         self.window['-QRCODE-'].update()
         self.window['-STATE-'].update("Disconnect PCB...")
         self.window.refresh()
 
-    def _state_test_finished(self):
+    def _state_pcb_removed(self):
         self.window['-QRCODE-'].update()
         self.window['-PASSFAIL-'].update('', background_color="black")
         self.window.refresh()
@@ -124,8 +133,8 @@ class App:
                 self._state_test_failed()
             if event == "test_passed":
                 self._state_test_passed(data['test_passed'])
-            if event == "test_finished":
-                self._state_test_finished()
+            if event == "pcb_removed":
+                self._state_pcb_removed()
             if event == "serial_detected":
                 self._state_serial_detected(data['serial_detected'])
 
