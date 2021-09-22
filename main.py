@@ -15,6 +15,8 @@ from pulse_jig.functional_test import FunctionalTest
 import threading
 import logging
 import click
+from pulse_jig.jig_client import JigClient
+from typing import Optional
 
 
 def tester_thread(window: sg.Window, dev: str):
@@ -168,17 +170,27 @@ class App:
 
 
 @click.command()
-@click.argument("dev")
+@click.option("--dev", default=lambda: JigClient.find_device())
 @click.option("--debug", "-d", default=False, is_flag=True)
-def main(dev: str, debug: bool):
+@click.option("--gui/--no-gui", default=True)
+def main(dev: Optional[str], gui: bool, debug: bool):
     if debug:
         logging.basicConfig(level=logging.DEBUG)
         logging.getLogger("transitions").setLevel(logging.INFO)
     else:
         logging.basicConfig(level=logging.INFO)
         logging.getLogger("transitions").setLevel(logging.WARN)
-    app = App(dev)
-    app.run()
+
+    if dev is None:
+        print("Could not detect device")
+        return
+
+    if gui:
+        app = App(dev)
+        app.run()
+    else:
+        ft = FunctionalTest(dev)
+        ft.run()
 
 
 if __name__ == "__main__":

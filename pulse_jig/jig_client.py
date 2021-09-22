@@ -1,6 +1,17 @@
 import serial
 import time
 from typing import Union
+import os
+
+
+if os.name == "nt":  # sys.platform == 'win32':
+    from serial.tools.list_ports_windows import comports
+elif os.name == "posix":
+    from serial.tools.list_ports_posix import comports
+else:
+    raise ImportError(
+        "Sorry: no implementation for your platform ('{}') available".format(os.name)
+    )
 
 
 class JigClientException(Exception):
@@ -95,3 +106,12 @@ class JigClient:
     def run_test_cmd(self, cmd: str) -> bool:
         resp = self.send_command(cmd)
         return self._is_response_successful(resp)
+
+    @staticmethod
+    def find_device():
+        """Returns the device name/path for the first XDOT developer board
+        found connected. Identified by the device with: VID:PID=0D28:0204"""
+        for p in comports():
+            if p.vid == 0x0D28 and p.pid == 0x0204:
+                return p.device
+        return None
