@@ -38,6 +38,8 @@ class FunctionalTest:
             raise RuntimeError(
                 f"Couldn't find production firmware at: {self.test_firmware_path}"
             )
+        if not self.xdot_volume.exists():
+            raise RuntimeError(f"Couldn't find xdot volume at: {self.xdot_volume}")
 
     def run(self) -> [str, str]:
         logging.debug("running_test() - loading test firmware")
