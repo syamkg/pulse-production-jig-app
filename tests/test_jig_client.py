@@ -20,6 +20,14 @@ def test_send_command_returns_the_body_on_success(client):
     )
 
 
+def test_send_command_works_when_prompt_present(client):
+    client.port.write(b"> SELF_TEST\r\n")
+    client.port.write(b"+OK\r\n")
+    client.port.write(b"testing EEPROM...OK\r\n")
+    client.port.write(b".\r\n")
+    assert client.send_command("SELF_TEST") == "testing EEPROM...OK"
+
+
 def test_send_command_return_false_on_negative_ack(client):
     client.port.write(b"SELF_TEST\r\n")
     client.port.write(b"-ERR\r\n")

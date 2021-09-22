@@ -1,4 +1,4 @@
-from .jig_client import JigClient, JigClientException
+from pulse_jig.jig_client import JigClient, JigClientException
 import logging
 import time
 import serial
