@@ -26,9 +26,18 @@ class FunctionalTest:
     def __init__(self, port: serial.Serial):
         self.port = port
         self.reset_xdot_gpio = gpiozero.OutputDevice(21, initial_value=True)
-        self.production_firmware = "firmware/prod-firmware"
-        self.test_firmware = "firmware/test-firmware"
+        self.production_firmware_path = Path("firmware/prod-firmware.bin")
+        self.test_firmware_path = Path("firmware/test-firmware.bin")
         self.xdot_volume = Path("/media/pi/XDOT")
+
+        if not self.production_firmware_path.is_file():
+            raise RuntimeError(
+                f"Couldn't find production firmware at: {self.production_firmware_path}"
+            )
+        if not self.test_firmware_path.is_file():
+            raise RuntimeError(
+                f"Couldn't find production firmware at: {self.test_firmware_path}"
+            )
 
     def run(self) -> [str, str]:
         logging.debug("running_test() - loading test firmware")
@@ -107,14 +116,14 @@ class FunctionalTest:
         return uuid.uuid4()
 
     def _load_test_firmware(self):
-        self._load_firmware("firmware/test-firmware.bin")
+        self._load_firmware(self.test_firmware_path)
 
     def _load_production_firmware(self):
-        self._load_firmware("firmware/prod-firmware.bin")
+        self._load_firmware(self.production_firmware_path)
 
-    def _load_firmware(self, firmware):
+    def _load_firmware(self, firmware: Path):
         def do_copy():
-            shutil.copy(firmware, self.xdot_volume / Path(firmware).name)
+            shutil.copy(firmware, self.xdot_volume / firmware.name)
 
         self.reset_xdot_gpio.off()
         logging.debug("_load_firmware() - starting copy")
