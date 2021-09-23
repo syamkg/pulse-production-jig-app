@@ -11,7 +11,7 @@ from pulse_jig.check_for_serial import check_for_serial
 
 
 class JigTester:
-    def __init__(self, dev: str):
+    def __init__(self, dev: str, pcb_sense_gpio_pin: int = 5):
         """Jig Tester loop. When run it will wait for a device to be plugged in,
         provision a serial, test the device, and save the results to the cloud
         before looping to do it all over again.
@@ -25,7 +25,7 @@ class JigTester:
         self._port.port = dev
         self._port.baudrate = 115200
         self._listeners = []
-        self._pcb_sense_gpio = gpiozero.Button(5, pull_up=True)
+        self._pcb_sense_gpio = gpiozero.Button(pcb_sense_gpio_pin, pull_up=True)
 
         self.machine = Machine(
             model=self,

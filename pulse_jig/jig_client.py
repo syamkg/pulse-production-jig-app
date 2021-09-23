@@ -51,7 +51,7 @@ class JigClient:
     def skip_boot_header(self) -> None:
         self._read_until_prompt(2)
 
-    def _read_until_prompt(self, timeout: int) -> None:
+    def _read_until_prompt(self, timeout: float) -> None:
         self._port.timeout = 0.1
         end_time = time.monotonic() + timeout
         while time.monotonic() < end_time:
@@ -95,7 +95,7 @@ class JigClient:
         # Parse command echo. Ignore any prompt at the start of the
         # response if present
         line = self._readline()
-        if line.lstrip(self._prompt) != f"{cmd}":
+        if line.lstrip(self._prompt) != cmd:
             raise JigClientException(f"Line not echoed back: {line}")
 
         # Parse command acknowledgement

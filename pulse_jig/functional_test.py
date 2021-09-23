@@ -4,7 +4,7 @@ import shutil
 import threading
 import uuid
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 import serial
 import gpiozero
 from pulse_jig.check_for_serial import check_for_serial
@@ -15,7 +15,9 @@ class FunctionalTestFailure(Exception):
     """Exception raised when a functional test fails
     for any expected reason"""
 
-    def __init__(self, msg, *, serial_no=None, log=None):
+    def __init__(
+        self, msg, *, serial_no: Optional[str] = None, log: Optional[str] = None
+    ):
         super().__init__(msg)
         self.msg = msg
         self.serial_no = serial_no
@@ -23,12 +25,14 @@ class FunctionalTestFailure(Exception):
 
 
 class FunctionalTest:
-    def __init__(self, port: serial.Serial):
+    def __init__(self, port: serial.Serial, reset_gpio_pin: int = 21):
         """Tests and provisions a serial number to the device on the given port.
         :param port: the port the device is on
         """
         self._port = port
-        self._reset_xdot_gpio = gpiozero.OutputDevice(21, initial_value=True)
+        self._reset_xdot_gpio = gpiozero.OutputDevice(
+            reset_gpio_pin, initial_value=True
+        )
         self._production_firmware_path = Path("firmware/prod-firmware.bin")
         self._test_firmware_path = Path("firmware/test-firmware.bin")
         self._xdot_volume = Path("/media/pi/XDOT")
