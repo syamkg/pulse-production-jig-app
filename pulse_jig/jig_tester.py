@@ -21,11 +21,11 @@ class JigTester:
                     linux: /dev/ttyACM1
         """
 
-        self.port = serial.Serial()
-        self.port.port = dev
-        self.port.baudrate = 115200
-        self.listeners = []
-        self.pcb_sense_gpio = gpiozero.Button(5, pull_up=True)
+        self._port = serial.Serial()
+        self._port.port = dev
+        self._port.baudrate = 115200
+        self._listeners = []
+        self._pcb_sense_gpio = gpiozero.Button(5, pull_up=True)
 
         self.machine = Machine(
             model=self,
@@ -100,10 +100,10 @@ class JigTester:
         self._send_event("serial_detected", dict(serial_no=serial_no))
 
     def _close_port(self):
-        self.port.close()
+        self._port.close()
 
     def _send_event(self, event: str, data: Dict = {}):
-        for listener in self.listeners:
+        for listener in self._listeners:
             listener(event, data)
 
     def add_listener(self, listener: Callable[[str, Dict], None]):
@@ -111,7 +111,7 @@ class JigTester:
 
         :param listener: The function that will be called on an event.
         """
-        self.listeners.append(listener)
+        self._listeners.append(listener)
 
     def run(self):
         """Runs the event loop. This function will never return and will
@@ -133,7 +133,7 @@ class JigTester:
         result in a `serial_found` transition."""
         while True:
             try:
-                self.port.open()
+                self._port.open()
                 self.serial_found()
                 return
             except serial.serialutil.SerialException:
@@ -181,7 +181,7 @@ class JigTester:
         * test_failed
         * serial_lost
         """
-        test = FunctionalTest(self.port)
+        test = FunctionalTest(self._port)
         try:
             serial_no, log = test.run()
             self.test_passed(serial_no, log)
@@ -193,7 +193,7 @@ class JigTester:
     def waiting_for_pcb_removal(self):
         """Blocks until the pcb is removed (detected via the pcb sense pin).
         The function will terminate with the `pcb_removed` transition."""
-        self.pcb_sense_gpio.wait_for_release()
+        self._pcb_sense_gpio.wait_for_release()
         self._send_event("pcb_removed")
         self.pcb_removed()
 
@@ -201,8 +201,8 @@ class JigTester:
         resp = ""
         end_time = time.monotonic() + timeout
         while timeout == 0 or end_time > time.monotonic():
-            while self.port.in_waiting > 0:
-                resp += self.port.read(self.port.in_waiting).decode("utf-8")
+            while self._port.in_waiting > 0:
+                resp += self._port.read(self._port.in_waiting).decode("utf-8")
             matches = re.search(r"^Serial: (.*)$", resp, re.MULTILINE)
             if matches:
                 return matches.group(1).strip()
@@ -211,4 +211,4 @@ class JigTester:
         return None
 
     def _is_pcb_connected(self):
-        return self.pcb_sense_gpio.is_pressed
+        return self._pcb_sense_gpio.is_pressed

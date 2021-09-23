@@ -12,7 +12,7 @@ from typing import Tuple
 
 
 class FunctionalTestFailure(Exception):
-    """Exception raised when a the functional test fails
+    """Exception raised when a functional test fails
     for any expected reason"""
 
     def __init__(self, msg, *, serial_no=None, log=None):
@@ -24,21 +24,24 @@ class FunctionalTestFailure(Exception):
 
 class FunctionalTest:
     def __init__(self, port: serial.Serial):
-        self.port = port
-        self.reset_xdot_gpio = gpiozero.OutputDevice(21, initial_value=True)
-        self.production_firmware_path = Path("firmware/prod-firmware.bin")
-        self.test_firmware_path = Path("firmware/test-firmware.bin")
-        self.xdot_volume = Path("/media/pi/XDOT")
+        """Tests and provisions a serial number to the device on the given port.
+        :param port: the port the device is on
+        """
+        self._port = port
+        self._reset_xdot_gpio = gpiozero.OutputDevice(21, initial_value=True)
+        self._production_firmware_path = Path("firmware/prod-firmware.bin")
+        self._test_firmware_path = Path("firmware/test-firmware.bin")
+        self._xdot_volume = Path("/media/pi/XDOT")
 
-        if not self.production_firmware_path.is_file():
+        if not self._production_firmware_path.is_file():
             raise RuntimeError(
                 f"Couldn't find production firmware at: {self.production_firmware_path}"
             )
-        if not self.test_firmware_path.is_file():
+        if not self._test_firmware_path.is_file():
             raise RuntimeError(
                 f"Couldn't find production firmware at: {self.test_firmware_path}"
             )
-        if not self.xdot_volume.exists():
+        if not self._xdot_volume.exists():
             raise RuntimeError(f"Couldn't find xdot volume at: {self.xdot_volume}")
 
     def run(self) -> Tuple[str, str]:
@@ -50,13 +53,13 @@ class FunctionalTest:
         :return: A tuple containing of (serial_no, log).
         """
         logging.debug("running_test() - loading test firmware")
-        self.port.reset_output_buffer()
-        self.port.reset_input_buffer()
+        self._port.reset_output_buffer()
+        self._port.reset_input_buffer()
 
         self._load_test_firmware()
         self._reset_device()
 
-        client = JigClient(self.port, logger=logging.getLogger("JigClient"))
+        client = JigClient(self._port, logger=logging.getLogger("JigClient"))
 
         def run_test(cmd: str):
             logging.info(f"running test for: {cmd}")
@@ -106,8 +109,8 @@ class FunctionalTest:
         resp = ""
         end_time = time.monotonic() + timeout
         while timeout == 0 or end_time > time.monotonic():
-            while self.port.in_waiting > 0:
-                resp += self.port.read(self.port.in_waiting).decode("utf-8")
+            while self._port.in_waiting > 0:
+                resp += self._port.read(self._port.in_waiting).decode("utf-8")
             matches = re.search(r"^Serial: (.*)$", resp, re.MULTILINE)
             if matches:
                 return matches.group(1).strip()
@@ -117,29 +120,34 @@ class FunctionalTest:
 
     def _reset_device(self):
         logging.debug("reset_device()")
-        self.reset_xdot_gpio.off()
+        self._reset_xdot_gpio.off()
         time.sleep(0.5)
-        self.reset_xdot_gpio.on()
+        self._reset_xdot_gpio.on()
 
     def _generate_serial(self):
         return uuid.uuid4()
 
     def _load_test_firmware(self):
-        self._load_firmware(self.test_firmware_path)
+        self._load_firmware(self._test_firmware_path)
 
     def _load_production_firmware(self):
-        self._load_firmware(self.production_firmware_path)
+        self._load_firmware(self._production_firmware_path)
 
     def _load_firmware(self, firmware: Path):
+        # Note that on macos the copy returns instantly but on linux
+        # it doesn't appear to return until after the reset pin is
+        # released.
+        # Improve error checking - take into account that it is
+        # being run in a thread.
         def do_copy():
-            shutil.copy(firmware, self.xdot_volume / firmware.name)
+            shutil.copy(firmware, self._xdot_volume / firmware.name)
 
-        self.reset_xdot_gpio.off()
+        self._reset_xdot_gpio.off()
         logging.debug("_load_firmware() - starting copy")
         copy_thread = threading.Thread(target=do_copy)
         copy_thread.start()
         time.sleep(0.5)
-        self.reset_xdot_gpio.on()
+        self._reset_xdot_gpio.on()
         logging.debug("_load_firmware() - waiting for copy")
         copy_thread.join()
         logging.debug("_load_firmware() - giving xdot 10 seconds")

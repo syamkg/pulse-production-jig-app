@@ -148,7 +148,7 @@ class App:
         ).start()
 
         while True:
-            event, data = self.window.read(timeout=500)
+            event, data = self.window.read(timeout=100)
             if event == sg.WIN_CLOSED:
                 break
             if event == "waiting_for_serial":
@@ -160,11 +160,11 @@ class App:
             if event == "test_failed":
                 self._state_test_failed()
             if event == "test_passed":
-                self._state_test_passed(data["test_passed"])
+                self._state_test_passed(data["test_passed"]["serial_no"])
             if event == "pcb_removed":
                 self._state_pcb_removed()
             if event == "serial_detected":
-                self._state_serial_detected(data["serial_detected"])
+                self._state_serial_detected(data["serial_detected"]["serial_no"])
 
         self.window.close()
 

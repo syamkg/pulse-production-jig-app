@@ -35,15 +35,15 @@ class JigClient:
         :param logger: If provided then all communication will be sent to the
         logger at the debug level.
         """
-        self.port = port
-        self.write_timeout = 1
-        self.ack_timeout = 0.5
-        self.body_timeout = 2
-        self.last_error = None
-        self.log = ""
-        self.terminator = "\r\n"
-        self.prompt = "> "
-        self.logger = logger
+        self._port = port
+        self._write_timeout = 1
+        self._ack_timeout = 0.5
+        self._body_timeout = 2
+        self._last_error = None
+        self._log = ""
+        self._terminator = "\r\n"
+        self._prompt = "> "
+        self._logger = logger
 
     def _is_end_of_body(self, line: str) -> None:
         return line == "."
@@ -52,29 +52,33 @@ class JigClient:
         self._read_until_prompt(2)
 
     def _read_until_prompt(self, timeout: int) -> None:
-        self.port.timeout = 0.1
+        self._port.timeout = 0.1
         end_time = time.monotonic() + timeout
         while time.monotonic() < end_time:
-            if self._readline() == self.prompt:
+            if self._readline() == self._prompt:
                 break
 
     def _readline(self) -> str:
-        line = self.port.readline().decode("utf-8")
-        self.log += line
-        line = line.rstrip(self.terminator)
-        if self.logger is not None and line != "":
-            self.logger.debug("S: " + line)
+        line = self._port.readline().decode("utf-8")
+        self._log += line
+        line = line.rstrip(self._terminator)
+        if self._logger is not None and line != "":
+            self._logger.debug("S: " + line)
         return line
 
     def _writeline(self, line: str) -> None:
-        if self.logger is not None:
-            self.logger.debug("C: " + line)
+        if self._logger is not None:
+            self._logger.debug("C: " + line)
         line += "\r"
-        self.port.write(f"{line}".encode("utf-8"))
-        self.log += line
+        self._port.write(f"{line}".encode("utf-8"))
+        self._log += line
 
     def _is_response_successful(self, body: str) -> bool:
         return body.strip().split("\n")[-1] == "PASS"
+
+    @property
+    def log(self):
+        return self._log
 
     def send_command(self, cmd: str, has_body=True) -> str:
         """Sends the given command to the device and returns
@@ -84,14 +88,14 @@ class JigClient:
         :return: The body of the command's response, None if has_body
         was False.
         """
-        self.port.write_timeout = self.write_timeout
-        self.port.timeout = self.ack_timeout
+        self._port.write_timeout = self._write_timeout
+        self._port.timeout = self._ack_timeout
         self._writeline(cmd)
 
         # Parse command echo. Ignore any prompt at the start of the
         # response if present
         line = self._readline()
-        if line.lstrip(self.prompt) != f"{cmd}":
+        if line.lstrip(self._prompt) != f"{cmd}":
             raise JigClientException(f"Line not echoed back: {line}")
 
         # Parse command acknowledgement
@@ -103,9 +107,9 @@ class JigClient:
         body = None
         if has_body:
             lines = []
-            timeout = time.monotonic() + self.body_timeout
+            timeout = time.monotonic() + self._body_timeout
             while time.monotonic() < timeout:
-                self.port.timeout = timeout - time.monotonic()
+                self._port.timeout = timeout - time.monotonic()
                 line = self._readline()
                 if self._is_end_of_body(line):
                     break
