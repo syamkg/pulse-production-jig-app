@@ -1,9 +1,12 @@
 import serial
 import time
-from typing import Union
+from typing import Optional
 import os
+import logging
 
 
+# Import the correct platform specific comports implementation.
+# There doesn't seem to be a better way of doing this at the moment.
 if os.name == "nt":  # sys.platform == 'win32':
     from serial.tools.list_ports_windows import comports
 elif os.name == "posix":
@@ -15,15 +18,24 @@ else:
 
 
 class JigClientException(Exception):
-    """JigClient exception"""
+    """JigClient exception. Raised if the device doesn't respond to the Jig
+    Function Test Protocol correctly."""
 
 
 class JigClient:
-    def __init__(self, port: Union[str, serial.Serial], logger=None):
-        if type(port) is str:
-            self.port = serial.Serial(port, 115200)
-        else:
-            self.port = port
+    def __init__(self, port: serial.Serial, logger: Optional[logging.Logger] = None):
+        """Creates a JigClient for communicating over the given port with the
+        Function Test Protocol. Methods will raise a JigClientException if a
+        device does not respond to the protocol as expected.
+
+        All communication with the device is recorded and can be retrieved via
+        `jig_client.log`.
+
+        :param port: The device to communicate over.
+        :param logger: If provided then all communication will be sent to the
+        logger at the debug level.
+        """
+        self.port = port
         self.write_timeout = 1
         self.ack_timeout = 0.5
         self.body_timeout = 2
@@ -39,7 +51,7 @@ class JigClient:
     def skip_boot_header(self) -> None:
         self._read_until_prompt(2)
 
-    def _read_until_prompt(self, timeout) -> None:
+    def _read_until_prompt(self, timeout: int) -> None:
         self.port.timeout = 0.1
         end_time = time.monotonic() + timeout
         while time.monotonic() < end_time:
@@ -65,11 +77,19 @@ class JigClient:
         return body.strip().split("\n")[-1] == "PASS"
 
     def send_command(self, cmd: str, has_body=True) -> str:
+        """Sends the given command to the device and returns
+        the body from the response.
+        :param cmd: the command to send, including any parameters.
+        :param has_body: True if the command is expected to return a body.
+        :return: The body of the command's response, None if has_body
+        was False.
+        """
         self.port.write_timeout = self.write_timeout
         self.port.timeout = self.ack_timeout
         self._writeline(cmd)
 
-        # Parse command echo
+        # Parse command echo. Ignore any prompt at the start of the
+        # response if present
         line = self._readline()
         if line.lstrip(self.prompt) != f"{cmd}":
             raise JigClientException(f"Line not echoed back: {line}")
@@ -80,6 +100,7 @@ class JigClient:
             raise JigClientException(f"Command not acknowledged: {ack}")
 
         # Parse command body
+        body = None
         if has_body:
             lines = []
             timeout = time.monotonic() + self.body_timeout
@@ -97,20 +118,41 @@ class JigClient:
 
         return body
 
-    def read_eeprom(self, key: str) -> bool:
+    def read_eeprom(self, key: str) -> str:
+        """Sends a `read_eeprom` command to the device.
+        :param key: the key to read
+        :return: The command's response body.
+        """
         return self.send_command(f"READ_EEPROM_KEY {key}")
 
-    def write_eeprom(self, key: str, value: str) -> bool:
+    def write_eeprom(self, key: str, value: str) -> str:
+        """Sends a `write_eeprom` command to the device.
+        :param key: the key to write
+        :param value: the value to write against the key
+        :return: The command's response body.
+        """
         return self.send_command(f"WRITE_EEPROM {key}={value}")
 
     def run_test_cmd(self, cmd: str) -> bool:
+        """Runs the given test command and whether it passed or
+        not. The test command is expected to conform to the standard
+        test output - the last line of the body should be either
+        `PASS` or `FAIL` to indicate the status.
+
+        :param cmd: the command str to send, including parameters.
+        :return: True if the test passed, false otherwise.
+        """
         resp = self.send_command(cmd)
         return self._is_response_successful(resp)
 
     @staticmethod
-    def find_device():
+    def find_device() -> Optional[str]:
         """Returns the device name/path for the first XDOT developer board
-        found connected. Identified by the device with: VID:PID=0D28:0204"""
+        found connected. Identified by the device with: VID:PID=0D28:0204.
+
+        :return: if found, the path to the device (eg. /dev/ttyACM1), otherwise
+        None if not found.
+        """
         for p in comports():
             if p.vid == 0x0D28 and p.pid == 0x0204:
                 return p.device

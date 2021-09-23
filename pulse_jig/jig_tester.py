@@ -163,8 +163,8 @@ class JigTester:
                         return
                     time.sleep(1)
             except OSError as err:
-                # These OSErrors will be thrown if the serial port disappears on us
-                # TODO improve
+                # These OSErrors will be thrown if the serial port disappears. This
+                # handling could be improved
                 # 6 on macos
                 # 5 on pi
                 if err.errno == 6 or err.errno == 5:

@@ -41,7 +41,14 @@ class FunctionalTest:
         if not self.xdot_volume.exists():
             raise RuntimeError(f"Couldn't find xdot volume at: {self.xdot_volume}")
 
-    def run(self) -> [str, str]:
+    def run(self) -> Tuple[str, str]:
+        """Runs the test and returns the provisioned serial number and test logs on
+        success. If the test fails a `FunctionalTestFailure` will be raised. If
+        communication to the serial port is interrupted a
+        `serial.serialutil.SerialException` will be raised.
+
+        :return: A tuple containing of (serial_no, log).
+        """
         logging.debug("running_test() - loading test firmware")
         self.port.reset_output_buffer()
         self.port.reset_input_buffer()
