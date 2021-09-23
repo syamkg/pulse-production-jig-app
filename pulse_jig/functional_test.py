@@ -1,14 +1,14 @@
-from pulse_jig.jig_client import JigClient, JigClientException
 import logging
 import time
-import serial
-import re
-import gpiozero
 import shutil
-from pathlib import Path
 import threading
 import uuid
+from pathlib import Path
 from typing import Tuple
+import serial
+import gpiozero
+from pulse_jig.check_for_serial import check_for_serial
+from pulse_jig.jig_client import JigClient, JigClientException
 
 
 class FunctionalTestFailure(Exception):
@@ -94,7 +94,7 @@ class FunctionalTest:
         self._reset_device()
 
         logging.info("running_test() - checking for serial")
-        detected_serial_no = self._check_for_serial(timeout=2)
+        detected_serial_no = check_for_serial(self._port, timeout=2)
         # We should check the serial is the same as that we generated
         # but we can't do that until the firmware actually persists
         # the serial across restarts
@@ -104,19 +104,6 @@ class FunctionalTest:
         logging.info(f"running_test() - serial found: {detected_serial_no}")
 
         return (serial_no, client.log)
-
-    def _check_for_serial(self, timeout=0):
-        resp = ""
-        end_time = time.monotonic() + timeout
-        while timeout == 0 or end_time > time.monotonic():
-            while self._port.in_waiting > 0:
-                resp += self._port.read(self._port.in_waiting).decode("utf-8")
-            matches = re.search(r"^Serial: (.*)$", resp, re.MULTILINE)
-            if matches:
-                return matches.group(1).strip()
-            if timeout == 0:
-                break
-        return None
 
     def _reset_device(self):
         logging.debug("reset_device()")

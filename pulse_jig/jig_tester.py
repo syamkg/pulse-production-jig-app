@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import logging
 import time
-import serial
-from transitions import Machine
-import re
-import gpiozero
-from pulse_jig.functional_test import FunctionalTest, FunctionalTestFailure
 import textwrap
 from typing import Callable, Dict
+import serial
+import gpiozero
+from transitions import Machine
+from pulse_jig.functional_test import FunctionalTest, FunctionalTestFailure
+from pulse_jig.check_for_serial import check_for_serial
 
 
 class JigTester:
@@ -157,7 +157,7 @@ class JigTester:
                     self.pcb_connected()
                     return
                 else:
-                    serial = self._check_for_serial()
+                    serial = check_for_serial(self._port)
                     if serial:
                         self.serial_detected(serial)
                         return
@@ -196,19 +196,6 @@ class JigTester:
         self._pcb_sense_gpio.wait_for_release()
         self._send_event("pcb_removed")
         self.pcb_removed()
-
-    def _check_for_serial(self, timeout=0):
-        resp = ""
-        end_time = time.monotonic() + timeout
-        while timeout == 0 or end_time > time.monotonic():
-            while self._port.in_waiting > 0:
-                resp += self._port.read(self._port.in_waiting).decode("utf-8")
-            matches = re.search(r"^Serial: (.*)$", resp, re.MULTILINE)
-            if matches:
-                return matches.group(1).strip()
-            if timeout == 0:
-                break
-        return None
 
     def _is_pcb_connected(self):
         return self._pcb_sense_gpio.is_pressed
