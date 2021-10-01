@@ -247,6 +247,7 @@ class JigTester:
         r = requests.post(
             f"{self._registrar_url}/device",
             json=dict(
+                serialNumber=serial_no,
                 testStatus=str(test_status),
                 testLogs=test_logs,
                 failureReason=failure_reason,
