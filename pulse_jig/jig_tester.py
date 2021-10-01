@@ -216,12 +216,13 @@ class JigTester:
         except serial.serialutil.SerialException as err:
             self.serial_lost(str(err))
         except DeviceProvisioningFailure as err:
-            self._record_results(
-                TestStatus.FAIL,
-                serial_no=serial_no,
-                test_logs=log,
-                failure_reason=err.msg,
-            )
+            if err.serial_no is not None:
+                self._record_results(
+                    TestStatus.FAIL,
+                    serial_no=err.serial_no,
+                    test_logs=err.log,
+                    failure_reason=err.msg,
+                )
             self.provisioning_failed(err.msg, serial_no=err.serial_no, log=err.log)
 
     def waiting_for_pcb_removal(self):
@@ -238,15 +239,14 @@ class JigTester:
         self,
         test_status: TestStatus,
         *,
-        serial_no: int,
-        test_logs: str,
+        serial_no: str,
+        test_logs: Optional[str],
         failure_reason: Optional[str] = None,
     ):
         # TODO: Auth requests - tbc: IAM auth on the gateway and allow the device's role, sign with requests_aws4auth
         r = requests.post(
             f"{self._registrar_url}/device",
             json=dict(
-                serialNumber=serial_no,
                 testStatus=str(test_status),
                 testLogs=test_logs,
                 failureReason=failure_reason,
