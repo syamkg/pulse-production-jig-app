@@ -19,8 +19,17 @@ import click
 from typing import Optional
 
 
+def create_jig_tester(dev: str):
+    return JigTester(
+        dev,
+        pcb_sense_gpio_pin=5,
+        reset_gpio_pin=21,
+        registrar_url="https://1mgiqq52xc.execute-api.ap-southeast-2.amazonaws.com/prod/",
+    )
+
+
 def tester_thread(window: sg.Window, dev: str):
-    ft = JigTester(dev)
+    ft = create_jig_tester(dev)
 
     def handler(event, data):
         window.write_event_value(event, data)
@@ -189,7 +198,7 @@ def main(dev: Optional[str], gui: bool, debug: bool):
         app = App(dev)
         app.run()
     else:
-        app = JigTester(dev)
+        app = create_jig_tester(dev)
         app.run()
 
 

@@ -2,16 +2,29 @@
 import logging
 import time
 import textwrap
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
+from enum import Enum
 import serial
 import gpiozero
 from transitions import Machine
+import requests
 from pulse_jig.functional_test import FunctionalTest, FunctionalTestFailure
 from pulse_jig.check_for_serial import check_for_serial
 
 
+class TestStatus(Enum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+
+
 class JigTester:
-    def __init__(self, dev: str, pcb_sense_gpio_pin: int = 5):
+    def __init__(
+        self,
+        dev: str,
+        registrar_url: str,
+        pcb_sense_gpio_pin: int = 5,
+        reset_gpio_pin: int = 21,
+    ):
         """Jig Tester loop. When run it will wait for a device to be plugged in,
         provision a serial, test the device, and save the results to the cloud
         before looping to do it all over again.
@@ -26,6 +39,8 @@ class JigTester:
         self._port.baudrate = 115200
         self._listeners = []
         self._pcb_sense_gpio = gpiozero.Button(pcb_sense_gpio_pin, pull_up=True)
+        self._registrar_url = registrar_url
+        self._reset_gpio_pin = reset_gpio_pin
 
         self.machine = Machine(
             model=self,
@@ -33,8 +48,8 @@ class JigTester:
                 "stopped",
                 "waiting_for_serial",
                 "waiting_for_pcb",
-                "waiting_for_pcb_removal",
                 "running_test",
+                "waiting_for_pcb_removal",
             ],
             initial="stopped",
         )
@@ -181,13 +196,28 @@ class JigTester:
         * test_failed
         * serial_lost
         """
-        test = FunctionalTest(self._port)
+        test = FunctionalTest(self._port, reset_gpio_pin=self._reset_gpio_pin)
         try:
             serial_no, log = test.run()
-            self.test_passed(serial_no, log)
+
+            if not self._record_results(
+                TestStatus.PASS, serial_no=serial_no, test_logs=log
+            ):
+                self.test_failed(
+                    "Failed to record results", serial_no=serial_no, log=log
+                )
+            else:
+                self.test_passed(serial_no, log)
+
         except serial.serialutil.SerialException as err:
             self.serial_lost(str(err))
         except FunctionalTestFailure as err:
+            self._record_results(
+                TestStatus.FAIL,
+                serial_no=serial_no,
+                test_logs=log,
+                failure_reason=err.msg,
+            )
             self.test_failed(err.msg, serial_no=err.serial_no, log=err.log)
 
     def waiting_for_pcb_removal(self):
@@ -199,3 +229,28 @@ class JigTester:
 
     def _is_pcb_connected(self):
         return self._pcb_sense_gpio.is_pressed
+
+    def _record_results(
+        self,
+        test_status: TestStatus,
+        *,
+        serial_no: int,
+        test_logs: str,
+        failure_reason: Optional[str] = None,
+    ):
+        # TODO: Auth requests - tbc: IAM auth on the gateway and allow the device's role, sign with requests_aws4auth
+        r = requests.post(
+            f"{self._registrar_url}/device",
+            json=dict(
+                serialNumber=serial_no,
+                testStatus=str(test_status),
+                testLogs=test_logs,
+                failureReason=failure_reason,
+            ),
+        )
+        if r.status_code != requests.codes.ok:
+            logging.error(
+                f"Failed to record results ({serial_no}, {test_status}): {r.text}"
+            )
+            return False
+        return True
