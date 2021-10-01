@@ -11,7 +11,7 @@ from pulse_jig.check_for_serial import check_for_serial
 from pulse_jig.jig_client import JigClient, JigClientException
 
 
-class FunctionalTestFailure(Exception):
+class DeviceProvisioningFailure(Exception):
     """Exception raised when a functional test fails
     for any expected reason"""
 
@@ -24,12 +24,15 @@ class FunctionalTestFailure(Exception):
         self.log = log
 
 
-class FunctionalTest:
-    def __init__(self, port: serial.Serial, reset_gpio_pin: int = 21):
-        """Tests and provisions a serial number to the device on the given port.
+class DeviceProvisioner:
+    """Runs a functional test of a device and, if it passes, provisions the device with
+    a serial number and other required details.
+    """
+
+    def __init__(self, reset_gpio_pin: int = 21):
+        """Creates a device provisioner.
         :param port: the port the device is on
         """
-        self._port = port
         self._reset_xdot_gpio = gpiozero.OutputDevice(
             reset_gpio_pin, initial_value=True
         )
@@ -48,27 +51,35 @@ class FunctionalTest:
         if not self._xdot_volume.exists():
             raise RuntimeError(f"Couldn't find xdot volume at: {self.xdot_volume}")
 
-    def run(self) -> Tuple[str, str]:
-        """Runs the test and returns the provisioned serial number and test logs on
-        success. If the test fails a `FunctionalTestFailure` will be raised. If
+    def run(self, port: serial.Serial) -> Tuple[str, str]:
+        """Runs a functional test of the device on the given port. If it
+        passes, the device is provisioned with a serial number, manufacturer
+        and the require LoRaWan details. If the device fails the functional
+        tests or fails to respond as expected then the
+        `DeviceProvisioningFailure` exception will be raised. If
         communication to the serial port is interrupted a
         `serial.serialutil.SerialException` will be raised.
+
+        If a device already has a serial number no new serial will be
+        provisioned.
+
+        :param port: The port to communicate with the device on.
 
         :return: A tuple containing of (serial_no, log).
         """
         logging.debug("running_test() - loading test firmware")
-        self._port.reset_output_buffer()
-        self._port.reset_input_buffer()
+        port.reset_output_buffer()
+        port.reset_input_buffer()
 
         self._load_test_firmware()
         self._reset_device()
 
-        client = JigClient(self._port, logger=logging.getLogger("JigClient"))
+        client = JigClient(port, logger=logging.getLogger("JigClient"))
 
         def run_test(cmd: str):
             logging.info(f"running test for: {cmd}")
             if not client.run_test_cmd(cmd):
-                raise FunctionalTestFailure(f"test failed: {cmd}")
+                raise DeviceProvisioningFailure(f"test failed: {cmd}")
 
         logging.debug("running_test() - skipping functional test firmware boot header")
         client.skip_boot_header()
@@ -84,12 +95,12 @@ class FunctionalTest:
             run_test("SELF_TEST")
             run_test("TEST_LORA_CONNECT")
 
-            for port in range(1, 5):
-                run_test(f"TEST_PORT_I2C {port}")
-                run_test(f"TEST_PORT_SPI {port}")
-                run_test(f"TEST_PORT_GIN_GOUT_LOOP {port}")
+            for port_no in range(1, 5):
+                run_test(f"TEST_PORT_I2C {port_no}")
+                run_test(f"TEST_PORT_SPI {port_no}")
+                run_test(f"TEST_PORT_GIN_GOUT_LOOP {port_no}")
         except JigClientException as err:
-            raise FunctionalTestFailure(
+            raise DeviceProvisioningFailure(
                 f"test failed: {str(err)}", serial_no=serial_no, log=client.log
             ) from err
 
@@ -98,13 +109,13 @@ class FunctionalTest:
         self._reset_device()
 
         logging.info("running_test() - checking for serial")
-        detected_serial_no = check_for_serial(self._port, timeout=2)
+        detected_serial_no = check_for_serial(port, timeout=2)
         # We should check the serial is the same as that we generated
         # but we can't do that until the firmware actually persists
         # the serial across restarts
         # if (detected_serial_no is not None) or (detected_serial_no != serial_no):
         if detected_serial_no is None:
-            raise FunctionalTestFailure("detected serial mismatch")
+            raise DeviceProvisioningFailure("detected serial mismatch")
         logging.info(f"running_test() - serial found: {detected_serial_no}")
 
         return (serial_no, client.log)

@@ -8,7 +8,7 @@ import serial
 import gpiozero
 from transitions import Machine
 import requests
-from pulse_jig.functional_test import FunctionalTest, FunctionalTestFailure
+from pulse_jig.device_provisioner import DeviceProvisioner, DeviceProvisioningFailure
 from pulse_jig.check_for_serial import check_for_serial
 
 
@@ -40,7 +40,7 @@ class JigTester:
         self._listeners = []
         self._pcb_sense_gpio = gpiozero.Button(pcb_sense_gpio_pin, pull_up=True)
         self._registrar_url = registrar_url
-        self._reset_gpio_pin = reset_gpio_pin
+        self._device_provisioner = DeviceProvisioner(reset_gpio_pin=reset_gpio_pin)
 
         self.machine = Machine(
             model=self,
@@ -196,9 +196,8 @@ class JigTester:
         * test_failed
         * serial_lost
         """
-        test = FunctionalTest(self._port, reset_gpio_pin=self._reset_gpio_pin)
         try:
-            serial_no, log = test.run()
+            serial_no, log = self._device_provisioner.run(self._port)
 
             if not self._record_results(
                 TestStatus.PASS, serial_no=serial_no, test_logs=log
@@ -211,11 +210,11 @@ class JigTester:
 
         except serial.serialutil.SerialException as err:
             self.serial_lost(str(err))
-        except FunctionalTestFailure as err:
+        except DeviceProvisioningFailure as err:
             self._record_results(
                 TestStatus.FAIL,
-                serial_no=serial_no,
-                test_logs=log,
+                serial_no=err.serial_no,
+                test_logs=err.log,
                 failure_reason=err.msg,
             )
             self.test_failed(err.msg, serial_no=err.serial_no, log=err.log)
