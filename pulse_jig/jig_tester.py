@@ -48,7 +48,7 @@ class JigTester:
                 "stopped",
                 "waiting_for_serial",
                 "waiting_for_pcb",
-                "running_test",
+                "provisioning",
                 "waiting_for_pcb_removal",
             ],
             initial="stopped",
@@ -73,21 +73,21 @@ class JigTester:
         self.machine.add_transition(
             "pcb_connected",
             "waiting_for_pcb",
-            "running_test",
+            "provisioning",
         )
 
         self.machine.add_transition(
-            "test_passed",
-            "running_test",
+            "provisioning_successful",
+            "provisioning",
             "waiting_for_pcb_removal",
-            before="_handle_test_passed",
+            before="_handle_provisioning_successful",
         )
 
         self.machine.add_transition(
-            "test_failed",
-            "running_test",
+            "provisioning_failed",
+            "provisioning",
             "waiting_for_pcb_removal",
-            before="_handle_test_failed",
+            before="_handle_provisioning_failed",
         )
 
         self.machine.add_transition(
@@ -101,15 +101,21 @@ class JigTester:
             "pcb_removed", "waiting_for_pcb_removal", "waiting_for_pcb"
         )
 
-    def _handle_test_passed(self, serial_no: str, log: str):
-        logging.info(f"_handled_test_passed({serial_no})\n{textwrap.indent(log, '+ ')}")
-        self._send_event("test_passed", dict(serial_no=serial_no))
-
-    def _handle_test_failed(self, msg: str, *, log: str = None, serial_no: str = None):
+    def _handle_provisioning_successful(self, serial_no: str, log: str):
         logging.info(
-            f"_handled_test_failed({msg}, {serial_no})\n{textwrap.indent(log, '+ ')}"
+            f"_handled_provisioning_successful({serial_no})\n{textwrap.indent(log, '+ ')}"
         )
-        self._send_event("test_failed", dict(msg=msg, serial_no=serial_no, log=log))
+        self._send_event("provisioning_successful", dict(serial_no=serial_no))
+
+    def _handle_provisioning_failed(
+        self, msg: str, *, log: str = None, serial_no: str = None
+    ):
+        logging.info(
+            f"_handled_provisioning_failed({msg}, {serial_no})\n{textwrap.indent(log, '+ ')}"
+        )
+        self._send_event(
+            "provisioning_failed", dict(msg=msg, serial_no=serial_no, log=log)
+        )
 
     def _handle_serial_detected(self, serial_no: str):
         self._send_event("serial_detected", dict(serial_no=serial_no))
@@ -188,12 +194,11 @@ class JigTester:
                 else:
                     raise err
 
-    def running_test(self) -> bool:
-        """Runs the actual device "test" which, along with running the test,
-        will generate the serial and write it to the device. The function
-        will terminate with one of the following transitions:
-        * test_passed
-        * test_failed
+    def provisioning(self) -> bool:
+        """Tests and provisions the device. The state will
+        terminate with one of the following transitions:
+        * provisioning_successful
+        * provisioning_failed
         * serial_lost
         """
         try:
@@ -202,22 +207,22 @@ class JigTester:
             if not self._record_results(
                 TestStatus.PASS, serial_no=serial_no, test_logs=log
             ):
-                self.test_failed(
+                self.provisioning_failed(
                     "Failed to record results", serial_no=serial_no, log=log
                 )
             else:
-                self.test_passed(serial_no, log)
+                self.provisioning_successful(serial_no, log)
 
         except serial.serialutil.SerialException as err:
             self.serial_lost(str(err))
         except DeviceProvisioningFailure as err:
             self._record_results(
                 TestStatus.FAIL,
-                serial_no=err.serial_no,
-                test_logs=err.log,
+                serial_no=serial_no,
+                test_logs=log,
                 failure_reason=err.msg,
             )
-            self.test_failed(err.msg, serial_no=err.serial_no, log=err.log)
+            self.provisioning_failed(err.msg, serial_no=err.serial_no, log=err.log)
 
     def waiting_for_pcb_removal(self):
         """Blocks until the pcb is removed (detected via the pcb sense pin).

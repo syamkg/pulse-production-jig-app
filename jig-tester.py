@@ -164,12 +164,12 @@ class App:
                 self._state_wait_for_serial()
             if event == "waiting_for_pcb":
                 self._state_wait_for_pcb()
-            if event == "running_test":
+            if event == "provisioning":
                 self._state_test_running()
-            if event == "test_failed":
+            if event == "provisioning_failed":
                 self._state_test_failed()
-            if event == "test_passed":
-                self._state_test_passed(data["test_passed"]["serial_no"])
+            if event == "provisioning_successful":
+                self._state_test_passed(data["provisioning_successful"]["serial_no"])
             if event == "pcb_removed":
                 self._state_pcb_removed()
             if event == "serial_detected":
