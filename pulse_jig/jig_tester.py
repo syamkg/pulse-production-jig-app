@@ -2,16 +2,29 @@
 import logging
 import time
 import textwrap
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
+from enum import Enum
 import serial
 import gpiozero
 from transitions import Machine
-from pulse_jig.functional_test import FunctionalTest, FunctionalTestFailure
+import requests
+from pulse_jig.device_provisioner import DeviceProvisioner, DeviceProvisioningFailure
 from pulse_jig.check_for_serial import check_for_serial
 
 
+class TestStatus(Enum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+
+
 class JigTester:
-    def __init__(self, dev: str, pcb_sense_gpio_pin: int = 5):
+    def __init__(
+        self,
+        dev: str,
+        registrar_url: str,
+        pcb_sense_gpio_pin: int = 5,
+        reset_gpio_pin: int = 21,
+    ):
         """Jig Tester loop. When run it will wait for a device to be plugged in,
         provision a serial, test the device, and save the results to the cloud
         before looping to do it all over again.
@@ -26,6 +39,8 @@ class JigTester:
         self._port.baudrate = 115200
         self._listeners = []
         self._pcb_sense_gpio = gpiozero.Button(pcb_sense_gpio_pin, pull_up=True)
+        self._registrar_url = registrar_url
+        self._device_provisioner = DeviceProvisioner(reset_gpio_pin=reset_gpio_pin)
 
         self.machine = Machine(
             model=self,
@@ -33,8 +48,8 @@ class JigTester:
                 "stopped",
                 "waiting_for_serial",
                 "waiting_for_pcb",
+                "provisioning",
                 "waiting_for_pcb_removal",
-                "running_test",
             ],
             initial="stopped",
         )
@@ -58,21 +73,21 @@ class JigTester:
         self.machine.add_transition(
             "pcb_connected",
             "waiting_for_pcb",
-            "running_test",
+            "provisioning",
         )
 
         self.machine.add_transition(
-            "test_passed",
-            "running_test",
+            "provisioning_successful",
+            "provisioning",
             "waiting_for_pcb_removal",
-            before="_handle_test_passed",
+            before="_handle_provisioning_successful",
         )
 
         self.machine.add_transition(
-            "test_failed",
-            "running_test",
+            "provisioning_failed",
+            "provisioning",
             "waiting_for_pcb_removal",
-            before="_handle_test_failed",
+            before="_handle_provisioning_failed",
         )
 
         self.machine.add_transition(
@@ -86,15 +101,21 @@ class JigTester:
             "pcb_removed", "waiting_for_pcb_removal", "waiting_for_pcb"
         )
 
-    def _handle_test_passed(self, serial_no: str, log: str):
-        logging.info(f"_handled_test_passed({serial_no})\n{textwrap.indent(log, '+ ')}")
-        self._send_event("test_passed", dict(serial_no=serial_no))
-
-    def _handle_test_failed(self, msg: str, *, log: str = None, serial_no: str = None):
+    def _handle_provisioning_successful(self, serial_no: str, log: str):
         logging.info(
-            f"_handled_test_failed({msg}, {serial_no})\n{textwrap.indent(log, '+ ')}"
+            f"_handled_provisioning_successful({serial_no})\n{textwrap.indent(log, '+ ')}"
         )
-        self._send_event("test_failed", dict(msg=msg, serial_no=serial_no, log=log))
+        self._send_event("provisioning_successful", dict(serial_no=serial_no))
+
+    def _handle_provisioning_failed(
+        self, msg: str, *, log: str = None, serial_no: str = None
+    ):
+        logging.info(
+            f"_handled_provisioning_failed({msg}, {serial_no})\n{textwrap.indent(log, '+ ')}"
+        )
+        self._send_event(
+            "provisioning_failed", dict(msg=msg, serial_no=serial_no, log=log)
+        )
 
     def _handle_serial_detected(self, serial_no: str):
         self._send_event("serial_detected", dict(serial_no=serial_no))
@@ -173,22 +194,36 @@ class JigTester:
                 else:
                     raise err
 
-    def running_test(self) -> bool:
-        """Runs the actual device "test" which, along with running the test,
-        will generate the serial and write it to the device. The function
-        will terminate with one of the following transitions:
-        * test_passed
-        * test_failed
+    def provisioning(self) -> bool:
+        """Tests and provisions the device. The state will
+        terminate with one of the following transitions:
+        * provisioning_successful
+        * provisioning_failed
         * serial_lost
         """
-        test = FunctionalTest(self._port)
         try:
-            serial_no, log = test.run()
-            self.test_passed(serial_no, log)
+            serial_no, log = self._device_provisioner.run(self._port)
+
+            if not self._record_results(
+                TestStatus.PASS, serial_no=serial_no, test_logs=log
+            ):
+                self.provisioning_failed(
+                    "Failed to record results", serial_no=serial_no, log=log
+                )
+            else:
+                self.provisioning_successful(serial_no, log)
+
         except serial.serialutil.SerialException as err:
             self.serial_lost(str(err))
-        except FunctionalTestFailure as err:
-            self.test_failed(err.msg, serial_no=err.serial_no, log=err.log)
+        except DeviceProvisioningFailure as err:
+            if err.serial_no is not None:
+                self._record_results(
+                    TestStatus.FAIL,
+                    serial_no=err.serial_no,
+                    test_logs=err.log,
+                    failure_reason=err.msg,
+                )
+            self.provisioning_failed(err.msg, serial_no=err.serial_no, log=err.log)
 
     def waiting_for_pcb_removal(self):
         """Blocks until the pcb is removed (detected via the pcb sense pin).
@@ -199,3 +234,28 @@ class JigTester:
 
     def _is_pcb_connected(self):
         return self._pcb_sense_gpio.is_pressed
+
+    def _record_results(
+        self,
+        test_status: TestStatus,
+        *,
+        serial_no: str,
+        test_logs: Optional[str],
+        failure_reason: Optional[str] = None,
+    ):
+        # TODO: Auth requests - tbc: IAM auth on the gateway and allow the device's role, sign with requests_aws4auth
+        r = requests.post(
+            f"{self._registrar_url}/device",
+            json=dict(
+                serialNumber=serial_no,
+                testStatus=str(test_status),
+                testLogs=test_logs,
+                failureReason=failure_reason,
+            ),
+        )
+        if r.status_code != requests.codes.ok:
+            logging.error(
+                f"Failed to record results ({serial_no}, {test_status}): {r.text}"
+            )
+            return False
+        return True

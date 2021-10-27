@@ -19,8 +19,17 @@ import click
 from typing import Optional
 
 
+def create_jig_tester(dev: str):
+    return JigTester(
+        dev,
+        pcb_sense_gpio_pin=5,
+        reset_gpio_pin=21,
+        registrar_url="https://1mgiqq52xc.execute-api.ap-southeast-2.amazonaws.com/prod/",
+    )
+
+
 def tester_thread(window: sg.Window, dev: str):
-    ft = JigTester(dev)
+    ft = create_jig_tester(dev)
 
     def handler(event, data):
         window.write_event_value(event, data)
@@ -155,12 +164,12 @@ class App:
                 self._state_wait_for_serial()
             if event == "waiting_for_pcb":
                 self._state_wait_for_pcb()
-            if event == "running_test":
+            if event == "provisioning":
                 self._state_test_running()
-            if event == "test_failed":
+            if event == "provisioning_failed":
                 self._state_test_failed()
-            if event == "test_passed":
-                self._state_test_passed(data["test_passed"]["serial_no"])
+            if event == "provisioning_successful":
+                self._state_test_passed(data["provisioning_successful"]["serial_no"])
             if event == "pcb_removed":
                 self._state_pcb_removed()
             if event == "serial_detected":
@@ -189,7 +198,7 @@ def main(dev: Optional[str], gui: bool, debug: bool):
         app = App(dev)
         app.run()
     else:
-        app = JigTester(dev)
+        app = create_jig_tester(dev)
         app.run()
 
 
