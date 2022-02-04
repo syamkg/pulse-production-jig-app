@@ -1,0 +1,22 @@
+---
+- name: Initialising Pi for the first time
+  hosts: all
+  become: yes
+
+  roles:
+    - basic-config
+    - change-passwords
+    - localisation
+    - hostname
+      
+  vars_prompt:
+
+    - name: pi_password
+      prompt: Enter a new password for the user 'pi' [leave blank for current]
+      private: yes
+      confirm: yes
+
+    - name: hostname
+      prompt: Enter new hostname
+      default: raspberrypi
+      private: no

@@ -1,0 +1,5 @@
+---
+- name: Disablling first run wizard
+  file:
+    state: absent
+    path: /etc/xdg/autostart/piwiz.desktop

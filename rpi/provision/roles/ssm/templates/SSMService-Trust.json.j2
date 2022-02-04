@@ -1,0 +1,21 @@
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Sid":"",
+         "Effect":"Allow",
+         "Principal":{
+            "Service":"ssm.amazonaws.com"
+         },
+         "Action":"sts:AssumeRole",
+         "Condition":{
+            "StringEquals":{
+               "aws:SourceAccount":"{{ account_id }}"
+            },
+            "ArnEquals":{
+               "aws:SourceArn":"arn:aws:ssm:{{ region }}:{{ account_id }}:*"
+            }
+         }
+      }
+   ]
+}

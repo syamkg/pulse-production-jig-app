@@ -1,0 +1,18 @@
+---
+- name: Generating {{ locale }}
+  locale_gen:
+    name: "{{ locale }}"
+    state: present
+- name: Set locale to {{ locale }}
+  command: localectl set-locale LANG={{ locale }}
+
+- name: Set timezone to {{ timezone }}
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Set keyboard layout
+  include_role:
+    name: gantsign.keyboard
+  vars:
+    keyboard_model: pc105
+    keyboard_layout: "{{ keyboard }}"

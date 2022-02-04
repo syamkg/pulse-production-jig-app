@@ -1,0 +1,8 @@
+---
+- name: Changing hostname 1 of 2
+  shell: sed -i 's/{{ ansible_fqdn }}/{{ hostname }}/g' /etc/hosts
+
+- name: Changing hostname 2 of 2
+  shell: echo "{{ hostname }}" | tee /etc/hostname
+  notify:
+    - reboot pi

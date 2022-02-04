@@ -1,0 +1,7 @@
+---
+- name: Initialising Pi for the first time (prod)
+  hosts: all
+  become: yes
+
+  roles:
+    - disable-password-auth

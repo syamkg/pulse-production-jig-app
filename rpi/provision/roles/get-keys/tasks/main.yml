@@ -1,0 +1,8 @@
+---
+- name: Automatically updating known_hosts
+  delegate_to: localhost
+  known_hosts:
+    key: "{{ lookup('pipe', 'ssh-keyscan ' + inventory_hostname) }}"
+    name: "{{ inventory_hostname }}"
+    state: present
+  when: lookup('config', 'DEFAULT_REMOTE_PORT') | string == "None"

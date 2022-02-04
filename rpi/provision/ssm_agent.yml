@@ -1,0 +1,22 @@
+---
+- name: Configuring SSM agent
+  hosts: all
+  become: yes
+
+  roles:
+    - ssm
+      
+  vars_prompt:
+
+    - name: account_id
+      prompt: Enter AWS Account ID
+      private: no
+
+    - name: create_role
+      prompt: Do you want to create an IAM role? (yes/no)
+      default: no
+      private: no
+
+    - name: copy_id
+      prompt: What is the "copy id"? (optional)
+      private: no

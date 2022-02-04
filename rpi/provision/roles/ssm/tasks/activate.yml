@@ -1,0 +1,20 @@
+---
+- name: Create a managed-instance activation
+  become: no
+  delegate_to: localhost
+  shell: |
+    aws ssm create-activation \
+      --default-instance-name {{ instance_name }} \
+      --description {{ instance_name }} \
+      --registration-limit 1 \
+      --region "{{ region }}" \
+      --iam-role "{{ iam_role_name }}"
+  register: result
+
+- set_fact:
+    name: Parsing json output
+    activation_details: "{{ result.stdout | from_json }}"
+- set_fact:
+    name: Extracting activation details
+    ssm_activation_id: "{{ activation_details | json_query('ActivationId') }}"
+    ssm_activation_code: "{{ activation_details | json_query('ActivationCode') }}"

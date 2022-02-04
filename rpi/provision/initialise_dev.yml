@@ -1,0 +1,23 @@
+---
+- name: Initialising Pi for the first time (dev)
+  hosts: all
+  become: yes
+
+  roles:
+    - ssh
+    - wifi
+      
+  vars_prompt:
+
+    - name: public_key
+      prompt: Enter the public key location
+      default: ~/.ssh/id_rsa.pub
+      private: no
+
+    - name: wifi_ssid
+      prompt: Enter WiFi SSID
+      private: no
+
+    - name: wifi_psk
+      prompt: Enter WiFi password
+      private: yes
