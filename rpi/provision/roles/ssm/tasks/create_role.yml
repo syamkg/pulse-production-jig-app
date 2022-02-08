@@ -3,8 +3,8 @@
   become: no
   delegate_to: localhost
   template:
-    src: ../roles/ssm/templates/SSMService-Trust.json.j2
-    dest: SSMService-Trust.json
+    src: SSMService-Trust.json.j2
+    dest: roles/ssm/templates/SSMService-Trust.json
 
 - name: Create IAM role
   become: no
@@ -12,7 +12,7 @@
   shell: |
     aws iam create-role \
       --role-name "{{ iam_role_name }}" \
-      --assume-role-policy-document file://SSMService-Trust.json \
+      --assume-role-policy-document file://roles/ssm/templates/SSMService-Trust.json \
       --permissions-boundary "{{ permission_boundry_arn }}"
 
 - name: Attach policy to created role
@@ -22,3 +22,7 @@
     aws iam attach-role-policy \
       --role-name "{{ iam_role_name }}" \
       --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+- name: Give it 5 seconds to propagte role
+  pause:
+    seconds: 5
