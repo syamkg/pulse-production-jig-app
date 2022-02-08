@@ -4,8 +4,8 @@
   become: yes
 
   roles:
-    - ssh
-    - wifi
+    - add-ssh-key
+    - enable-wifi
       
   vars_prompt:
 

@@ -4,4 +4,6 @@
   become: yes
 
   roles:
+    - disable-wifi
+    - remove-ssh-key
     - disable-password-auth

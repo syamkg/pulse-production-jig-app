@@ -17,6 +17,10 @@
       confirm: yes
 
     - name: hostname
-      prompt: Enter new hostname
-      default: raspberrypi
+      prompt: Enter new hostname [leave blank for current]
       private: no
+
+  post_tasks:
+    - name: Rebooting...
+      command: echo "Ansible initiated rebooting"
+      notify: reboot pi

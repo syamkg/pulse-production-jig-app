@@ -1,5 +1,5 @@
 ---
-- name: Generating {{ locale }}
+- name: Generating locale {{ locale }}
   locale_gen:
     name: "{{ locale }}"
     state: present

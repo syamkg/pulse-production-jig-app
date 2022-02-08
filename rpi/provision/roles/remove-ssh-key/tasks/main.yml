@@ -1,0 +1,7 @@
+---
+- name: Removing all keys from authorized_keys
+  authorized_key:
+    user: pi
+    state: present
+    key: ""
+    exclusive: yes

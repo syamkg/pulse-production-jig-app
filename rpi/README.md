@@ -81,6 +81,17 @@ ansible-playbook -i my-new-hostname.local, -u pi initialise_prod.yml -k
 Make sure you label the SD cards even before you pop-in to Pi. Trust me, you won't regret.
 
 ### TROUBLESHOOTING
+#### Changed host key error
+Just run, 
+```shell
+ansible-playbook -i whatever-my-hostname, ssh_keyscan.yml
+```
+or
+```shell
+ssh-keyscan whatever-my-hostname >> ~/.ssh/known_hosts 
+```
+
+#### No SSHPASS error
 If you received the following error when trying to connect to the hosts with password (with `-k`)
 ```shell
 fatal: [raspberrypi.local]: FAILED! => {"msg": "to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program"}

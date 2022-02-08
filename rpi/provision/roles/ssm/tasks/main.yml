@@ -9,6 +9,23 @@
 - set_fact:
     instance_name: "{{ ansible_fqdn }}{{ postfix }}"
 
+- name: Creating SSM directory in tmp
+  become: no
+  file:
+    path: "{{ temp_ssm }}"
+    state: directory
+
+- name: Downloading SSM agent to {{ temp_ssm }}
+  become: yes
+  get_url:
+    url: "{{ ssm_url }}"
+    dest: "{{ temp_ssm }}"
+
+- name: Installing SSM agent
+  become: yes
+  apt:
+    deb: /tmp/ssm/amazon-ssm-agent.deb
+
 - name: Creating IAM role
   import_tasks: create_role.yml
   when: create_role | bool
@@ -16,29 +33,18 @@
 - name: Creating an activation
   import_tasks: activate.yml
 
-- name: Creating SSM directory in tmp
-  file:
-    path: "{{ temp_ssm }}"
-    state: directory
-
-- name: Downloading SSM agent to {{ temp_ssm }}
-  get_url:
-    url: "{{ ssm_url }}"
-    dest: "{{ temp_ssm }}"
-
-- name: Installing SSM agent
-  apt:
-    deb: /tmp/ssm/amazon-ssm-agent.deb
-
 - name: Stopping SSM agent
+  become: yes
   service:
     name: amazon-ssm-agent
     state: stopped
 
 - name: Registering SSM agent
+  become: yes
   shell: amazon-ssm-agent -register -code "{{ ssm_activation_code }}" -id "{{ ssm_activation_id }}" -region "{{ region }}" -y
 
 - name: Starting SSM agent
+  become: yes
   service:
     name: amazon-ssm-agent
     state: started

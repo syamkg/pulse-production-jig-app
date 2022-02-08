@@ -5,7 +5,7 @@
     dest: /etc/wpa_supplicant/wpa_supplicant.conf
     backup: yes
 
-- name: Enabling WiFi
+- name: Turning on WiFi
   shell: rfkill unblock wifi
 
 - name: Connecting to WiFi

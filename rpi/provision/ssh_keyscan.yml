@@ -1,0 +1,7 @@
+---
+- name: Adding SSH keys
+  gather_facts: no
+  hosts: all
+  become: no
+  roles:
+    - get-keys
