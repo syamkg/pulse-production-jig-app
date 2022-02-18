@@ -1,0 +1,47 @@
+name: CD
+on:
+  push:
+    branches:
+      - main
+jobs:
+  cd:
+      runs-on: ubuntu-latest
+      steps:
+        # checkout the source code
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        # This converts /ref/head/a/branch/name to a/branch/name
+        - name: Set output
+          id: vars
+          run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+
+        - name: Version
+          if: startsWith(github.ref, 'refs/tags/v')
+          env:
+            TAG: ${{ steps.vars.outputs.short_ref }}
+          run: echo "$TAG" > VERSION.txt
+
+        # zip the source code - we recommend naming it 'source.zip'
+        - name: Bundle
+          uses: TheDoctor0/zip-release@master
+          with:
+            # must be named source.zip
+            filename: source.zip
+
+        # Upload the zipped source code - we recommend uploading it to
+        # a specific directory in the source bucket. The action
+        # used here obtains a presigned URL from the endpoint and uses
+        # it to upload the source code zip file.
+        #
+        # To trigger the pipeline, the key must match the trigger of the
+        # pipeline, which is [branch]/source.zip
+        - name: Upload
+          uses: MechanicalRock/proxy-s3-upload@v1.0.3
+          env:
+            GITHUB_SECRET: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            endpoint: ${{ secrets.ENDPOINT }}
+            bucket: ${{ secrets.BUCKET }}
+            key: ${{ steps.vars.outputs.short_ref }}/source.zip
+            filename: source.zip

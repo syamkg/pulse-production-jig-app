@@ -8,15 +8,17 @@ It runs fullscreen with no capability to exit and is intended to be run on
 boot on an RPI with a touchscreen.
 """
 
-import PySimpleGUI as sg
-import qrcode
 import io
-from pulse_jig.jig_tester import JigTester
-from pulse_jig.jig_client import JigClient
-import threading
 import logging
-import click
+import threading
 from typing import Optional
+
+import PySimpleGUI as sg
+import click
+import qrcode
+
+from jig_client import JigClient
+from jig_tester import JigTester
 
 
 def create_jig_tester(dev: str):

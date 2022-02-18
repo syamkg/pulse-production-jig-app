@@ -1,5 +1,4 @@
 ---
----
 - name: Update all packages to their latest version
   apt:
     force_apt_get: yes
@@ -19,6 +18,7 @@
 - name: Remove useless packages from the cache
   apt:
     autoclean: yes
+    force_apt_get: yes
 
 - name: Check if a reboot is needed on all servers
   register: reboot_required_file

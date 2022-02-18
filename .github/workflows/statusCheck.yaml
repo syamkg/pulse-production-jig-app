@@ -1,0 +1,47 @@
+name: Status Check
+on:
+  push:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout the source code
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # zip the source code - we recommend naming it with
+      # 'head sha', which is the head of the commit on the
+      # PR branch
+      - name: Bundle
+        uses: TheDoctor0/zip-release@master
+        with:
+          filename: ${{ github.event.pull_request.head.sha }}.zip
+
+      # Upload the zipped source code - we recommend uploading it to
+      # a specific directory in the source bucket. The action
+      # used here obtains a presigned URL from the endpoint and uses
+      # it to upload the source code zip file.
+      - name: Upload
+        uses: MechanicalRock/proxy-s3-upload@v1.0.3
+        env:
+          GITHUB_SECRET: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          endpoint: ${{ secrets.ENDPOINT }}
+          bucket: ${{ secrets.BUCKET }}
+          key: commit/${{ github.event.pull_request.head.sha }}.zip
+          filename: ${{ github.event.pull_request.head.sha }}.zip
+
+      # Invoke code build using the key of the uploaded source code
+      # use-aws-credentials = false prevents the calls to the proxy
+      # from being signed with aws-sigv4, which is not required.
+      - name: Build
+        uses: MechanicalRock/aws-codebuild-run-build@v2.0.0
+        env:
+          AWS_REGION: ap-southeast-2
+          GITHUB_SECRET: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          endpoint: ${{ secrets.ENDPOINT }}
+          use-aws-credentials: false
+          project-name: ${{ secrets.PROJECT }}
+          source-location-override: ${{ secrets.bucket }}/commit/${{ github.event.pull_request.head.sha }}.zip

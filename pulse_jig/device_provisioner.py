@@ -1,14 +1,16 @@
 import logging
-import time
 import shutil
 import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Tuple, Optional
-import serial
+
 import gpiozero
-from pulse_jig.check_for_serial import check_for_serial
-from pulse_jig.jig_client import JigClient, JigClientException
+import serial
+
+from check_for_serial import check_for_serial
+from jig_client import JigClient, JigClientException
 
 
 class DeviceProvisioningFailure(Exception):

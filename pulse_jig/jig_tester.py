@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 import logging
-import time
 import textwrap
-from typing import Callable, Dict, Optional
+import time
 from enum import Enum
-import serial
+from typing import Callable, Dict, Optional
+
 import gpiozero
-from transitions import Machine
 import requests
-from pulse_jig.device_provisioner import DeviceProvisioner, DeviceProvisioningFailure
-from pulse_jig.check_for_serial import check_for_serial
+import serial
+from transitions import Machine
+
+from check_for_serial import check_for_serial
+from device_provisioner import DeviceProvisioner, DeviceProvisioningFailure
 
 
 class TestStatus(Enum):
