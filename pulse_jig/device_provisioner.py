@@ -144,7 +144,10 @@ class DeviceProvisioner:
         # Improve error checking - take into account that it is
         # being run in a thread.
         def do_copy():
-            shutil.copy(firmware, self._xdot_volume / firmware.name)
+            try:
+                shutil.copy(firmware, self._xdot_volume / firmware.name)
+            except:
+                logging.exception("Oops:")
 
         self._reset_xdot_gpio.off()
         logging.debug("_load_firmware() - starting copy")

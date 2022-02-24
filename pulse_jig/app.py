@@ -10,6 +10,7 @@ boot on an RPI with a touchscreen.
 
 import io
 import logging
+import queue
 import threading
 from typing import Optional
 
@@ -25,7 +26,7 @@ def create_jig_tester(dev: str):
     return JigTester(
         dev,
         pcb_sense_gpio_pin=5,
-        reset_gpio_pin=21,
+        reset_gpio_pin=6,
         registrar_url="https://1mgiqq52xc.execute-api.ap-southeast-2.amazonaws.com/prod/",
     )
 
@@ -47,6 +48,35 @@ def generate_qrcode(serial: str):
     return bio.getvalue()
 
 
+def configure_logging(debug: bool, gui: bool):
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger("transitions").setLevel(logging.INFO)
+        logging.getLogger("JigClient").setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger("transitions").setLevel(logging.WARN)
+
+    log_queue = None
+    queue_handler = None
+    if gui:
+        log_queue = queue.Queue()
+        queue_handler = QueueHandler(log_queue)
+        queue_handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
+        logging.getLogger().addHandler(queue_handler)
+
+    return log_queue, queue_handler
+
+
+class QueueHandler(logging.Handler):
+    def __init__(self, log_queue):
+        super().__init__()
+        self.log_queue = log_queue
+
+    def emit(self, record):
+        self.log_queue.put(record)
+
+
 class App:
     def __init__(self, dev: str):
         self.window = None
@@ -58,13 +88,71 @@ class App:
             [
                 sg.Column(
                     layout=[
+                        [sg.Sizer(500, 0)],
                         [
                             sg.Frame(
                                 "State",
                                 layout=[
-                                    [sg.Text(key="-STATE-", font="Helvetica 20 bold")]
+                                    [
+                                        sg.Text(
+                                            key="-STATE-",
+                                            font="Helvetica 20 bold",
+                                            expand_x=True,
+                                            expand_y=True,
+                                        )
+                                    ]
                                 ],
                                 expand_x=True,
+                            )
+                        ],
+                        [
+                            sg.Frame(
+                                "Log",
+                                layout=[
+                                    [
+                                        sg.Multiline(
+                                            key="-LOG-",
+                                            disabled=True,
+                                            autoscroll=True,
+                                            border_width=0,
+                                            font="Monospace 8 normal",
+                                            background_color="black",
+                                            expand_x=True,
+                                            expand_y=True,
+                                        )
+                                    ]
+                                ],
+                                expand_x=True,
+                                expand_y=True,
+                            )
+                        ],
+                    ],
+                    expand_x=True,
+                    expand_y=True,
+                ),
+                sg.Column(
+                    layout=[
+                        [sg.Sizer(300, 0)],
+                        [
+                            sg.Frame(
+                                "",
+                                key="-PASSFAIL_WRAPPER-",
+                                layout=[
+                                    [sg.Sizer(0, 10)],
+                                    [
+                                        sg.Text(
+                                            key="-PASSFAIL-",
+                                            font="Helvetica 20 bold",
+                                            justification="center",
+                                            pad=0,
+                                            expand_x=True,
+                                        )
+                                    ],
+                                    [sg.Sizer(0, 1)],
+                                ],
+                                vertical_alignment="center",
+                                expand_x=True,
+                                pad=(4, (10, 4)),
                             )
                         ],
                         [
@@ -84,24 +172,9 @@ class App:
                             )
                         ],
                     ],
+                    element_justification="center",
                     expand_y=True,
                     expand_x=True,
-                ),
-                sg.Frame(
-                    "Test Status",
-                    layout=[
-                        [
-                            sg.Text(
-                                key="-PASSFAIL-",
-                                font="Helvetica 20 bold",
-                                justification="center",
-                                expand_x=True,
-                                expand_y=True,
-                            )
-                        ]
-                    ],
-                    expand_x=True,
-                    expand_y=True,
                 ),
             ]
         ]
@@ -130,12 +203,14 @@ class App:
 
     def _state_test_passed(self, serial):
         self.window["-PASSFAIL-"].update("Pass", background_color="green")
+        self.window["-PASSFAIL_WRAPPER-"].Widget.config(background="green")
         self.window["-QRCODE-"].update(data=generate_qrcode(serial))
         self.window["-STATE-"].update("Disconnect PCB...")
         self.window.refresh()
 
     def _state_test_failed(self):
         self.window["-PASSFAIL-"].update("Failed", background_color="Red")
+        self.window["-PASSFAIL_WRAPPER-"].Widget.config(background="Red")
         self.window["-QRCODE-"].update()
         self.window["-STATE-"].update("Disconnect PCB...")
         self.window.refresh()
@@ -143,15 +218,27 @@ class App:
     def _state_pcb_removed(self):
         self.window["-QRCODE-"].update()
         self.window["-PASSFAIL-"].update("", background_color="black")
+        self.window["-PASSFAIL_WRAPPER-"].Widget.config(background="black")
+        self.window["-LOG-"].update("")
         self.window.refresh()
 
     def _state_serial_detected(self, serial):
         self.window["-STATE-"].update("Serial Detected, Waiting for PCB...")
         self.window["-QRCODE-"].update(data=generate_qrcode(serial))
         self.window["-PASSFAIL-"].update("", background_color="black")
+        self.window["-PASSFAIL_WRAPPER-"].Widget.config(background="black")
         self.window.refresh()
 
-    def run(self):
+    def _display_logs(self, log_queue, queue_handler):
+        try:
+            record = log_queue.get(block=False)
+        except queue.Empty:
+            pass
+        else:
+            msg = queue_handler.format(record)
+            self.window["-LOG-"].update(msg + "\n", append=True)
+
+    def run(self, log_queue, queue_handler):
         self._init_gui()
 
         threading.Thread(
@@ -177,6 +264,8 @@ class App:
             if event == "serial_detected":
                 self._state_serial_detected(data["serial_detected"]["serial_no"])
 
+            self._display_logs(log_queue=log_queue, queue_handler=queue_handler)
+
         self.window.close()
 
 
@@ -185,12 +274,7 @@ class App:
 @click.option("--debug", "-d", default=False, is_flag=True)
 @click.option("--gui/--no-gui", default=True)
 def main(dev: Optional[str], gui: bool, debug: bool):
-    if debug:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger("transitions").setLevel(logging.INFO)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.getLogger("transitions").setLevel(logging.WARN)
+    log_queue, queue_handler = configure_logging(debug, gui)
 
     if dev is None:
         print("Could not detect device")
@@ -198,11 +282,14 @@ def main(dev: Optional[str], gui: bool, debug: bool):
 
     if gui:
         app = App(dev)
-        app.run()
+        app.run(log_queue=log_queue, queue_handler=queue_handler)
     else:
         app = create_jig_tester(dev)
         app.run()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except:
+        logging.exception("Oops:")
