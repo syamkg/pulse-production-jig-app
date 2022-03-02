@@ -112,7 +112,7 @@ class JigTester:
     def _handle_provisioning_failed(
         self, msg: str, *, log: str = None, serial_no: str = None
     ):
-        logging.info(
+        logging.error(
             f"_handled_provisioning_failed({msg}, {serial_no})\n{textwrap.indent(log, '+ ')}"
         )
         self._send_event(
@@ -159,7 +159,9 @@ class JigTester:
                 self._port.open()
                 self.serial_found()
                 return
-            except serial.serialutil.SerialException:
+            except serial.serialutil.SerialException as e:
+                logging.error(str(e))
+                logging.info("Retrying...")
                 time.sleep(1)
 
     def waiting_for_pcb(self):

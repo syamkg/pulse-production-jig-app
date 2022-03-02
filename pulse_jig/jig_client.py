@@ -1,9 +1,9 @@
-import serial
+import logging
+import os
 import time
 from typing import Optional
-import os
-import logging
 
+import serial
 
 # Import the correct platform specific comports implementation.
 # There doesn't seem to be a better way of doing this at the moment.
@@ -63,12 +63,12 @@ class JigClient:
         self._log += line
         line = line.rstrip(self._terminator)
         if self._logger is not None and line != "":
-            self._logger.debug("S: " + line)
+            self._logger.debug("DEV: " + line)
         return line
 
     def _writeline(self, line: str) -> None:
         if self._logger is not None:
-            self._logger.debug("C: " + line)
+            self._logger.debug("JIG: " + line)
         line += "\r"
         self._port.write(f"{line}".encode("utf-8"))
         self._log += line
@@ -123,19 +123,21 @@ class JigClient:
         return body
 
     def read_eeprom(self, key: str) -> str:
-        """Sends a `read_eeprom` command to the device.
+        """Sends a ``hwsoec-load & `hwspec-get` commands to the device.
         :param key: the key to read
         :return: The command's response body.
         """
-        return self.send_command(f"READ_EEPROM_KEY {key}")
+        self.send_command(f"hwspec-load")
+        return self.send_command(f"hwspec-get {key}")
 
     def write_eeprom(self, key: str, value: str) -> str:
-        """Sends a `write_eeprom` command to the device.
+        """Sends a `hwspec-set` & `hwspec-save` commands to the device.
         :param key: the key to write
         :param value: the value to write against the key
         :return: The command's response body.
         """
-        return self.send_command(f"WRITE_EEPROM {key}={value}")
+        self.send_command(f"hwspec-set {key} {value}")
+        return self.send_command(f"hwspec-save")
 
     def run_test_cmd(self, cmd: str) -> bool:
         """Runs the given test command and whether it passed or

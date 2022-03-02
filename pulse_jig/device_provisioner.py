@@ -81,7 +81,7 @@ class DeviceProvisioner:
         def run_test(cmd: str):
             logging.info(f"running test for: {cmd}")
             if not client.run_test_cmd(cmd):
-                raise DeviceProvisioningFailure(f"test failed: {cmd}")
+                raise DeviceProvisioningFailure(f"test failed: {cmd}", log=client.log)
 
         logging.debug("running_test() - skipping functional test firmware boot header")
         client.skip_boot_header()
@@ -94,13 +94,9 @@ class DeviceProvisioner:
                 client.write_eeprom("serial", serial_no)
                 logging.info(f"running_test() - serial generated: {serial_no}")
 
-            run_test("SELF_TEST")
-            run_test("TEST_LORA_CONNECT")
-
-            for port_no in range(1, 5):
-                run_test(f"TEST_PORT_I2C {port_no}")
-                run_test(f"TEST_PORT_SPI {port_no}")
-                run_test(f"TEST_PORT_GIN_GOUT_LOOP {port_no}")
+            run_test("test-self")
+            run_test("test-lora-connect")
+            run_test(f"test-port -n 0x0f 1")
         except JigClientException as err:
             raise DeviceProvisioningFailure(
                 f"test failed: {str(err)}", serial_no=serial_no, log=client.log
@@ -117,7 +113,9 @@ class DeviceProvisioner:
         # the serial across restarts
         # if (detected_serial_no is not None) or (detected_serial_no != serial_no):
         if detected_serial_no is None:
-            raise DeviceProvisioningFailure("detected serial mismatch")
+            raise DeviceProvisioningFailure(
+                "detected serial mismatch", serial_no=detected_serial_no, log=client.log
+            )
         logging.info(f"running_test() - serial found: {detected_serial_no}")
 
         return (serial_no, client.log)
