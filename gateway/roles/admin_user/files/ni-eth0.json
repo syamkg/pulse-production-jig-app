@@ -1,0 +1,27 @@
+{
+  "available" : true,
+  "bridge" : "--",
+  "ipv4" : {
+      "dns1" : "",
+      "dns2" : "",
+      "gateway" : "",
+      "ip" : "",
+      "mask" : "",
+      "mode" : "DHCP"
+  },
+  "ipv6" : {
+      "delegatedPrefixLength" : 64,
+      "dns1" : "",
+      "dns2" : "",
+      "enabled" : false,
+      "fixedIp" : [],
+      "gateway" : "",
+      "ip" : [],
+      "linkLocalIp" : [],
+      "mode" : "AUTO",
+      "prefixDelegationEnabled" : false
+  },
+  "name" : "eth0",
+  "nitype" : "ETHER",
+  "type" : "WAN"
+}

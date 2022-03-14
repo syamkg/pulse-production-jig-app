@@ -1,0 +1,8 @@
+amazon-ssm-agent
+ssm-agent-worker
+ssm-cli
+ssm-document-worker
+ssm-session-logger
+ssm-session-worker
+ssm-setup-cli
+updater
