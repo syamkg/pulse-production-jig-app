@@ -16,6 +16,9 @@ jobs:
           id: vars
           run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
 
+        - name: Fetch tags
+          run: git fetch --tags
+
         - name: Version
           if: startsWith(github.ref, 'refs/tags/v')
           env:
