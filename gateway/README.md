@@ -58,7 +58,15 @@ rsync -r -e ssh roles/jig/files/ssm admin@10.42.0.25:/tmp/ssm
 ```
 
 3) Hop onto the Conduit, e.g. `ssh admin@10.42.0.25`
-4) Register the device with SSM Agent and start the agent:
+4) Move the files to the correct locations:
+
+```bash
+sudo mv /tmp/ssm/etc/amazon /etc
+sudo mv /tmp/ssm/etc/init.d/ssm-agent /etc/init.d/ssm-agent
+sudo mv /tmp/ssm/usr/bin/* /usr/bin/.
+```
+
+5) Register the device with SSM Agent and start the agent:
 
 ```bash
 sudo /usr/bin/amazon-ssm-agent -register -code <CODE> -id <ID> -region ap-southeast-2
