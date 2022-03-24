@@ -1,0 +1,85 @@
+---
+- name: Retreive commissioning status
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/commissioning
+    validate_certs: no
+    status_code: [200, 400]
+  register: commissioning
+  failed_when: commissioning.json.status != "success" and commissioning.json.error != "commissioning is finished"
+
+- name: Create username
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/commissioning
+    method: POST
+    validate_certs: no
+    body_format: json
+    body: '{"username":"{{ conduit_username }}", "aasID": "", "aasAnswer":""}'
+  register: commissioning_user
+  when: commissioning.json.status == "success"
+  failed_when: commissioning_user.json.result.aasType == "error"
+
+- name: Create password
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/commissioning
+    method: POST
+    validate_certs: no
+    body_format: json
+    body: '{"username":"{{ conduit_username }}", "aasID": "{{ commissioning_user.json.result.aasID }}", "aasAnswer":"{{ conduit_password }}"}'
+  register: commissioning_password
+  when: commissioning.json.status == "success" and commissioning_user.json.status == "success"
+  failed_when: commissioning_password.json.result.aasType == "error"
+
+- name: Confirm password
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/commissioning
+    method: POST
+    validate_certs: no
+    body_format: json
+    body: '{"username":"{{ conduit_username }}", "aasID": "{{ commissioning_user.json.result.aasID }}", "aasAnswer":"{{ conduit_password }}"}'
+  register: commissioning_confirm_password
+  when: commissioning.json.status == "success" and commissioning_password.json.status == "success"
+  failed_when: commissioning_confirm_password.json.result.aasType == "error"
+
+- name: Login
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/login
+    method: POST
+    validate_certs: no
+    body_format: json
+    body: '{"username": "{{ conduit_username }}", "password": "{{ conduit_password }}"}'
+  register: conduit_login
+
+- name: Enable remote SSH - disable http/https
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/remoteAccess?token={{ conduit_login.json.result.token }}
+    method: PUT
+    validate_certs: no
+    body_format: json
+    src: "{{ role_path }}/files/remoteAccess.json"
+
+- name: Set eth0 to use DHCP
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/ni?token={{ conduit_login.json.result.token }}
+    method: PUT
+    validate_certs: no
+    body_format: json
+    src: "{{ role_path }}/files/ni-eth0.json"
+
+- name: Generate LoRaWAN configuration
+  template:
+    src: lora.json.j2
+    dest: "{{ role_path }}/files/lora.json"
+
+- name: Configure LoRaWAN
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/loraNetwork?token={{ conduit_login.json.result.token }}
+    method: PUT
+    validate_certs: no
+    body_format: json
+    src: "{{ role_path }}/files/lora.json"
+
+- name: Reboot
+  ansible.builtin.uri:
+    url: https://{{ conduit_api_ip }}/api/command/save_restart?token={{ conduit_login.json.result.token }}
+    method: POST
+    validate_certs: no

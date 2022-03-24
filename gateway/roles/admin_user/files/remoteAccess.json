@@ -1,0 +1,66 @@
+{
+  "bruteForcePrevention" : {
+     "enabled" : true,
+     "failAttempts" : 3,
+     "lockoutSeconds" : 300
+  },
+  "dosAttackPrevention" : {
+     "enabled" : true,
+     "limitBurst" : 100,
+     "limitPerMinute" : 60
+  },
+  "http" : {
+     "enabled" : false,
+     "lan" : false,
+     "port" : 80,
+     "redirectToHttps" : false,
+     "wan" : false
+  },
+  "https" : {
+     "enabled" : false,
+     "lan" : false,
+     "port" : 443,
+     "wan" : false
+  },
+  "icmp" : {
+     "enabled" : true,
+     "respondToLan" : true,
+     "respondToWan" : false
+  },
+  "modbusSlave" : {
+     "enabled" : false,
+     "lan" : true,
+     "port" : 1502
+  },
+  "nodeRed" : {
+     "lan" : false,
+     "wan" : false
+  },
+  "pingLimit" : {
+     "enabled" : true,
+     "limitBurst" : 30,
+     "limitPerSecond" : 10
+  },
+  "privateWan" : false,
+  "reverseSsh" : {
+     "authMode" : "PASSWORD",
+     "enabled" : false,
+     "password" : "",
+     "privateKey" : "",
+     "remotePort" : 2222,
+     "serverAddress" : "",
+     "serverPort" : 22,
+     "username" : ""
+  },
+  "snmp" : {
+     "lan" : false,
+     "wan" : false
+  },
+  "ssh" : {
+     "enabled" : true,
+     "lan" : true,
+     "port" : 22,
+     "wan" : true
+  },
+  "timeoutSeconds" : 300
+}

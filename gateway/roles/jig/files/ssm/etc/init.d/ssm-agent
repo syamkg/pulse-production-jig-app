@@ -1,0 +1,50 @@
+#!/bin/sh
+
+DESC="ssm-agent"
+PIDFILE="/var/run/ssm-agent.pid"
+START_STOP_DAEMON="/usr/sbin/start-stop-daemon"
+ANGEL="/sbin/ssm-angel"
+
+function do_start {
+    logger -t Start "$DESC"
+    if [ ! -f "$ANGEL" ]; then
+        ln -s /sbin/angel "$ANGEL"
+    fi
+
+    if [ -f "/var/lib/amazon/ssm/Vault/Store/RegistrationKey" ]; then
+        $START_STOP_DAEMON --start --background \
+            --pidfile "$PIDFILE" --make-pidfile \
+            --chdir "/usr/bin" \
+            --exec $ANGEL -- "amazon-ssm-agent"
+    else
+       logger -t FAIL "$DESC cannot start as no registration found"
+       echo "FAIL $DESC cannot start as no registration found"
+    fi
+}
+
+function do_stop {
+    logger -t Stop "$DESC"
+    $START_STOP_DAEMON --stop -p "$PIDFILE" --retry 60
+}
+
+case "$1" in
+  "start")
+    do_start
+    ;;
+  "stop")
+    do_stop
+    ;;
+  "restart")
+    ## Stop the service only if .pid file is present (do not do if not running)
+    if [ -f "$PIDFILE" ]; then
+      do_stop
+    fi
+    do_start
+    ;;
+  *)
+    ## If no parameters are given, print which are avaiable.
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+

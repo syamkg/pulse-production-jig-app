@@ -1,0 +1,8 @@
+---
+- name: Configures a Conduit with an admin user and remote access
+  hosts: localhost
+  gather_facts: no
+  vars:
+    conduit_api_ip: 192.168.2.1
+  roles:
+    - admin_user
