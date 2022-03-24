@@ -42,9 +42,11 @@
 
 - name: Login
   ansible.builtin.uri:
-    url: https://{{ conduit_api_ip }}/api/login?username={{ conduit_username }}&password={{ conduit_password }}
+    url: https://{{ conduit_api_ip }}/api/login
     method: POST
     validate_certs: no
+    body_format: json
+    body: '{"username": "{{ conduit_username }}", "password": "{{ conduit_password }}"}'
   register: conduit_login
 
 - name: Enable remote SSH - disable http/https
