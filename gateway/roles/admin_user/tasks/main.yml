@@ -26,7 +26,7 @@
     body_format: json
     body: '{"username":"{{ conduit_username }}", "aasID": "{{ commissioning_user.json.result.aasID }}", "aasAnswer":"{{ conduit_password }}"}'
   register: commissioning_password
-  when: commissioning.json.status == "success"
+  when: commissioning.json.status == "success" and commissioning_user.json.status == "success"
   failed_when: commissioning_password.json.result.aasType == "error"
 
 - name: Confirm password
@@ -37,7 +37,7 @@
     body_format: json
     body: '{"username":"{{ conduit_username }}", "aasID": "{{ commissioning_user.json.result.aasID }}", "aasAnswer":"{{ conduit_password }}"}'
   register: commissioning_confirm_password
-  when: commissioning.json.status == "success"
+  when: commissioning.json.status == "success" and commissioning_password.json.status == "success"
   failed_when: commissioning_confirm_password.json.result.aasType == "error"
 
 - name: Login
