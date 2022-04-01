@@ -44,14 +44,14 @@ class DeviceProvisioner:
 
         if not self._production_firmware_path.is_file():
             raise RuntimeError(
-                f"Couldn't find production firmware at: {self.production_firmware_path}"
+                f"Couldn't find production firmware at: {self._production_firmware_path}"
             )
         if not self._test_firmware_path.is_file():
             raise RuntimeError(
-                f"Couldn't find production firmware at: {self.test_firmware_path}"
+                f"Couldn't find production firmware at: {self._test_firmware_path}"
             )
         if not self._xdot_volume.exists():
-            raise RuntimeError(f"Couldn't find xdot volume at: {self.xdot_volume}")
+            raise RuntimeError(f"Couldn't find xdot volume at: {self._xdot_volume}")
 
     def run(self, port: serial.Serial) -> Tuple[str, str]:
         """Runs a functional test of the device on the given port. If it

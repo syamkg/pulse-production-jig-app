@@ -2,7 +2,7 @@ FROM arm32v7/python:3.9-slim-bullseye
 
 RUN apt-get update --yes && \
     apt-get install --yes \
-#        # runtime dependency
+#        runtime dependencies
         python3-tk \
         zlib1g \
         libtiff5 \
@@ -19,5 +19,3 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY pulse_jig ./
-
-CMD [ "python", "./app.py" ]

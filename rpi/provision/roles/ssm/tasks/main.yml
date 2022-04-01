@@ -48,3 +48,6 @@
   service:
     name: amazon-ssm-agent
     state: started
+
+- name: Giving everone permissions to root AWS credentials
+  import_tasks: credentials.yml

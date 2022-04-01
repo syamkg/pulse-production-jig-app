@@ -1,6 +1,6 @@
 
 
-# Setup
+## Setup
 
 After a fresh clone run:
 
@@ -9,7 +9,7 @@ pip install -r requirements.txt
 pre-commit install
 ```
 
-# Testing
+## Testing
 
 Tests are implemented with pytest. Run them with:
 
@@ -17,10 +17,10 @@ Tests are implemented with pytest. Run them with:
 python -m pytest 
 ```
 
-# Formating
+## Formating
 
-Formatting is done via [Black](https://github.com/psf/black). It's opinionated and not very configurable so just 
-accept its formatting and don't fight it :)
+Formatting is done via [Black](https://github.com/psf/black). It's opinionated and not very configurable so just accept
+its formatting and don't fight it :)
 
 To format on commit, install the pre-commit git hook upon a fresh clone of the repository:
 
@@ -28,10 +28,30 @@ To format on commit, install the pre-commit git hook upon a fresh clone of the r
 pre-commit install
 ```
 
-# Running in docker
+## Running in local
+
+```shell
+cd pulse_jig
+python app.py
+```
+
+## Running in docker
+
+### BUILD (optional)
 
 ```bash
 docker buildx build --platform linux/arm/v7 -t pulse-jig .
-docker run --platform linux/arm/v7 -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -u $(id -u ${USER}):$(id -g ${USER}) pulse-jig
+```
+
+### PULL FROM ECR (not required if building)
+
+```shell
+./docker-pull <AWS_ACCOUNT_ID>
+```
+
+### RUN
+
+```shell
+./run.sh python app.py
 ```
 

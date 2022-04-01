@@ -291,5 +291,5 @@ def main(dev: Optional[str], gui: bool, debug: bool):
 if __name__ == "__main__":
     try:
         main()
-    except:
+    except Exception:
         logging.exception("Oops:")
