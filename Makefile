@@ -1,4 +1,4 @@
-.PHONY: sync check-host
+.PHONY: sync check-host check-notifyloop check-rsync
 
 sync: check-host check-rsync
 	rsync -r --exclude=".git" --exclude ".pytest_cache" --exclude ".coverage" --exclude=".venv" --exclude="__pycache__" --exclude="*.pyc" . $(HOST):/home/pi/pulse-dev
