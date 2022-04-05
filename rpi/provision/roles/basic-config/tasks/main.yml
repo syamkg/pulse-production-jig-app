@@ -3,3 +3,8 @@
   file:
     state: absent
     path: /etc/xdg/autostart/piwiz.desktop
+- name: Disablling removable media autorun
+  lineinfile:
+    path: /home/pi/.config/pcmanfm/LXDE-pi/pcmanfm.conf
+    regexp: '^autorun='
+    line: autorun=0
