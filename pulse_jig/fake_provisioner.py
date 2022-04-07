@@ -38,62 +38,27 @@ class FakeProvisioner(Provisioner):
 
         # Expected working path
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
-        m.add_transition(
-            "proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE
-        )
-        m.add_transition(
-            "proceed", States.LOADING_TEST_FIRMWARE, States.WAITING_FOR_TARGET
-        )
-        m.add_transition(
-            "proceed", States.WAITING_FOR_TARGET, States.LOADING_DEVICE_REGO
-        )
-        m.add_transition(
-            "proceed",
-            States.LOADING_DEVICE_REGO,
-            States.RUNNING_TESTS,
-            conditions="has_hwspec",
-        )
-        m.add_transition(
-            "proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD
-        )
-        m.add_transition(
-            "proceed",
-            States.SUBMITTING_PROVISIONING_RECORD,
-            States.WAITING_FOR_TARGET_REMOVAL,
-        )
-        m.add_transition(
-            "proceed", States.WAITING_FOR_TARGET_REMOVAL, States.WAITING_FOR_TARGET
-        )
+        m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE)
+        m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.WAITING_FOR_TARGET)
+        m.add_transition("proceed", States.WAITING_FOR_TARGET, States.LOADING_DEVICE_REGO)
+        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
+        m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD)
+        m.add_transition("proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_TARGET_REMOVAL)
+        m.add_transition("proceed", States.WAITING_FOR_TARGET_REMOVAL, States.WAITING_FOR_TARGET)
 
         # Register device if it doesn't have a hwspec
-        m.add_transition(
-            "proceed",
-            States.LOADING_DEVICE_REGO,
-            States.REGISTERING_DEVICE,
-            unless="has_hwspec",
-        )
+        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.REGISTERING_DEVICE, unless="has_hwspec")
         m.add_transition("proceed", States.REGISTERING_DEVICE, States.RUNNING_TESTS)
 
         # Load the production firmware if the device passed the tests
-        m.add_transition(
-            "proceed",
-            States.RUNNING_TESTS,
-            States.LOADING_PROD_FIRMWARE,
-            conditions="has_passed",
-        )
-        m.add_transition(
-            "proceed", States.LOADING_PROD_FIRMWARE, States.WAITING_FOR_TARGET_REMOVAL
-        )
+        m.add_transition("proceed", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, conditions="has_passed")
+        m.add_transition("proceed", States.LOADING_PROD_FIRMWARE, States.WAITING_FOR_TARGET_REMOVAL)
 
         # On retry set state to RETRY and wait for the device to be removed
-        m.add_transition(
-            "retry", "*", States.WAITING_FOR_TARGET_REMOVAL, before="set_status_retry"
-        )
+        m.add_transition("retry", "*", States.WAITING_FOR_TARGET_REMOVAL, before="set_status_retry")
 
         # On failure set state to FAILED and submit results
-        m.add_transition(
-            "fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail"
-        )
+        m.add_transition("fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail")
 
         # Some error conditions
         m.add_transition("serial_lost", "*", States.WAITING_FOR_SERIAL)
@@ -142,9 +107,7 @@ class FakeProvisioner(Provisioner):
         self.proceed()
 
     def registering_device(self):
-        resp = bg_input(
-            "registeration status? [p:pass, f:fail registration, w: fail write hwspec"
-        )
+        resp = bg_input("registeration status? [p:pass, f:fail registration, w: fail write hwspec")
         if resp == "w":
             self.fail()
         elif resp == "f":
@@ -157,9 +120,7 @@ class FakeProvisioner(Provisioner):
 
     def submitting_provisioning_record(self):
         if bg_input("submitted? [y: yes, n: no]") == "y":
-            self._registrar.submit_provisioning_record(
-                self.provisional_status, self.hwspec, self.logs
-            )
+            self._registrar.submit_provisioning_record(self.provisional_status, self.hwspec, self.logs)
             self.proceed()
         else:
             self.retry()

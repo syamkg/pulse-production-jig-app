@@ -14,9 +14,7 @@ if os.name == "nt":  # sys.platform == 'win32':
 elif os.name == "posix":
     from serial.tools.list_ports_posix import comports
 else:
-    raise ImportError(
-        "Sorry: no implementation for your platform ('{}') available".format(os.name)
-    )
+    raise ImportError("Sorry: no implementation for your platform ('{}') available".format(os.name))
 
 
 def _to_port_flags(port_number: int):

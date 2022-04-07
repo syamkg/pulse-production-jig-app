@@ -23,9 +23,7 @@ class CommonStates:
         self.proceed()
 
     def registering_device(self):
-        resp = bg_input(
-            "registeration status? [p:pass, f:fail registration, w: fail write hwspec"
-        )
+        resp = bg_input("registeration status? [p:pass, f:fail registration, w: fail write hwspec")
         if resp == "w":
             self.fail()
         elif resp == "f":
@@ -38,9 +36,7 @@ class CommonStates:
 
     def submitting_provisioning_record(self):
         if bg_input("submitted? [y: yes, n: no]") == "y":
-            self._registrar.submit_provisioning_record(
-                self.provisional_status, self.hwspec, self._ftf.log
-            )
+            self._registrar.submit_provisioning_record(self.provisional_status, self.hwspec, self._ftf.log)
             self.proceed()
         else:
             self.retry()

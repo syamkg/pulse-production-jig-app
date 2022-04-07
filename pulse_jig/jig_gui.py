@@ -39,9 +39,7 @@ class JigGUI:
         self._init_gui()
         self._init_logs()
 
-        threading.Thread(
-            target=provisioner_thread, args=(self.window, provisioner), daemon=True
-        ).start()
+        threading.Thread(target=provisioner_thread, args=(self.window, provisioner), daemon=True).start()
 
         while True:
             event, data = self.window.read(timeout=100)
@@ -60,9 +58,7 @@ class JigGUI:
     def _init_logs(self):
         self._log_queue = queue.Queue()
         self._queue_handler = QueueHandler(self._log_queue)
-        self._queue_handler.setFormatter(
-            logging.Formatter("[%(levelname)s:%(name)s] %(message)s")
-        )
+        self._queue_handler.setFormatter(logging.Formatter("[%(levelname)s:%(name)s] %(message)s"))
         logging.getLogger().addHandler(self._queue_handler)
 
     def _update_logs(self):
@@ -92,9 +88,7 @@ class JigGUI:
         }
         if self.current_status != status:
             self.current_status = status
-            self.window["-PASSFAIL-"].update(
-                opts[status][0], background_color=opts[status][1]
-            )
+            self.window["-PASSFAIL-"].update(opts[status][0], background_color=opts[status][1])
             self.window["-PASSFAIL_WRAPPER-"].Widget.config(background=opts[status][1])
 
     def _update_state(self, name):
@@ -178,13 +172,7 @@ class JigGUI:
                         [
                             sg.Frame(
                                 "QRCode",
-                                layout=[
-                                    [
-                                        sg.Image(
-                                            key="-QRCODE-", expand_x=True, expand_y=True
-                                        )
-                                    ]
-                                ],
+                                layout=[[sg.Image(key="-QRCODE-", expand_x=True, expand_y=True)]],
                                 element_justification="center",
                                 vertical_alignment="center",
                                 expand_x=True,

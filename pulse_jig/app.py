@@ -15,15 +15,11 @@ class Target(enum.Enum):
     FAKE = "fake"
 
 
-def _create_probe_provisioner(
-    dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int
-):
+def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int):
     from probe_provisioner import ProbeProvisioner
     from pulse_manager import PulseManager
 
-    pulse_manager = PulseManager(
-        reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT"
-    )
+    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
 
     return ProbeProvisioner(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
 
@@ -40,12 +36,8 @@ def _parse_target(name: str) -> Target:
 
 
 def _configure_logging(transitions: bool, jig_client: bool):
-    logging.getLogger("transitions").setLevel(
-        logging.INFO if transitions else logging.ERROR
-    )
-    logging.getLogger("jig_client").setLevel(
-        logging.INFO if jig_client else logging.ERROR
-    )
+    logging.getLogger("transitions").setLevel(logging.INFO if transitions else logging.ERROR)
+    logging.getLogger("jig_client").setLevel(logging.INFO if jig_client else logging.ERROR)
 
 
 @click.command()
@@ -59,9 +51,7 @@ def _configure_logging(transitions: bool, jig_client: bool):
 @click.option("--debug", "-d", default=False, is_flag=True)
 @click.option("--reset-pin", default=6)
 @click.option("--pcb-sense-pin", default=5)
-def main(
-    target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense_pin: int
-):
+def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense_pin: int):
     if dev is None:
         print("Could not detect device")
         exit(1)
