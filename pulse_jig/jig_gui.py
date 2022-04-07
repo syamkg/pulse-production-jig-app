@@ -7,7 +7,7 @@ import queue
 import logging
 
 
-def provisioner_thread(window, provisioner):
+def _provisioner_thread(window, provisioner):
     def handler(event, data):
         window.write_event_value(event, data)
 
@@ -15,7 +15,7 @@ def provisioner_thread(window, provisioner):
     provisioner.run()
 
 
-def generate_qrcode(serial: str):
+def _generate_qrcode(serial: str) -> bytes:
     img = qrcode.make(serial)
     bio = io.BytesIO()
     img.get_image().save(bio, format="PNG")
@@ -23,11 +23,11 @@ def generate_qrcode(serial: str):
 
 
 class QueueHandler(logging.Handler):
-    def __init__(self, log_queue):
+    def __init__(self, log_queue: queue.Queue):
         super().__init__()
         self.log_queue = log_queue
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord):
         self.log_queue.put(record)
 
 
@@ -39,7 +39,7 @@ class JigGUI:
         self._init_gui()
         self._init_logs()
 
-        threading.Thread(target=provisioner_thread, args=(self.window, provisioner), daemon=True).start()
+        threading.Thread(target=_provisioner_thread, args=(self.window, provisioner), daemon=True).start()
 
         while True:
             event, data = self.window.read(timeout=100)
@@ -72,7 +72,7 @@ class JigGUI:
 
     def _update_qr(self, state):
         if state["status"] == Provisioner.Status.PASSED:
-            data = generate_qrcode(state["hwspec"]["serial"])
+            data = _generate_qrcode(state["hwspec"]["serial"])
         else:
             data = None
         self.window["-QRCODE-"].update(data=data)

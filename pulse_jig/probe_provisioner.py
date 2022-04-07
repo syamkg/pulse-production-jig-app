@@ -23,10 +23,6 @@ class States(enum.Enum):
     WAITING_FOR_TARGET_REMOVAL = enum.auto()
 
 
-class PCBLostException(Exception):
-    pass
-
-
 class ProbeProvisioner(Provisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)
