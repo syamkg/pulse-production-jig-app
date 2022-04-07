@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 # Import the correct platform specific comports implementation.
 # There doesn't seem to be a better way of doing this at the moment.
 if os.name == "nt":  # sys.platform == 'win32':
-    from serial.tools.list_ports_windows import comports
+    # Commented out to avoid mypy errors and we don't use windows - reenable and fix if you use windows :)
+    # from serial.tools.list_ports_windows import comports
+    pass
 elif os.name == "posix":
     from serial.tools.list_ports_posix import comports
 else:

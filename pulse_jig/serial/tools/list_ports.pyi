@@ -1,0 +1,6 @@
+from collections.abc import Generator
+from serial.tools.list_ports_posix import comports as comports
+from typing import Any
+
+def grep(regexp, include_links: bool = ...) -> Generator[Any, None, None]: ...
+def main() -> None: ...
