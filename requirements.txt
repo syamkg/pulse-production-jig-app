@@ -18,3 +18,4 @@ pigpio==1.78
 black==21.9b0
 pre-commit==2.15.0
 requests==2.26.0
+mypy==0.942
