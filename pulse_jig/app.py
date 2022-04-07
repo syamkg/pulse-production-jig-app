@@ -61,17 +61,17 @@ def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense
 
     registrar = Registrar()
 
-    target = _parse_target(target)
-    if Target.PROBE == target:
+    provider_target = _parse_target(target)
+    if Target.PROBE == provider_target:
         provisioner = _create_probe_provisioner(
             dev=dev,
             registrar=registrar,
             reset_pin=reset_pin,
             pcb_sense_pin=pcb_sense_pin,
         )
-    elif Target.FAKE == target:
+    elif Target.FAKE == provider_target:
         provisioner = _create_fake_provisioner(registrar)
-    elif Target.PULSE == target:
+    elif Target.PULSE == provider_target:
         raise RuntimeError("Not implemented")
     else:
         raise RuntimeError("Invalid target")

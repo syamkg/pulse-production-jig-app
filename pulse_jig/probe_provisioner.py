@@ -132,7 +132,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
         try:
             if self._ftf.hwspec_load("probe"):
-                self.hwspec = {"serial": self._ftf.hwspec_get("serial")}
+                self.hwspec = Provisioner.HWSpec(serial=self._ftf.hwspec_get("serial"))
             else:
                 self.hwspec = None
             self._ftf.disable_external_port()

@@ -2,9 +2,10 @@ import time
 import serial
 import logging
 import sys
+from provisioner import Provisioner
 
 
-def bg_input(prompt):
+def bg_input(prompt: str):
     sys.stdout.write(prompt + "\n")
     return sys.stdin.readline().strip()
 
@@ -31,7 +32,7 @@ class CommonStates:
         else:
             serial = "W0-234-12345678"
             self._registrar.register_serial(serial)
-            self.hwspec = {"serial": serial}
+            self.hwspec = Provisioner.HWSpec(serial=serial)
             self.proceed()
 
     def submitting_provisioning_record(self):

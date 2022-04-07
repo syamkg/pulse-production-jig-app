@@ -78,7 +78,7 @@ class FakeProvisioner(Provisioner):
         inp = bg_input("has hwspec? [y: yes, n: no]")
         print(f"input: {inp}")
         if inp == "y":
-            self.hwspec = {"serial": "W0-123-456789"}
+            self.hwspec = Provisioner.HWSpec(serial="W0-123-456789")
         else:
             self.hwspec = None
         self.proceed()
@@ -107,7 +107,7 @@ class FakeProvisioner(Provisioner):
         self.proceed()
 
     def registering_device(self):
-        resp = bg_input("registeration status? [p:pass, f:fail registration, w: fail write hwspec")
+        resp = bg_input("registeration status? [p:pass, f:fail registration, w: fail write hwspec]:")
         if resp == "w":
             self.fail()
         elif resp == "f":
@@ -115,7 +115,7 @@ class FakeProvisioner(Provisioner):
         else:
             serial = "W0-234-12345678"
             self._registrar.register_serial(serial)
-            self.hwspec = {"serial": serial}
+            self.hwspec = Provisioner.HWSpec(serial=serial)
             self.proceed()
 
     def submitting_provisioning_record(self):

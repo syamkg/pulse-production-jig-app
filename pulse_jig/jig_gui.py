@@ -49,7 +49,7 @@ class JigGUI:
                 pass
             else:
                 self._update_state(event)
-                self._set_status(data[event]["status"])
+                self._set_status(data[event].status)
                 self._update_qr(data[event])
             self._update_logs()
 
@@ -71,8 +71,8 @@ class JigGUI:
             self.window["-LOG-"].update(msg + "\n", append=True)
 
     def _update_qr(self, state):
-        if state["status"] == Provisioner.Status.PASSED:
-            data = _generate_qrcode(state["hwspec"]["serial"])
+        if state.status == Provisioner.Status.PASSED:
+            data = _generate_qrcode(state.hwspec.serial)
         else:
             data = None
         self.window["-QRCODE-"].update(data=data)

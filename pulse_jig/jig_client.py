@@ -120,7 +120,7 @@ class JigClient:
         if has_body and type == "sync":
             body = self._parse_sync_command_body()
 
-        return body
+        return body or ""
 
     def _parse_command_echo(self, cmd):
         # Parse command echo. Ignore any prompt at the start of the
