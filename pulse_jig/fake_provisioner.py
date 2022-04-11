@@ -107,7 +107,7 @@ class FakeProvisioner(Provisioner):
         self.proceed()
 
     def registering_device(self):
-        resp = bg_input("registeration status? [p:pass, f:fail registration, w: fail write hwspec]:")
+        resp = bg_input("registration status? [p:pass, f:fail registration, w: fail write hwspec]:")
         if resp == "w":
             self.fail()
         elif resp == "f":
