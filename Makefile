@@ -1,4 +1,10 @@
-.PHONY: sync check-host check-notifyloop check-rsync
+.PHONY: sync check-host check-notifyloop check-rsync test lint
+
+test:
+	python -m pytest
+
+lint:
+	pre-commit run -a
 
 sync: check-host check-rsync
 	rsync -r --exclude=".git" --exclude ".pytest_cache" --exclude ".coverage" --exclude=".venv" --exclude="__pycache__" --exclude="*.pyc" . $(HOST):/home/pi/pulse-dev

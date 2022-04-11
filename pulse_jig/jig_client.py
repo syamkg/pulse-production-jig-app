@@ -116,11 +116,11 @@ class JigClient:
         self._parse_command_ack()
 
         body = None
-        if has_body and type == "async":
-            body = self._parse_async_command_body()
-
-        if has_body and type == "sync":
-            body = self._parse_sync_command_body()
+        if has_body:
+            if type == "async":
+                body = self._parse_async_command_body()
+            elif type == "sync":
+                body = self._parse_sync_command_body()
 
         return body or ""
 
