@@ -1,7 +1,7 @@
 import enum
 from typing import Callable, Dict, List, Optional
-from registrar import Registrar
 from dataclasses import dataclass
+from ..registrar import Registrar
 
 
 class Provisioner:

@@ -1,7 +1,7 @@
 import logging
 import os
-import time
 from typing import Optional
+from .timeout import Timeout
 
 import serial
 
@@ -70,8 +70,8 @@ class JigClient:
 
     def _read_until_prompt(self, timeout: float) -> None:
         self._port.timeout = 0.1
-        end_time = time.monotonic() + timeout
-        while time.monotonic() < end_time:
+        timer = Timeout(timeout)
+        while timer.active:
             if self._readline() == self._prompt:
                 break
 
@@ -143,9 +143,9 @@ class JigClient:
         # Parse async command body
         line = ""
         lines = []
-        timeout = time.monotonic() + self._body_timeout
-        while time.monotonic() < timeout:
-            self._port.timeout = timeout - time.monotonic()
+        timeout = Timeout(self._body_timeout)
+        while not timeout.expired:
+            self._port.timeout = timeout.remaining
             line = self._readline()
             if self._is_end_of_body(line):
                 break

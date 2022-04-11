@@ -1,10 +1,11 @@
 import PySimpleGUI as sg
 import threading
-from provisioner import Provisioner
 import qrcode
 import io
 import queue
 import logging
+from .provisioner.provisioner import Provisioner
+from .timeout import Timeout
 
 
 def _provisioner_thread(window, provisioner):
@@ -63,12 +64,13 @@ class JigGUI:
 
     def _update_logs(self):
         try:
-            record = self._log_queue.get(block=False)
+            timeout = Timeout(0.1)
+            while not timeout.expired:
+                record = self._log_queue.get(block=False)
+                msg = self._queue_handler.format(record)
+                self.window["-LOG-"].update(msg + "\n", append=True)
         except queue.Empty:
             pass
-        else:
-            msg = self._queue_handler.format(record)
-            self.window["-LOG-"].update(msg + "\n", append=True)
 
     def _update_qr(self, state):
         if state.status == Provisioner.Status.PASSED:

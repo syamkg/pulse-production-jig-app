@@ -1,11 +1,11 @@
 import logging
-from registrar import Registrar
-from jig_gui import JigGUI
 import enum
 import click
 from typing import Optional
-from jig_client import JigClient
-from provisioner import Provisioner
+from lib.registrar import Registrar
+from lib.jig_gui import JigGUI
+from lib.jig_client import JigClient
+from lib.provisioner.provisioner import Provisioner
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,8 +17,8 @@ class Target(enum.Enum):
 
 
 def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
-    from probe_provisioner import ProbeProvisioner
-    from pulse_manager import PulseManager
+    from lib.provisioner.probe_provisioner import ProbeProvisioner
+    from lib.pulse_manager import PulseManager
 
     pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
 
@@ -26,7 +26,7 @@ def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pc
 
 
 def _create_fake_provisioner(registrar: Registrar) -> Provisioner:
-    from fake_provisioner import FakeProvisioner
+    from lib.provisioner.fake_provisioner import FakeProvisioner
 
     return FakeProvisioner(registrar)
 

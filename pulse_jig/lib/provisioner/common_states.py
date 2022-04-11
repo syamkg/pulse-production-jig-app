@@ -2,7 +2,7 @@ import time
 import serial
 import logging
 import sys
-from provisioner import Provisioner
+from .provisioner import Provisioner
 
 
 def bg_input(prompt: str):
@@ -13,6 +13,7 @@ def bg_input(prompt: str):
 class CommonStates:
     def waiting_for_serial(self):
         """Blocks until the serial port is detected."""
+        self._port.close()
         while True:
             try:
                 self._port.open()

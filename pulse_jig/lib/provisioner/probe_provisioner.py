@@ -1,10 +1,10 @@
 import enum
-from provisioner import Provisioner
-from common_states import CommonStates
-from transitions import Machine
-from jig_client import JigClient, JigClientException
 import serial
 import os
+from transitions import Machine
+from .provisioner import Provisioner
+from .common_states import CommonStates
+from ..jig_client import JigClient, JigClientException
 
 
 class States(enum.Enum):
