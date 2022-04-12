@@ -3,6 +3,7 @@ import enum
 from provisioner import Provisioner
 from transitions import Machine
 import sys
+from ..hwspec import HWSpec
 
 
 def bg_input(prompt):
@@ -78,7 +79,7 @@ class FakeProvisioner(Provisioner):
         inp = bg_input("has hwspec? [y: yes, n: no]")
         print(f"input: {inp}")
         if inp == "y":
-            self.hwspec = Provisioner.HWSpec(serial="W0-123-456789")
+            self.hwspec = HWSpec(serial="W0-123-456789")
         else:
             self.hwspec = None
         self.proceed()
@@ -115,7 +116,7 @@ class FakeProvisioner(Provisioner):
         else:
             serial = "W0-234-12345678"
             self._registrar.register_serial(serial)
-            self.hwspec = Provisioner.HWSpec(serial=serial)
+            self.hwspec = HWSpec(serial=serial)
             self.proceed()
 
     def submitting_provisioning_record(self):

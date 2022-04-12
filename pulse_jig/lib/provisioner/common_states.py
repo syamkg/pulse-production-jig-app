@@ -3,6 +3,7 @@ import serial
 import logging
 import sys
 from .provisioner import Provisioner
+from ..hwspec import HWSpec
 
 
 def bg_input(prompt: str):
@@ -33,7 +34,7 @@ class CommonStates:
         else:
             serial = "W0-234-12345678"
             self._registrar.register_serial(serial)
-            self.hwspec = Provisioner.HWSpec(serial=serial)
+            self.hwspec = HWSpec(serial=serial)
             self.proceed()
 
     def submitting_provisioning_record(self):

@@ -2,10 +2,20 @@ import enum
 from typing import Callable, Dict, List, Optional
 from dataclasses import dataclass
 from ..registrar import Registrar
+from ..hwspec import HWSpec
 
 
 class Provisioner:
+    """
+    Base class for providers. It contains the provisioning status, event system,
+    and main loop of the workflow.
+    """
+
     class Status(enum.Enum):
+        """
+        Workflow status.
+        """
+
         UNKNOWN = enum.auto()
         INPROGRESS = enum.auto()
         PASSED = enum.auto()
@@ -14,18 +24,16 @@ class Provisioner:
         WAITING = enum.auto()
 
     @dataclass
-    class HWSpec:
-        serial: str
-
-    @dataclass
     class EventData:
-        hwspec: Optional["Provisioner.HWSpec"]
+        hwspec: Optional[HWSpec]
         status: "Provisioner.Status"
 
     def __init__(self, registrar: Registrar):
         self.reset()
         self._registrar = registrar
         self._listeners: List[Callable] = []
+        self.status = Provisioner.Status.UNKNOWN
+        self.provisional_status = Provisioner.Status.UNKNOWN
 
     def _send_event(self, name: str):
         for listener in self._listeners:
@@ -78,6 +86,6 @@ class Provisioner:
         self.status = self.provisional_status
 
     def reset(self):
-        self.hwspec: Optional[Provisioner.HWSpec] = None
+        self.hwspec: Optional[HWSpec] = None
         self.logs: str = ""
         self.status: Provisioner.Status = Provisioner.Status.UNKNOWN

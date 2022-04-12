@@ -5,6 +5,7 @@ from transitions import Machine
 from .provisioner import Provisioner
 from .common_states import CommonStates
 from ..jig_client import JigClient, JigClientException
+from ..hwspec import HWSpec
 
 
 class States(enum.Enum):
@@ -132,7 +133,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
         try:
             if self._ftf.hwspec_load("probe"):
-                self.hwspec = Provisioner.HWSpec(serial=self._ftf.hwspec_get("serial"))
+                self.hwspec = HWSpec(serial=self._ftf.hwspec_get("serial"))
             else:
                 self.hwspec = None
             self._ftf.disable_external_port()
