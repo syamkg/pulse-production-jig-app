@@ -1,4 +1,4 @@
-from pulse_jig.jig_client import JigClient, JigClientException
+from pulse_jig.lib.jig_client import JigClient, JigClientException
 import serial
 import pytest
 
