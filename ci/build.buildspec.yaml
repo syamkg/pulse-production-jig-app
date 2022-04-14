@@ -13,7 +13,8 @@ phases:
 
   build:
     commands:
-      - python -m pytest
+      - make lint
+      - make test
       - echo Build started on `date`
       - echo Building the Docker image...
       - export DOCKER_BUILDKIT=1

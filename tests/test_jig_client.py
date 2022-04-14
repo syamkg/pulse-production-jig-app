@@ -1,4 +1,4 @@
-from pulse_jig.jig_client import JigClient, JigClientException
+from pulse_jig.lib.jig_client import JigClient, JigClientException
 import serial
 import pytest
 
@@ -15,9 +15,7 @@ def test_send_command_returns_the_body_on_success(port):
     port.write(b"testing EEPROM...OK\r\n")
     port.write(b".\r\n")
     client = JigClient(port)
-    assert client.send_command("SELF_TEST") == "\n".join(
-        ["testing watchdog...OK", "testing EEPROM...OK"]
-    )
+    assert client.send_command("SELF_TEST") == "\n".join(["testing watchdog...OK", "testing EEPROM...OK"])
 
 
 def test_send_command_works_when_prompt_present(port):
@@ -29,11 +27,11 @@ def test_send_command_works_when_prompt_present(port):
     assert client.send_command("SELF_TEST") == "testing EEPROM...OK"
 
 
-def test_send_command_return_false_on_negative_ack(port):
+def test_send_command_raises_exception_on_error_response(port):
     port.write(b"SELF_TEST\r\n")
     port.write(b"-ERR\r\n")
     client = JigClient(port)
-    with pytest.raises(JigClientException):
+    with pytest.raises(JigClient.CommandFailed):
         assert client.send_command("SELF_TEST")
 
 
