@@ -4,3 +4,7 @@ __pycache__/
 .venv
 firmware
 .coverage
+
+# Ignore dynaconf secret files
+.secrets.*
+settings.local.yaml
