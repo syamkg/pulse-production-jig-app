@@ -1,9 +1,12 @@
-import PySimpleGUI as sg
-import threading
-import qrcode
 import io
-import queue
+import json
 import logging
+import queue
+import threading
+
+import PySimpleGUI as sg
+import qrcode
+
 from .provisioner.provisioner import Provisioner
 from .timeout import Timeout
 
@@ -16,10 +19,15 @@ def _provisioner_thread(window, provisioner):
     provisioner.run()
 
 
-def _generate_qrcode(serial: str) -> bytes:
-    img = qrcode.make(serial)
+def _generate_qrcode(data: dict) -> bytes:
+    qr = qrcode.QRCode(version=8, box_size=5, border=3)
+    qr.add_data(json.dumps(data))
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="white", back_color="black")
+
     bio = io.BytesIO()
     img.get_image().save(bio, format="PNG")
+
     return bio.getvalue()
 
 
@@ -73,10 +81,11 @@ class JigGUI:
             pass
 
     def _update_qr(self, state):
+        data = None
         if state.status == Provisioner.Status.PASSED:
-            data = _generate_qrcode(state.hwspec.serial)
-        else:
-            data = None
+            data = _generate_qrcode(
+                {"sn": state.hwspec.serial, "rev": state.hwspec.hw_revision, "dom": state.hwspec.assembly_timestamp}
+            )
         self.window["-QRCODE-"].update(data=data)
 
     def _set_status(self, status: Provisioner.Status):
@@ -104,7 +113,7 @@ class JigGUI:
             [
                 sg.Column(
                     layout=[
-                        [sg.Sizer(500, 0)],
+                        [sg.Sizer(450, 0)],
                         [
                             sg.Frame(
                                 "State",
@@ -148,7 +157,7 @@ class JigGUI:
                 ),
                 sg.Column(
                     layout=[
-                        [sg.Sizer(300, 0)],
+                        [sg.Sizer(350, 0)],
                         [
                             sg.Frame(
                                 "",

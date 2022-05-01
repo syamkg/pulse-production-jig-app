@@ -1,8 +1,10 @@
-import time
 import enum
-from provisioner import Provisioner
-from transitions import Machine
 import sys
+import time
+
+from transitions import Machine
+
+from .provisioner import Provisioner
 from ..hwspec import HWSpec
 
 
@@ -121,7 +123,7 @@ class FakeProvisioner(Provisioner):
 
     def submitting_provisioning_record(self):
         if bg_input("submitted? [y: yes, n: no]") == "y":
-            self._registrar.submit_provisioning_record(self.provisional_status, self.hwspec, self.logs)
+            self._registrar.submit_provisioning_record(self.hwspec, self.provisional_status.name, self.logs)
             self.proceed()
         else:
             self.retry()
