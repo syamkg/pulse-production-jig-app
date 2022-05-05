@@ -13,7 +13,7 @@ RUN apt-get update --yes && \
 # add the https://www.piwheels.org/ repo so we don't have to build from source
 COPY pip.conf /etc/pip.conf
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/pulse_jig
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

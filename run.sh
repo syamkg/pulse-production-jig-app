@@ -10,8 +10,10 @@ docker run -it --rm \
   --env QT_X11_NO_MITSHM=1 \
   --volume /tmp/.X11-unix:/tmp/.X11-unix \
   --volume /media/pi/XDOT/:/media/pi/XDOT \
-  --volume /home/pi/Desktop/test-jig/pulse_jig/firmware:/usr/src/app/firmware \
+  --volume /home/pi/.aws:/root/.aws \
+  --volume /home/pi/Desktop/test-jig/.env:/usr/src/pulse_jig/.env \
+  --volume /home/pi/Desktop/test-jig/pulse_jig/firmware:/usr/src/pulse_jig/firmware \
   --privileged \
-  pulse-jig $@
+  pulse-jig "$@"
 
 xhost -local:

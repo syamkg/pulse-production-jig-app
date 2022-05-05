@@ -1,8 +1,12 @@
 import enum
-from typing import Callable, Dict, List, Optional
+import logging
 from dataclasses import dataclass
-from ..registrar import Registrar
+from typing import Callable, Dict, List, Optional
+
 from ..hwspec import HWSpec
+from ..registrar import Registrar
+
+logger = logging.getLogger("provisioner")
 
 
 class Provisioner:
@@ -47,8 +51,9 @@ class Provisioner:
         self._send_event(self.state.value)
         try:
             getattr(self, self.state.value)()
+            logger.info(f"{self.state.value}()")
         except ValueError as e:
-            print(e)
+            logger.error(str(e))
             self.fail()
 
     def add_listener(self, listener: Callable[[str, Dict], None]):

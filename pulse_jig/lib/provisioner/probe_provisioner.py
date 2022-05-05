@@ -1,11 +1,16 @@
 import enum
+import logging
+
 import serial
-import os
 from transitions import Machine
-from .provisioner import Provisioner
+
+from pulse_jig.config import settings
 from .common_states import CommonStates
-from ..jig_client import JigClient, JigClientException
+from .provisioner import Provisioner
 from ..hwspec import HWSpec
+from ..jig_client import JigClient, JigClientException
+
+logger = logging.getLogger("probe_provisioner")
 
 
 class States(enum.Enum):
@@ -17,7 +22,9 @@ class States(enum.Enum):
     LOADING_TEST_FIRMWARE = enum.auto()
     WAITING_FOR_TARGET = enum.auto()
     LOADING_DEVICE_REGO = enum.auto()
+    GENERATE_HWSPEC = enum.auto()
     REGISTERING_DEVICE = enum.auto()
+    SAVE_HWSPEC = enum.auto()
     RUNNING_TESTS = enum.auto()
     SUBMITTING_PROVISIONING_RECORD = enum.auto()
     LOADING_PROD_FIRMWARE = enum.auto()
@@ -31,7 +38,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self._pulse_manager = pulse_manager
         self._port = serial.Serial(baudrate=115200)
         self._port.port = dev
-        self._test_firmware_path = "../firmware/test-firmware.bin"
+        self._test_firmware_path = settings.app.test_firmware_path
 
     def _init_state_machine(self):
         m = Machine(
@@ -51,8 +58,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_TARGET_REMOVAL, States.WAITING_FOR_TARGET)
 
         # Register device if it doesn't have a hwspec
-        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.REGISTERING_DEVICE, unless="has_hwspec")
-        m.add_transition("proceed", States.REGISTERING_DEVICE, States.RUNNING_TESTS)
+        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.GENERATE_HWSPEC, unless="has_hwspec")
+        m.add_transition("proceed", States.GENERATE_HWSPEC, States.REGISTERING_DEVICE, conditions="has_hwspec")
+        m.add_transition("proceed", States.REGISTERING_DEVICE, States.SAVE_HWSPEC)
+        m.add_transition("proceed", States.SAVE_HWSPEC, States.RUNNING_TESTS)
 
         # Load the production firmware if the device passed the tests
         m.add_transition("proceed", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, conditions="has_passed")
@@ -97,7 +106,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self.proceed()
 
     def loading_test_firmware(self):
-        if os.getenv("SKIP_TEST_FIRMWARE_LOAD") != "1":
+        if not settings.app.skip_test_firmware_load:
             self._pulse_manager.load_firmware(self._test_firmware_path)
         self._ftf = JigClient(self._port)
         self._pulse_manager.reset_device()
@@ -116,8 +125,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
             try:
                 self._inner_loop()
             except Exception as e:
-                print(f"BOOM: {e}")
-                print(type(e))
+                logger.error(str(e))
                 self.pcb_lost()
 
     def loading_device_rego(self):
@@ -125,7 +133,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
             self._ftf.enable_external_port(self._port_no)
         except JigClientException:
             # If a JigClientException occurred here then it
-            # shouldn't be the probe because it is isoated
+            # shouldn't be the probe because it is isolated
             # from the system until after this command.
             # Going to assume this means the pulse was
             # unplugged.
@@ -133,7 +141,8 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
         try:
             if self._ftf.hwspec_load("probe"):
-                self.hwspec = HWSpec(serial=self._ftf.hwspec_get("serial"))
+                self.hwspec = HWSpec()
+                self.hwspec.get(self._ftf)
             else:
                 self.hwspec = None
             self._ftf.disable_external_port()
@@ -156,4 +165,16 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
     def waiting_for_target_removal(self):
         self._ftf.probe_await_recovery()
+        self.proceed()
+
+    def generate_hwspec(self):
+        self.hwspec = HWSpec()
+        self.hwspec.set(self._ftf)
+        self.proceed()
+
+    def save_hwspec(self):
+        self.hwspec.save(self._ftf)
+        self._ftf.enable_external_port(self._port_no)
+        self._ftf.hwspec_save("probe")
+        self._ftf.disable_external_port()
         self.proceed()

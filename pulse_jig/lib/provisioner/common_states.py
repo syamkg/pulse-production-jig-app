@@ -1,9 +1,8 @@
-import time
-import serial
 import logging
 import sys
-from .provisioner import Provisioner
-from ..hwspec import HWSpec
+import time
+
+import serial
 
 
 def bg_input(prompt: str):
@@ -26,20 +25,15 @@ class CommonStates:
         self.proceed()
 
     def registering_device(self):
-        resp = bg_input("registeration status? [p:pass, f:fail registration, w: fail write hwspec")
-        if resp == "w":
-            self.fail()
-        elif resp == "f":
-            self.retry()
-        else:
-            serial = "W0-234-12345678"
-            self._registrar.register_serial(serial)
-            self.hwspec = HWSpec(serial=serial)
+        registered = self._registrar.register_serial(self.hwspec, self._ftf.lora_deveui())
+        if registered:
             self.proceed()
+        else:
+            self.retry()
 
     def submitting_provisioning_record(self):
-        if bg_input("submitted? [y: yes, n: no]") == "y":
-            self._registrar.submit_provisioning_record(self.provisional_status, self.hwspec, self._ftf.log)
+        success = self._registrar.submit_provisioning_record(self.hwspec, self.provisional_status.name, self._ftf.log)
+        if success:
             self.proceed()
         else:
             self.retry()

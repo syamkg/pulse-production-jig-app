@@ -81,7 +81,7 @@ class FakeProvisioner(Provisioner):
         inp = bg_input("has hwspec? [y: yes, n: no]")
         print(f"input: {inp}")
         if inp == "y":
-            self.hwspec = HWSpec(serial="W0-123-456789")
+            self.hwspec = HWSpec(serial="W0-123-456789")  # todo fix
         else:
             self.hwspec = None
         self.proceed()
@@ -116,9 +116,8 @@ class FakeProvisioner(Provisioner):
         elif resp == "f":
             self.retry()
         else:
-            serial = "W0-234-12345678"
-            self._registrar.register_serial(serial)
-            self.hwspec = HWSpec(serial=serial)
+            self.hwspec = HWSpec()  # todo fix
+            self._registrar.register_serial(self.hwspec, "00:00")
             self.proceed()
 
     def submitting_provisioning_record(self):

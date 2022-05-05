@@ -1,10 +1,10 @@
-import gpiozero
 import logging
+import shutil
+import threading
 import time
 from pathlib import Path
-import threading
-import shutil
 
+import gpiozero
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class PulseManager:
             try:
                 shutil.copy(str(firmware_path), self._xdot_volume / firmware_path.name)
             except IOError as e:
-                logger.exception(f"Oops: {e}")
+                logger.error(str(e))
 
         self._reset_pin.off()
         logger.debug("starting copy")

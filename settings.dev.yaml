@@ -1,4 +1,22 @@
 ---
-lora:
-  join_eui: aa:aa:aa:aa:aa:aa:aa:aa
-  app_key: aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa
+global:
+  app:
+    test_firmware_path: firmware/test-firmware.bin
+    prod_firmware_path: firmware/prod-firmware.bin
+    stage: dev
+    skip_test_firmware_load: true
+  device:
+    minter_id: 0x00
+    thing_type_name: ta3k
+    thing_type_id: 0x201
+    hw_revision: r2.0
+    assembly_id: 0x00
+    assembly_version: 0.0.0
+    manufacturer_name: Woodside
+    manufacturer_id: 0x01
+  api:
+    region: ap-southeast-2
+    host: https://8k3h1lqdjd.execute-api.ap-southeast-2.amazonaws.com
+  lora:
+    join_eui: aa:aa:aa:aa:aa:aa:aa:aa
+    app_key: aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa

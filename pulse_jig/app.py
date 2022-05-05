@@ -1,13 +1,16 @@
-import logging
 import enum
-import click
+import logging
+import sys
 from typing import Optional
-from lib.registrar import Registrar
-from lib.jig_gui import JigGUI
-from lib.jig_client import JigClient
-from lib.provisioner.provisioner import Provisioner
 
-logging.basicConfig(level=logging.DEBUG)
+import click
+
+sys.path.append("..")
+
+from lib.jig_client import JigClient
+from lib.jig_gui import JigGUI
+from lib.provisioner.provisioner import Provisioner
+from lib.registrar import Registrar
 
 
 class Target(enum.Enum):
@@ -36,9 +39,11 @@ def _parse_target(name: str) -> Target:
     return targets[name]
 
 
-def _configure_logging(transitions: bool, jig_client: bool):
-    logging.getLogger("transitions").setLevel(logging.INFO if transitions else logging.ERROR)
-    logging.getLogger("jig_client").setLevel(logging.INFO if jig_client else logging.ERROR)
+def _configure_logging(debug):
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    logging.getLogger("transitions").setLevel(logging.INFO if debug else logging.ERROR)
+    logging.getLogger("jig_client").setLevel(logging.INFO if debug else logging.ERROR)
+    logging.getLogger("botocore").setLevel(logging.INFO if debug else logging.ERROR)
 
 
 @click.command()
@@ -57,7 +62,7 @@ def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense
         print("Could not detect device")
         exit(1)
 
-    _configure_logging(transitions=debug, jig_client=True)
+    _configure_logging(debug)
 
     registrar = Registrar()
 

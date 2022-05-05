@@ -1,9 +1,10 @@
 import logging
 import os
 from typing import Optional
-from .timeout import Timeout
 
 import serial
+
+from .timeout import Timeout
 
 logger = logging.getLogger(__name__)
 
@@ -216,14 +217,14 @@ class JigClient:
         :param value: the value to write against the key
         :return: The command's response body.
         """
-        return self.send_command(f"hwspec-set {key} {value}")
+        return self.send_command(f"hwspec-set {key} {value}", has_body=False)
 
     def hwspec_save(self, target: str) -> str:
         """Sends a `hwspec-set` command to the device.
         :param target: the target to save the hwspec to
         :return: The command's response body.
         """
-        return self.send_command(f"hwspec-save {target}")
+        return self.send_command(f"hwspec-save {target}", has_body=False)
 
     def test_ta3k(self, port: int) -> bool:
         return self.run_test_cmd(f"test-ta3k {_to_port_flags(port)} 1")
@@ -248,6 +249,18 @@ class JigClient:
         """
         resp = self.send_command(cmd)
         return self._is_response_successful(resp)
+
+    def lora_deveui(self) -> str:
+        """Sends a `lora-deveui` command to the device.
+        :return: The command's response body.
+        """
+        return self.send_command("lora-deveui")
+
+    def firmware_version(self) -> str:
+        """Sends a `firmware_version` command to the device.
+        :return: The command's response body.
+        """
+        return self.send_command("firmware-version")
 
     @staticmethod
     def find_device() -> Optional[str]:

@@ -19,7 +19,7 @@ Tests are implemented with pytest. Run them with:
 python -m pytest 
 ```
 
-## Formating
+## Formatting
 
 Formatting is done via [Black](https://github.com/psf/black). It's opinionated and not very configurable so just accept
 its formatting and don't fight it :)
@@ -39,19 +39,19 @@ python app.py
 
 ## Running in docker
 
-### BUILD (optional)
+### Option 1: Build
 
 ```bash
 docker buildx build --platform linux/arm/v7 -t pulse-jig .
 ```
 
-### PULL FROM ECR (not required if building)
+### Option 2: Pull from ECR
 
 ```shell
 ./docker-pull <AWS_ACCOUNT_ID>
 ```
 
-### RUN
+### Run
 
 ```shell
 ./run.sh python app.py
