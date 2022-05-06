@@ -117,7 +117,7 @@ class FakeProvisioner(Provisioner):
             self.retry()
         else:
             self.hwspec = HWSpec()  # todo fix
-            self._registrar.register_serial(self.hwspec, "00:00")
+            self._registrar.register_serial(self.hwspec)
             self.proceed()
 
     def submitting_provisioning_record(self):

@@ -25,7 +25,7 @@ class CommonStates:
         self.proceed()
 
     def registering_device(self):
-        registered = self._registrar.register_serial(self.hwspec, self._ftf.lora_deveui())
+        registered = self._registrar.register_serial(self.hwspec)
         if registered:
             self.proceed()
         else:
