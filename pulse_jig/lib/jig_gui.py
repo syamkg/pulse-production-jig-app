@@ -60,7 +60,8 @@ class JigGUI:
                 self._update_state(event)
                 self._set_status(data[event].status)
                 self._update_qr(data[event])
-            self._update_logs()
+            self._update_logs(event, data)
+            self._update_network_status(provisioner.has_network())
 
         self.window.close()
 
@@ -93,8 +94,8 @@ class JigGUI:
             Provisioner.Status.UNKNOWN: ("", "black"),
             Provisioner.Status.WAITING: ("Waiting", "black"),
             Provisioner.Status.INPROGRESS: ("In Progress", "gray"),
-            Provisioner.Status.PASSED: ("Pass", "green"),
-            Provisioner.Status.FAILED: ("Fail", "red"),
+            Provisioner.Status.PASSED: ("Passed", "green"),
+            Provisioner.Status.FAILED: ("Failed", "red"),
             Provisioner.Status.RETRY: ("Retry", "orange"),
         }
         if self.current_status != status:
@@ -106,6 +107,13 @@ class JigGUI:
         # Munge the status handle into something resembling English
         # based on our inside knowledge
         self.window["-STATE-"].update(name.replace("_", " ").capitalize())
+
+    def _update_network_status(self, network_status):
+        if network_status:
+            status_msg = {"value": "Connected", "text_color": "green"}
+        else:
+            status_msg = {"value": "Not connected", "text_color": "red"}
+        self.window["-NETWORK-"].update(**status_msg)
 
     def _init_gui(self):
         sg.theme("Black")
@@ -121,11 +129,12 @@ class JigGUI:
                                     [
                                         sg.Text(
                                             key="-STATE-",
-                                            font="Helvetica 20 bold",
+                                            font=("Arial", 20, "bold"),
                                             expand_x=True,
                                             expand_y=True,
                                         )
-                                    ]
+                                    ],
+                                    [sg.Sizer(0, 5)],
                                 ],
                                 expand_x=True,
                             )
@@ -140,7 +149,7 @@ class JigGUI:
                                             disabled=True,
                                             autoscroll=True,
                                             border_width=0,
-                                            font="Monospace 8 normal",
+                                            font=("Courier New", 8),
                                             background_color="black",
                                             expand_x=True,
                                             expand_y=True,
@@ -163,17 +172,17 @@ class JigGUI:
                                 "",
                                 key="-PASSFAIL_WRAPPER-",
                                 layout=[
-                                    [sg.Sizer(0, 10)],
+                                    [sg.Sizer(0, 8)],
                                     [
                                         sg.Text(
                                             key="-PASSFAIL-",
-                                            font="Helvetica 20 bold",
+                                            font=("Arial", 20, "bold"),
                                             justification="center",
                                             pad=0,
                                             expand_x=True,
                                         )
                                     ],
-                                    [sg.Sizer(0, 1)],
+                                    [sg.Sizer(0, 8)],
                                 ],
                                 vertical_alignment="center",
                                 expand_x=True,
@@ -182,7 +191,7 @@ class JigGUI:
                         ],
                         [
                             sg.Frame(
-                                "QRCode",
+                                "QR Code",
                                 layout=[[sg.Image(key="-QRCODE-", expand_x=True, expand_y=True)]],
                                 element_justification="center",
                                 vertical_alignment="center",
@@ -195,7 +204,18 @@ class JigGUI:
                     expand_y=True,
                     expand_x=True,
                 ),
-            ]
+            ],
+            [
+                sg.Frame(
+                    "App status",
+                    layout=[
+                        [sg.Text("Network:"), sg.Text(key="-NETWORK-")],
+                        [sg.Sizer(0, 5)],
+                    ],
+                    expand_x=True,
+                    pad=(10, 5),
+                )
+            ],
         ]
 
         self.window = sg.Window(
@@ -204,6 +224,7 @@ class JigGUI:
             element_justification="center",
             resizable=True,
             finalize=True,
+            font=("Arial", 10),
         )
         self.window.maximize()
         self.window.refresh()

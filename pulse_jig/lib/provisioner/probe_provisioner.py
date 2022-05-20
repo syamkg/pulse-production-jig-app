@@ -10,7 +10,7 @@ from .provisioner import Provisioner
 from ..hwspec import HWSpec
 from ..jig_client import JigClient, JigClientException
 
-logger = logging.getLogger("probe_provisioner")
+logger = logging.getLogger("provisioner")
 
 
 class States(enum.Enum):
@@ -21,6 +21,7 @@ class States(enum.Enum):
     WAITING_FOR_PCB = enum.auto()
     LOADING_TEST_FIRMWARE = enum.auto()
     WAITING_FOR_TARGET = enum.auto()
+    WAITING_FOR_NETWORK = enum.auto()
     LOADING_DEVICE_REGO = enum.auto()
     GENERATE_HWSPEC = enum.auto()
     REGISTERING_DEVICE = enum.auto()
@@ -51,11 +52,15 @@ class ProbeProvisioner(Provisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE)
         m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.WAITING_FOR_TARGET)
-        m.add_transition("proceed", States.WAITING_FOR_TARGET, States.LOADING_DEVICE_REGO)
+        m.add_transition("proceed", States.WAITING_FOR_TARGET, States.LOADING_DEVICE_REGO, conditions="has_network")
         m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
         m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD)
         m.add_transition("proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_TARGET_REMOVAL)
         m.add_transition("proceed", States.WAITING_FOR_TARGET_REMOVAL, States.WAITING_FOR_TARGET)
+
+        # Wait for network if API is unreachable
+        m.add_transition("proceed", States.WAITING_FOR_TARGET, States.WAITING_FOR_NETWORK, unless="has_network")
+        m.add_transition("proceed", States.WAITING_FOR_NETWORK, States.WAITING_FOR_TARGET, conditions="has_network")
 
         # Register device if it doesn't have a hwspec
         m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.GENERATE_HWSPEC, unless="has_hwspec")

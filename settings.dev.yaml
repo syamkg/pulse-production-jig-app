@@ -20,3 +20,5 @@ global:
   lora:
     join_eui: aa:aa:aa:aa:aa:aa:aa:aa
     app_key: aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa
+  network:
+    ping_interval: 30 # in seconds

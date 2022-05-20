@@ -69,6 +69,9 @@ class Provisioner:
     def has_passed(self) -> bool:
         return self.provisional_status == Provisioner.Status.PASSED
 
+    def has_network(self) -> bool:
+        return self._registrar.network
+
     def set_status_passed(self):
         self.provisional_status = Provisioner.Status.PASSED
 

@@ -1,6 +1,10 @@
 import enum
 import json
 import logging
+import threading
+from time import sleep
+
+import requests
 
 from pulse_jig.config import settings
 from .api import Api
@@ -14,9 +18,25 @@ class ThingType(enum.Enum):
     PROBE = 513
 
 
+def threaded(fn):
+    """
+    Decorator that multithreads the target function
+    with the given parameters. Returns the thread
+    created for the function
+    """
+
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs, daemon=True)
+        thread.start()
+        return thread
+
+    return wrapper
+
+
 class Registrar:
     def __init__(self):
         self._api = Api()
+        self._network = False
 
     def register_serial(self, hwspec: HWSpec):
         data = {
@@ -58,6 +78,21 @@ class Registrar:
         logger.info(response.json()["message"])
         logger.debug("\n" + self._pretty_print(response.text))
         return True if response.status_code == 201 else False
+
+    @threaded
+    def network_check(self):
+        while True:
+            try:
+                self._network = self._api.auth_check().status_code == 200
+            except requests.exceptions.ConnectionError:
+                self._network = False
+            status = "Connected" if self._network else "Not connected"
+            logger.debug(f"Network: {status}")
+            sleep(settings.network.ping_interval)
+
+    @property
+    def network(self) -> bool:
+        return self._network
 
     @staticmethod
     def _pretty_print(data):

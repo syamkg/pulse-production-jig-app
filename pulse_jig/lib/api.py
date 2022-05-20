@@ -36,3 +36,7 @@ class Api:
     def provisioning_record(self, serial: str, data: dict) -> Response:
         url = self._url(f"device/{serial}/provisioning_record")
         return self._session().post(url, json=data)
+
+    def auth_check(self) -> Response:
+        url = self._url("auth/check")
+        return self._session().get(url)

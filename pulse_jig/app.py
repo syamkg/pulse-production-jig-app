@@ -65,6 +65,7 @@ def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense
     _configure_logging(debug)
 
     registrar = Registrar()
+    registrar.network_check()
 
     provider_target = _parse_target(target)
     if Target.PROBE == provider_target:
