@@ -10,11 +10,20 @@ jobs:
         # checkout the source code
         - name: Checkout
           uses: actions/checkout@v2
+          with:
+            fetch-depth: '0'
 
         # This converts /ref/head/a/branch/name to a/branch/name
         - name: Set output
           id: vars
           run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+
+        # Automatically tag repo if HEAD is not tagged
+        - name: Bump version and push tag
+          uses: anothrNick/github-tag-action@master
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            WITH_V: true
 
         - name: Fetch tags
           run: git fetch --tags
