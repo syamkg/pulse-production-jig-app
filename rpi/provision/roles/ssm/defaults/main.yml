@@ -3,6 +3,7 @@ temp_ssm: /tmp/ssm
 
 region: ap-southeast-2
 ssm_url: https://s3.{{ region }}.amazonaws.com/amazon-ssm-{{ region }}/latest/debian_arm/amazon-ssm-agent.deb
+instance_tag: pulse-jig
 
 iam_role_name: IntellisenseJigSSMServiceRole
-permission_boundry_arn: arn:aws:iam::{{ account_id }}:policy/cops-teamadmin-permission-boundary
+permission_boundary_arn: arn:aws:iam::{{ account_id }}:policy/cops-teamadmin-permission-boundary

@@ -71,13 +71,16 @@ class JigGUI:
         self._queue_handler.setFormatter(logging.Formatter("[%(levelname)s:%(name)s] %(message)s"))
         logging.getLogger().addHandler(self._queue_handler)
 
-    def _update_logs(self):
+    def _update_logs(self, event, data):
         try:
             timeout = Timeout(0.1)
             while not timeout.expired:
-                record = self._log_queue.get(block=False)
-                msg = self._queue_handler.format(record)
-                self.window["-LOG-"].update(msg + "\n", append=True)
+                if event == "waiting_for_target" and data[event].reset_logs:
+                    self.window["-LOG-"].update("")
+                else:
+                    record = self._log_queue.get(block=False)
+                    msg = self._queue_handler.format(record)
+                    self.window["-LOG-"].update(msg + "\n", append=True)
         except queue.Empty:
             pass
 

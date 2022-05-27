@@ -13,7 +13,7 @@
     aws iam create-role \
       --role-name "{{ iam_role_name }}" \
       --assume-role-policy-document "file://{{ role_path }}/files/SSMService-Trust.json" \
-      --permissions-boundary "{{ permission_boundry_arn }}"
+      --permissions-boundary "{{ permission_boundary_arn }}"
 
 - name: Attach policy to created role
   become: no

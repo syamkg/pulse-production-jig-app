@@ -49,5 +49,6 @@
     name: amazon-ssm-agent
     state: started
 
-- name: Giving everone permissions to root AWS credentials
-  import_tasks: credentials.yml
+- name: Give it 10 seconds to start SSM agent
+  pause:
+    seconds: 10

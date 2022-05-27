@@ -7,3 +7,4 @@
     - disable-wifi
     - remove-ssh-key
     - disable-password-auth
+    - app-launch

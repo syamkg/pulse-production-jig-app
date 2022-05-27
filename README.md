@@ -34,7 +34,12 @@ pre-commit install
 
 ```shell
 cd pulse_jig
-python app.py
+python app.py -t <TARGET>
+```
+
+Add `DISPLAY=:0` if running via SSH
+```shell
+DISPLAY=:0 python app.py -t <TARGET>
 ```
 
 ## Running in docker
@@ -42,19 +47,24 @@ python app.py
 ### Option 1: Build
 
 ```bash
-docker buildx build --platform linux/arm/v7 -t pulse-jig .
+make build
 ```
 
 ### Option 2: Pull from ECR
 
 ```shell
-./docker-pull <AWS_ACCOUNT_ID>
+make pull 
 ```
 
 ### Run
 
 ```shell
-./run.sh python app.py
+make run
+```
+
+Add `DISPLAY=:0` if running via SSH
+```shell
+DISPLAY=:0 make run
 ```
 
 ## Settings
@@ -68,6 +78,26 @@ This application uses [Dynaconf](https://www.dynaconf.com/) to maintain settings
 Validation is performed on the combined resolved settings in `config.py`. It can be used to access settings in this way:
 
 ```python
-from config import settings
+from pulse_jig.config import settings
 print(f"join eui: {settings.lora.join_eui}")
 ```
+
+## Environment variables
+`app.env` file contains the environment specific values required until app starts. This is separate to above-mentioned
+`settings.yaml` - which has the settings required during the run-time.
+
+Copy the contents from `app.env.example`
+
+## App auto launch config 
+- A `.desktop` entry will be created in `/etc/xdg/autostart/jig-app.desktop` to auto launch the Jig App.
+- This entry will then fire `boot.sh`.
+- A `zenity` progress bar added to factory worker to indicate app is launching (which will takes about 10 seconds)
+
+## Deploying boot scripts
+If you running Ansible on your local to provision any jig it's important to run following before Ansible
+```shell
+. ./ci/scripts/copy.sh
+```
+This will copy the boot scripts to the relevant Ansible role.
+
+`deploy.buildspec.yaml` will also run the above before zipping the Ansible playbooks, so that they are available for Systems Manager provisioning. 

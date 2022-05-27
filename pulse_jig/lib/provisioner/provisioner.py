@@ -31,6 +31,7 @@ class Provisioner:
     class EventData:
         hwspec: Optional[HWSpec]
         status: "Provisioner.Status"
+        reset_logs: bool
 
     def __init__(self, registrar: Registrar):
         self.reset()
@@ -38,10 +39,11 @@ class Provisioner:
         self._listeners: List[Callable] = []
         self.status = Provisioner.Status.UNKNOWN
         self.provisional_status = Provisioner.Status.UNKNOWN
+        self.reset_logs = False
 
     def _send_event(self, name: str):
         for listener in self._listeners:
-            listener(name, Provisioner.EventData(hwspec=self.hwspec, status=self.status))
+            listener(name, Provisioner.EventData(hwspec=self.hwspec, status=self.status, reset_logs=self.reset_logs))
 
     def run(self):
         while True:
@@ -95,5 +97,5 @@ class Provisioner:
 
     def reset(self):
         self.hwspec: Optional[HWSpec] = None
-        self.logs: str = ""
         self.status: Provisioner.Status = Provisioner.Status.UNKNOWN
+        self.reset_logs: bool = True

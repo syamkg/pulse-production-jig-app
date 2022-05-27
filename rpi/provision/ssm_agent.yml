@@ -5,7 +5,8 @@
 
   roles:
     - ssm
-      
+    - aws-credentials
+
   vars_prompt:
 
     - name: account_id

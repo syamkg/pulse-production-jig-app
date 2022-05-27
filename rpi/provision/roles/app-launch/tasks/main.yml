@@ -1,0 +1,30 @@
+---
+- name: Create app directory
+  become_user: pi
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+
+- name: Copying boot scripts
+  become_user: pi
+  copy:
+    src: "{{ item }}"
+    dest: "{{ app_dir }}"
+    mode: +x
+  with_fileglob:
+    - "{{ role_path }}/files/scripts/*"
+
+- name: Copying initial settings
+  become_user: pi
+  copy:
+    src: "{{ item }}"
+    dest: "{{ app_dir }}"
+    mode: +x
+    force: false
+  with_fileglob:
+    - "{{ role_path }}/files/settings/*"
+
+- name: Creating jig app auto launch entry
+  template:
+    src: jig-app.desktop.j2
+    dest: /etc/xdg/autostart/jig-app.desktop

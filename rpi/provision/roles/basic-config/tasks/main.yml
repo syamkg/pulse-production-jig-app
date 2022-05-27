@@ -4,6 +4,11 @@
     state: absent
     path: /etc/xdg/autostart/piwiz.desktop
 
+- name: Install AWS CLI
+  package:
+    name: awscli
+    state: present
+
 - name: Disabling removable media autorun
   lineinfile:
     path: /home/pi/.config/pcmanfm/LXDE-pi/pcmanfm.conf

@@ -1,0 +1,12 @@
+---
+- name: Create ".aws" directory for "pi" user
+  file:
+    path: /home/pi/.aws
+    state: directory
+
+- name: Creating hard link to root credentials change permissions
+  file:
+    src: /root/.aws/credentials
+    dest: /home/pi/.aws/credentials
+    state: hard
+    mode: o+rx

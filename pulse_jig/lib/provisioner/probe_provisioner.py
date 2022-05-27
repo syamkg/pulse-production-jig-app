@@ -79,17 +79,19 @@ class ProbeProvisioner(Provisioner, CommonStates):
         m.add_transition("fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail")
 
         # Handle bad probes being detected while waiting for a target
-        m.add_transition("bad_probe", States.WAITING_FOR_TARGET, States.WAITING_FOR_TARGET_REMOVAL)
+        m.add_transition(
+            "bad_probe", States.WAITING_FOR_TARGET, States.WAITING_FOR_TARGET_REMOVAL, before="set_status_fail"
+        )
 
         # Some error conditions
         m.add_transition("serial_lost", "*", States.WAITING_FOR_SERIAL)
         m.add_transition("pcb_lost", "*", States.WAITING_FOR_SERIAL)
         m.add_transition("target_lost", "*", States.WAITING_FOR_TARGET)
 
-        m.on_exit_WAITING_FOR_TARGET("reset")
         m.on_enter_WAITING_FOR_TARGET("set_status_waiting")
         m.on_enter_LOADING_DEVICE_REGO("set_status_inprogress")
         m.on_enter_WAITING_FOR_TARGET_REMOVAL("promote_provision_status")
+        m.on_exit_WAITING_FOR_TARGET_REMOVAL("reset")
 
     def waiting_for_pcb(self):
         while not self._pulse_manager.is_connected:
@@ -121,7 +123,9 @@ class ProbeProvisioner(Provisioner, CommonStates):
     def waiting_for_target(self):
         port_no = self._ftf.probe_await_connect()
         if port_no is None:
+            logger.error("INVALID PROBE DETECTED!")
             self.bad_probe()
+            return
         self._port_no = port_no
         self.proceed()
 
@@ -163,8 +167,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
     def running_tests(self):
         passed = self._ftf.test_ta3k(self._port_no)
         if passed:
+            logger.info("Tests passed!")
             self.set_status_passed()
         else:
+            logger.error("Tests Failed!")
             self.set_status_failed()
         self.proceed()
 

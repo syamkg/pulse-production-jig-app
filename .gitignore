@@ -8,3 +8,4 @@ firmware
 # Ignore dynaconf secret files
 .secrets.*
 settings.local.yaml
+app.env

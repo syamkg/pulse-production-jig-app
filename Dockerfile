@@ -7,7 +7,8 @@ RUN apt-get update --yes && \
         zlib1g \
         libtiff5 \
         libopenjp2-7 \
-        libjpeg62-turbo && \
+        libjpeg62-turbo \
+        fonts-liberation2 && \
      rm -rf /var/lib/apt/lists/*
 
 # add the https://www.piwheels.org/ repo so we don't have to build from source

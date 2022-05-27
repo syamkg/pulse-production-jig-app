@@ -5,3 +5,6 @@
 
   roles:
     - upgrade
+    - basic-config
+    - aws-credentials
+    - app-launch

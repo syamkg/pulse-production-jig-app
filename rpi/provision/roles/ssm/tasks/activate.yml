@@ -8,12 +8,14 @@
       --description {{ instance_name }} \
       --registration-limit 1 \
       --region "{{ region }}" \
-      --iam-role "{{ iam_role_name }}"
+      --iam-role "{{ iam_role_name }}" \
+      --tags "Key=instance_tag,Value={{ instance_tag }}"
   register: result
 
 - set_fact:
     name: Parsing json output
     activation_details: "{{ result.stdout | from_json }}"
+
 - set_fact:
     name: Extracting activation details
     ssm_activation_id: "{{ activation_details | json_query('ActivationId') }}"
