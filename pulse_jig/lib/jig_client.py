@@ -4,7 +4,7 @@ from typing import Optional
 
 import serial
 
-from .timeout import Timeout
+from .timeout import Timeout, TimeoutNever
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,6 @@ class JigClient:
         self._port = port
         self._write_timeout = 1
         self._ack_timeout = 0.5
-        self._body_timeout = 2
         self._last_error = None
         self._log = ""
         self._terminator = "\r\n"
@@ -97,14 +96,13 @@ class JigClient:
     def log(self):
         return self._log
 
-    def send_command(self, cmd: str, has_body: bool = True, type: str = "async") -> str:
+    def send_command(self, cmd: str, has_body: bool = True, timeout: int = 2) -> str:
         """Sends the given command to the device and returns
         the body from the response.
         :param cmd: the command to send, including any parameters.
         :param has_body: True if the command is expected to return a body.
-        :param type: Specifies if command exits after execution for wait for user input
-                        async: default: Command will give the complete output & exits
-                        sync: Command will wait for user input
+        :param timeout: Timeout for reading from device
+                        No timeout == (timeout <= 0)
 
         :return: The body of the command's response, None if has_body
         was False.
@@ -118,10 +116,7 @@ class JigClient:
 
         body = None
         if has_body:
-            if type == "async":
-                body = self._parse_async_command_body()
-            elif type == "sync":
-                body = self._parse_sync_command_body()
+            body = self._parse_command_body(timeout)
 
         return body or ""
 
@@ -140,36 +135,29 @@ class JigClient:
         elif ack != "+OK":
             raise JigClientException(f"Command not acknowledged: {ack}")
 
-    def _parse_async_command_body(self):
-        # Parse async command body
+    def _parse_command_body(self, timeout: int):
+        # Parse command body
         line = ""
         lines = []
-        timeout = Timeout(self._body_timeout)
-        while not timeout.expired:
-            self._port.timeout = timeout.remaining
+
+        timer = Timeout(timeout) if timeout >= 0 else TimeoutNever()
+
+        while not timer.expired:
+            self._port.timeout = timer.remaining
             line = self._readline()
+
             if self._is_end_of_body(line):
                 break
-            lines.append(line)
+
+            if len(line) != 0:
+                lines.append(line)
+
         body = "\n".join(lines)
 
         # We didn't receive the end of body marker before timeout
         if not self._is_end_of_body(line):
             raise JigClientException("Did not receive end of body marker")
 
-        return body
-
-    def _parse_sync_command_body(self):
-        # Parse async command body
-        lines = []
-        while True:
-            line = self._readline()
-            if self._is_end_of_body(line):
-                break
-            if len(line) != 0:
-                lines.append(line)
-
-        body = "\n".join(lines)
         return body
 
     def enable_external_port(self, port_number: int):
@@ -230,13 +218,13 @@ class JigClient:
         return self.run_test_cmd(f"test-ta3k {_to_port_flags(port)} 1")
 
     def probe_await_connect(self) -> Optional[int]:
-        resp = self.send_command("probe-await connect", type="sync")
+        resp = self.send_command("probe-await connect", timeout=-1)
         if "Found on port" not in resp:
             return None
         return int((resp.split(":", 1)[1]).strip())
 
     def probe_await_recovery(self):
-        return self.send_command("probe-await recovery", type="sync")
+        return self.send_command("probe-await recovery", timeout=-1)
 
     def run_test_cmd(self, cmd: str) -> bool:
         """Runs the given test command and whether it passed or
@@ -247,7 +235,7 @@ class JigClient:
         :param cmd: the command str to send, including parameters.
         :return: True if the test passed, false otherwise.
         """
-        resp = self.send_command(cmd)
+        resp = self.send_command(cmd, timeout=10)
         return self._is_response_successful(resp)
 
     def lora_deveui(self) -> str:
