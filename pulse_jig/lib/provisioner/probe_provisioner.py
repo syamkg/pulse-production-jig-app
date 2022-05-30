@@ -1,5 +1,6 @@
 import enum
 import logging
+from dataclasses import dataclass
 
 import serial
 from transitions import Machine
@@ -28,11 +29,19 @@ class States(enum.Enum):
     SAVE_HWSPEC = enum.auto()
     RUNNING_TESTS = enum.auto()
     SUBMITTING_PROVISIONING_RECORD = enum.auto()
-    LOADING_PROD_FIRMWARE = enum.auto()
+    UPDATE_QRCODE = enum.auto()
     WAITING_FOR_TARGET_REMOVAL = enum.auto()
 
 
 class ProbeProvisioner(Provisioner, CommonStates):
+    @dataclass
+    class QRCode(Provisioner.QRCode):
+        len: str
+
+    @dataclass
+    class Mode(Provisioner.Mode):
+        cable_length: float = 0
+
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)
         self._init_state_machine()
@@ -40,6 +49,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self._port = serial.Serial(baudrate=115200)
         self._port.port = dev
         self._test_firmware_path = settings.app.test_firmware_path
+        self.mode = self.Mode()
 
     def _init_state_machine(self):
         m = Machine(
@@ -55,7 +65,9 @@ class ProbeProvisioner(Provisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_TARGET, States.LOADING_DEVICE_REGO, conditions="has_network")
         m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
         m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD)
-        m.add_transition("proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_TARGET_REMOVAL)
+        m.add_transition(
+            "proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_TARGET_REMOVAL, before="update_qrcode"
+        )
         m.add_transition("proceed", States.WAITING_FOR_TARGET_REMOVAL, States.WAITING_FOR_TARGET)
 
         # Wait for network if API is unreachable
@@ -67,10 +79,6 @@ class ProbeProvisioner(Provisioner, CommonStates):
         m.add_transition("proceed", States.GENERATE_HWSPEC, States.REGISTERING_DEVICE, conditions="has_hwspec")
         m.add_transition("proceed", States.REGISTERING_DEVICE, States.SAVE_HWSPEC)
         m.add_transition("proceed", States.SAVE_HWSPEC, States.RUNNING_TESTS)
-
-        # Load the production firmware if the device passed the tests
-        m.add_transition("proceed", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, conditions="has_passed")
-        m.add_transition("proceed", States.LOADING_PROD_FIRMWARE, States.WAITING_FOR_TARGET_REMOVAL)
 
         # On retry set state to RETRY and wait for the device to be removed
         m.add_transition("retry", "*", States.WAITING_FOR_TARGET_REMOVAL, before="set_status_retry")
@@ -85,8 +93,11 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
         # Some error conditions
         m.add_transition("serial_lost", "*", States.WAITING_FOR_SERIAL)
-        m.add_transition("pcb_lost", "*", States.WAITING_FOR_SERIAL)
+        m.add_transition("pcb_lost", "*", States.WAITING_FOR_PCB)
         m.add_transition("target_lost", "*", States.WAITING_FOR_TARGET)
+
+        # Manually restart the loop
+        m.add_transition("restart", "*", States.WAITING_FOR_TARGET_REMOVAL)
 
         m.on_enter_WAITING_FOR_TARGET("set_status_waiting")
         m.on_enter_LOADING_DEVICE_REGO("set_status_inprogress")
@@ -189,3 +200,15 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self._ftf.hwspec_save("probe")
         self._ftf.disable_external_port()
         self.proceed()
+
+    def update_qrcode(self):
+        if self.has_passed():
+            self.hwspec.cable_length = (
+                self.mode.cable_length
+            )  # TODO remove & move it to correct place(s) once device supports this
+            self.qrcode = self.QRCode(
+                sn=self.hwspec.serial,
+                rev=self.hwspec.hw_revision,
+                dom=self.hwspec.assembly_timestamp,
+                len=self.hwspec.cable_length,
+            )

@@ -28,10 +28,23 @@ class Provisioner:
         WAITING = enum.auto()
 
     @dataclass
+    class QRCode:
+        sn: str
+        rev: str
+        dom: str
+
+    @dataclass
+    class Mode:
+        manufacturer: str = ""
+        device: str = ""
+
+    @dataclass
     class EventData:
         hwspec: Optional[HWSpec]
         status: "Provisioner.Status"
+        qrcode: Optional["Provisioner.QRCode"]
         reset_logs: bool
+        mode: Optional["Provisioner.Mode"]
 
     def __init__(self, registrar: Registrar):
         self.reset()
@@ -40,10 +53,20 @@ class Provisioner:
         self.status = Provisioner.Status.UNKNOWN
         self.provisional_status = Provisioner.Status.UNKNOWN
         self.reset_logs = False
+        self.mode = self.Mode()
 
     def _send_event(self, name: str):
         for listener in self._listeners:
-            listener(name, Provisioner.EventData(hwspec=self.hwspec, status=self.status, reset_logs=self.reset_logs))
+            listener(
+                name,
+                Provisioner.EventData(
+                    hwspec=self.hwspec,
+                    status=self.status,
+                    qrcode=self.qrcode,
+                    reset_logs=self.reset_logs,
+                    mode=self.mode,
+                ),
+            )
 
     def run(self):
         while True:
@@ -98,4 +121,5 @@ class Provisioner:
     def reset(self):
         self.hwspec: Optional[HWSpec] = None
         self.status: Provisioner.Status = Provisioner.Status.UNKNOWN
+        self.qrcode: Optional[Provisioner.QRCode] = None
         self.reset_logs: bool = True

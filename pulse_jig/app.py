@@ -8,7 +8,7 @@ import click
 sys.path.append("..")
 
 from lib.jig_client import JigClient
-from lib.jig_gui import JigGUI
+from lib.ui.jig_gui import JigGUI
 from lib.provisioner.provisioner import Provisioner
 from lib.registrar import Registrar
 
