@@ -25,9 +25,6 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             WITH_V: true
 
-        - name: Fetch tags
-          run: git fetch --tags
-
         # zip the source code - we recommend naming it 'source.zip'
         - name: Bundle
           uses: TheDoctor0/zip-release@master

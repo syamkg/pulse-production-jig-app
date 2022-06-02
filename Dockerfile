@@ -20,3 +20,8 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY pulse_jig ./
+
+# We'll set a default value for Dev builds
+ARG VERSION=0.0.0
+# JIG_ENV is the env_switcher for Dynaconf
+ENV JIG_ENV_VERSION=$VERSION
