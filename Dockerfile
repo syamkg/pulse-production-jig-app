@@ -23,5 +23,5 @@ COPY pulse_jig ./
 
 # We'll set a default value for Dev builds
 ARG VERSION=0.0.0
-# JIG_ENV is the env_switcher for Dynaconf
-ENV JIG_ENV_VERSION=$VERSION
+# JIG_ is the envvar_prefix for Dynaconf
+ENV JIG_VERSION=$VERSION
