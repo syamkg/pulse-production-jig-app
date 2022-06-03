@@ -30,6 +30,16 @@ To format on commit, install the pre-commit git hook upon a fresh clone of the r
 pre-commit install
 ```
 
+## Tagging and versioning
+
+A GitHub Action has set up on `deploy.yaml` to automatically tag when merging to `main`. This will follow the standard 
+semantic versioning with prefix `v`
+
+By default, this will increment the `minor` version number. To override this default behavior, 
+include `#major`, `#minor` or `#patch` tags in the commit message. 
+
+Extra reading: https://github.com/anothrNick/github-tag-action
+
 ## Running in local
 
 ```shell
