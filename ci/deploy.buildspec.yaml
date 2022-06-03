@@ -29,9 +29,3 @@ phases:
       - echo Pushing the Docker image...
       - docker push $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
       - "[ ! -z \"$VERSION\" ] && docker push $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$version || echo"
-      - echo "Compressing the Ansible playbooks..."
-      - . ./ci/scripts/copy.sh
-      - cd rpi
-      - zip -r maintenance.zip provision
-      - echo "Uploading playbooks to S3..."
-      - aws s3 cp maintenance.zip s3://pulse-jig-maintenance-tasks-$CNF_STAGE/maintenance.zip
