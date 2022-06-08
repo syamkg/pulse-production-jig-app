@@ -62,6 +62,16 @@ def layout():
                                                     expand_y=True,
                                                 )
                                             ],
+                                            [
+                                                sg.Text(
+                                                    f"v{settings.VERSION}",
+                                                    text_color="gray",
+                                                    justification="right",
+                                                    expand_x=True,
+                                                    expand_y=True,
+                                                    font=("Arial", 12),
+                                                )
+                                            ],
                                         ],
                                         border_width=0,
                                         pad=(60, 50),

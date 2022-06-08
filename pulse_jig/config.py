@@ -18,7 +18,7 @@ settings = Dynaconf(
         ),
         Validator("api.region", "api.host", "api.stage", must_exist=True),
         Validator("lora.join_eui", must_exist=True),
-        # should not be present outside of development as it will be generated uniquely for each device
+        # app_key should not be present outside of development as it will be generated uniquely for each device
         Validator("lora.app_key", must_exist=None),
         Validator("VERSION", must_exist=True),
     ],
