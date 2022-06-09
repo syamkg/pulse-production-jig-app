@@ -107,7 +107,7 @@ class Registrar:
 
     @staticmethod
     def _get_provisioning_client_ver() -> str:
-        return "0.0.0"  # todo implement
+        return settings.VERSION
 
     @staticmethod
     def _format_hex(value) -> str:
