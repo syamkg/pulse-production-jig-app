@@ -15,6 +15,18 @@
     regexp: '^autorun='
     line: autorun=0
 
+- name: Disabling auto mounting on startup
+  lineinfile:
+    path: /home/pi/.config/pcmanfm/LXDE-pi/pcmanfm.conf
+    regexp: '^mount_on_startup='
+    line: mount_on_startup=0
+
+- name: Disabling auto mounting on plug-in
+  lineinfile:
+    path: /home/pi/.config/pcmanfm/LXDE-pi/pcmanfm.conf
+    regexp: '^mount_removable='
+    line: mount_removable=0
+
 - name: Disabling screen blanking
   template:
     src: 10-blanking.conf
