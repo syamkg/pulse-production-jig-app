@@ -43,7 +43,6 @@ def _configure_logging(debug):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     logging.getLogger("transitions").setLevel(logging.INFO if debug else logging.ERROR)
     logging.getLogger("jig_client").setLevel(logging.INFO if debug else logging.ERROR)
-    logging.getLogger("botocore").setLevel(logging.INFO if debug else logging.ERROR)
 
 
 @click.command()

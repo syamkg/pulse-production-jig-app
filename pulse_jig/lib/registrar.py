@@ -87,7 +87,7 @@ class Registrar:
             except requests.exceptions.ConnectionError:
                 self._network = False
             status = "Connected" if self._network else "Not connected"
-            logger.debug(f"Network: {status}")
+            logger.debug(f"Network check: {status}")
             sleep(settings.network.ping_interval)
 
     @property

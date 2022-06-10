@@ -7,7 +7,10 @@ from requests_aws4auth import AWS4Auth
 
 from pulse_jig.config import settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("api")
+
+logging.getLogger("botocore").setLevel(logging.ERROR)
+logging.getLogger("urllib3").setLevel(logging.ERROR)
 
 
 class Api:
