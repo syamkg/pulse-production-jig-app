@@ -19,6 +19,7 @@ class Api:
         self._host = settings.api.host
         self._stage = settings.api.stage
         self._service = "execute-api"
+        self._timeout = 30
 
     def _auth(self) -> AWS4Auth:
         credentials = botocore.session.Session().get_credentials()
@@ -34,12 +35,12 @@ class Api:
 
     def add_item(self, data: dict) -> Response:
         url = self._url("device")
-        return self._session().post(url, json=data)
+        return self._session().post(url, json=data, timeout=self._timeout)
 
     def provisioning_record(self, serial: str, data: dict) -> Response:
         url = self._url(f"device/{serial}/provisioning_record")
-        return self._session().post(url, json=data)
+        return self._session().post(url, json=data, timeout=self._timeout)
 
     def auth_check(self) -> Response:
         url = self._url("auth/check")
-        return self._session().get(url)
+        return self._session().get(url, timeout=self._timeout)
