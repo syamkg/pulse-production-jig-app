@@ -148,7 +148,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
                 self._inner_loop()
             except Exception as e:
                 logger.error(str(e))
-                self.pcb_lost()
+                self.retry()
 
     def loading_device_rego(self):
         try:
