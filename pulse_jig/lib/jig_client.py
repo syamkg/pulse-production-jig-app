@@ -96,6 +96,9 @@ class JigClient:
     def log(self):
         return self._log
 
+    def reset_logs(self):
+        self._log = ""
+
     def send_command(self, cmd: str, has_body: bool = True, timeout: int = 2) -> str:
         """Sends the given command to the device and returns
         the body from the response.
