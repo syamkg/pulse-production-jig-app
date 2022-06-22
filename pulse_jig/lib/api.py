@@ -14,7 +14,7 @@ class Api:
     def __init__(self):
         self._region = settings.api.region
         self._host = settings.api.host
-        self._stage = settings.app.stage
+        self._stage = settings.api.stage
         self._service = "execute-api"
 
     def _auth(self) -> AWS4Auth:

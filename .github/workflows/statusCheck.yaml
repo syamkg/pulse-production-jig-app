@@ -9,6 +9,8 @@ jobs:
       # checkout the source code
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
 
       # zip the source code - we recommend naming it with
       # 'head sha', which is the head of the commit on the
