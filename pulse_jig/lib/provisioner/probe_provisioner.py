@@ -198,19 +198,26 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self.hwspec.save(self._ftf)
         self._ftf.enable_external_port(self._port_no)
         self._ftf.hwspec_save("probe")
+
+        # Need to write cable length only after `hwspec-save`
+        success = self._ftf.write_cable_length(int(self.mode.cable_length))
+
+        # If writing the cable length fails we need to clear our mess
+        if not success:
+            self._ftf.hwchunk("clear probe")
+            self.retry()
+            return
+
         self._ftf.disable_external_port()
         self.proceed()
 
     def update_qrcode(self):
         if self.has_passed():
-            self.hwspec.cable_length = (
-                self.mode.cable_length
-            )  # TODO remove & move it to correct place(s) once device supports this
             self.qrcode = self.QRCode(
                 sn=self.hwspec.serial,
                 rev=self.hwspec.hw_revision,
                 dom=self.hwspec.assembly_timestamp,
-                len=self.hwspec.cable_length,
+                len=self.hwspec_cable_length,
             )
 
     def registering_device(self):
@@ -226,3 +233,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
             self.proceed()
         else:
             self.retry()
+
+    @property
+    def hwspec_cable_length(self):
+        self._ftf.enable_external_port(self._port_no)
+        hwspec_cable_length = self._ftf.read_cable_length()
+        self._ftf.disable_external_port()
+        return hwspec_cable_length
