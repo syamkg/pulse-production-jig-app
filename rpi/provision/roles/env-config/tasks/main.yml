@@ -1,0 +1,24 @@
+---
+- name: Create app directory
+  become_user: pi
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+
+- name: Copying app.env
+  become_user: pi
+  template:
+    src: app.env.j2
+    dest: "{{ app_dir }}/app.env"
+    
+- name: Copying settings.local.yaml
+  become_user: pi
+  template:
+    src: settings.local.yaml.j2
+    dest: "{{ app_dir }}/settings.local.yaml"
+
+- name: Copying settings.yaml
+  become_user: pi
+  template:
+    src: settings.yaml.j2
+    dest: "{{ app_dir }}/settings.yaml"

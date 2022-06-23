@@ -1,5 +1,8 @@
 # Raspberry Pi Provisioner
 
+Here,  we'll discuss how to provision a new SD card to be used in a Jig plus some basic instructions to use Ansible 
+for the first time.
+
 ## Creating Base Image
 
 ### STEP 1
@@ -59,7 +62,7 @@ ansible-playbook -i my-new-hostname.local, -u pi initialise_dev.yml -k
 ```
 
 ### STEP 3 
-Install SSH agent
+Install SSM agent
 ```shell
 ansible-playbook -i my-new-hostname.local, -u pi ssm_agent.yml -k
 ```

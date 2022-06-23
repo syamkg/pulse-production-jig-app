@@ -1,0 +1,10 @@
+---
+- name: Pulling Docker image
+  become: no
+  shell:
+    chdir: "{{ app_dir }}"
+    cmd: "AWS_ACCOUNT_ID={{ aws_account_id }} ./pull.sh"
+  register: command_output
+
+- debug:
+    var: command_output.stdout_lines

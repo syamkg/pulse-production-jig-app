@@ -1,0 +1,28 @@
+---
+- name: Pulling Docker image from local
+  become: no
+  delegate_to: localhost
+  shell:
+    chdir: ../..
+    cmd: "AWS_ACCOUNT_ID={{ aws_account_id }} ./pull.sh"
+  register: command_output
+
+- debug:
+    var: command_output.stdout_lines
+
+- name: Saving Docker image as .tar
+  become: no
+  delegate_to: localhost
+  shell:
+    cmd: "docker save -o {{ role_path }}/files/pulse-jig.tar pulse-jig"
+
+- name: Copying image over to RPi
+  become: no
+  copy:
+    src: "{{ role_path }}/files/pulse-jig.tar"
+    dest: "{{ app_dir }}"
+
+- name: Loading the copied Docker image
+  become: no
+  shell:
+    cmd: "docker load -i {{ app_dir }}/pulse-jig.tar"

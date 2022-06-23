@@ -96,7 +96,7 @@ print(f"join eui: {settings.lora.join_eui}")
 `app.env` file contains the environment specific values required until app starts. This is separate to above-mentioned
 `settings.yaml` - which has the settings required during the run-time.
 
-Copy the contents from `app.env.example`
+Copy the contents from `app.env.dev` to set up a dev environment.
 
 ## App auto launch config 
 - A `.desktop` entry will be created in `/etc/xdg/autostart/jig-app.desktop` to auto launch the Jig App.

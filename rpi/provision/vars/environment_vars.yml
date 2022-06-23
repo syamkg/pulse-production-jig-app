@@ -1,0 +1,43 @@
+---
+# Use this to set environment values. This will overwrite default vars in
+#   1. app-launch
+#   2. env-config
+#   3. update-firmware
+#
+# Q: Should I commit the changes or not?
+# A: Flip a coin. But I wouldn't commit PROD endpoints - just-in-case
+
+# Variables for app.env
+app_dir: /home/pi/test-jig
+target: ta3k
+aws_account_id: aws_account_id_not_set
+
+# Variable for update-firmware
+firmware_dir: "{{ app_dir }}/pulse_jig/firmware"
+test_firmware: test-firmware.bin
+prod_firmware: prod-firmware.bin
+
+# Variables for settings.local.yaml
+app:
+  test_firmware_path: "firmware/{{ test_firmware }}"
+  prod_firmware_path: "firmware/{{ prod_firmware }}"
+  skip_test_firmware_load: false
+device:
+  minter_id: 0x00
+  thing_type_name: ta3k
+  thing_type_id: 0x201
+  hw_revision: r2.0
+  assembly_id: 0x00
+  assembly_version: 0.0.0
+  manufacturer_name: Woodside
+  manufacturer_id: 0x01
+  cable_lengths: [1.5, 2.0]
+api:
+  region: ap-southeast-2
+  host: https://8k3h1lqdjd.execute-api.ap-southeast-2.amazonaws.com
+  stage: dev
+lora:
+  join_eui: aa:aa:aa:aa:aa:aa:aa:aa
+  app_key: aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa
+network:
+  ping_interval: 30 # in seconds
