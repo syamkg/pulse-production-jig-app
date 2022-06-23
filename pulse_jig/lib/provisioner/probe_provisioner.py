@@ -212,3 +212,17 @@ class ProbeProvisioner(Provisioner, CommonStates):
                 dom=self.hwspec.assembly_timestamp,
                 len=self.hwspec.cable_length,
             )
+
+    def registering_device(self):
+        registered = self._registrar.register_serial(self.hwspec, cable_length=self.mode.cable_length)
+        if registered:
+            self.proceed()
+        else:
+            self.retry()
+
+    def submitting_provisioning_record(self):
+        success = self._registrar.submit_provisioning_record(self.hwspec, self.provisional_status.name, self._ftf.log)
+        if success:
+            self.proceed()
+        else:
+            self.retry()
