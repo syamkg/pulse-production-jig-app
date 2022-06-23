@@ -136,6 +136,8 @@ class JigGUI:
             if mode_text != "":
                 mode_text += ", "
             mode_text += f"{item}: {provisioner.mode.__dict__[item]}"
+            if item == "cable_length":
+                mode_text += "mm"
         self.window["-MODE-"].update(mode_text)
 
     def _set_mode(self, event, data, provisioner):
@@ -153,7 +155,7 @@ class JigGUI:
                 else:
                     provisioner.restart()
 
-                provisioner.mode.cable_length = float(data["-CABLE_LENGTH-"])
+                provisioner.mode.cable_length = data["-CABLE_LENGTH-"]
                 provisioner.mode.manufacturer = settings.device.manufacturer_name
                 provisioner.mode.device = settings.device.thing_type_name
                 self.window.force_focus()

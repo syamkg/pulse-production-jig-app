@@ -12,9 +12,7 @@ device:
   assembly_version: 0.0.0
   manufacturer_name: Woodside
   manufacturer_id: 0x01
-  cable_lengths:
-    - 1.0
-    - 1.5
+  cable_lengths: [1500, 2000]
 api:
   region: ap-southeast-2
   host: https://8k3h1lqdjd.execute-api.ap-southeast-2.amazonaws.com
