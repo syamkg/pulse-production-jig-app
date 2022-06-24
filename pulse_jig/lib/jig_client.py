@@ -6,7 +6,7 @@ import serial
 
 from .timeout import Timeout, TimeoutNever
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("jig_client")
 
 # Import the correct platform specific comports implementation.
 # There doesn't seem to be a better way of doing this at the moment.
@@ -223,7 +223,7 @@ class JigClient:
         :param port: Port number as an int
         :return bool: If test command is a pass or fail
         """
-        return self.run_test_cmd(f"test-ta3k {_to_port_flags(port)} 1", timeout=10)
+        return self.run_test_cmd(f"test-ta3k -v {_to_port_flags(port)} 1", timeout=10)
 
     def probe_await_connect(self) -> Optional[int]:
         resp = self.send_command("probe-await connect", timeout=-1)
