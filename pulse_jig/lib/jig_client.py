@@ -275,12 +275,12 @@ class JigClient:
         resp = self.hwchunk("verify probe")
         return self._is_response_successful(resp, "OK")
 
-    def read_cable_length(self) -> str:
+    def read_cable_length(self) -> int:
         """Extract the cable length from the `hwchunk dump` command
         :return str: cable length (e.g. 1500mm)
         """
         resp = self.hwchunk("dump probe probe")
-        return resp.split("cable length: ")[1]
+        return int(resp.split("cable length: ")[1].split("mm")[0])
 
     @staticmethod
     def find_device() -> Optional[str]:

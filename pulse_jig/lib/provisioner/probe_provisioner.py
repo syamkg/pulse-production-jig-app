@@ -200,7 +200,8 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self._ftf.hwspec_save("probe")
 
         # Need to write cable length only after `hwspec-save`
-        success = self._ftf.write_cable_length(int(self.mode.cable_length))
+        # cable_length has to be mm
+        success = self._ftf.write_cable_length(self.cable_length_mm)
 
         # If writing the cable length fails we need to clear our mess
         if not success:
@@ -217,11 +218,11 @@ class ProbeProvisioner(Provisioner, CommonStates):
                 sn=self.hwspec.serial,
                 rev=self.hwspec.hw_revision,
                 dom=self.hwspec.assembly_timestamp,
-                len=self.hwspec_cable_length,
+                len=f"{self.hwspec_cable_length_m}m",
             )
 
     def registering_device(self):
-        registered = self._registrar.register_serial(self.hwspec, cable_length=self.mode.cable_length)
+        registered = self._registrar.register_serial(self.hwspec, cable_length=self.cable_length_mm)
         if registered:
             self.proceed()
         else:
@@ -235,8 +236,14 @@ class ProbeProvisioner(Provisioner, CommonStates):
             self.retry()
 
     @property
-    def hwspec_cable_length(self):
+    def cable_length_mm(self) -> int:
+        """Returns mode.cable_length in mm"""
+        return int(self.mode.cable_length * 1000)  # type: ignore
+
+    @property
+    def hwspec_cable_length_m(self) -> float:
+        """Reads cable length from hwspec & returns in meters"""
         self._ftf.enable_external_port(self._port_no)
         hwspec_cable_length = self._ftf.read_cable_length()
         self._ftf.disable_external_port()
-        return hwspec_cable_length
+        return int(hwspec_cable_length) / 1000

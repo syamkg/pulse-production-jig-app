@@ -29,7 +29,7 @@ def layout():
                                             ],
                                             [sg.Sizer(0, 10)],
                                             [
-                                                sg.Text("Cable Length (mm)"),
+                                                sg.Text("Cable Length (m)"),
                                                 sg.Combo(
                                                     ["--Select one--"] + settings.device.cable_lengths,
                                                     key="-CABLE_LENGTH-",
