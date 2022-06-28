@@ -35,7 +35,7 @@ pre-commit install
 A GitHub Action has set up on `deploy.yaml` to automatically tag when merging to `main`. This will follow the standard 
 semantic versioning with prefix `v`
 
-By default, this will increment the `minor` version number. To override this default behavior, 
+By default, this will increment the `patch` version number. To override this default behavior, 
 include `#major`, `#minor` or `#patch` tags in the commit message. 
 
 Extra reading: https://github.com/anothrNick/github-tag-action

@@ -24,6 +24,7 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             WITH_V: true
+            DEFAULT_BUMP: patch
 
         # zip the source code - we recommend naming it 'source.zip'
         - name: Bundle
