@@ -1,10 +1,16 @@
 ---
-- name: Running latest updates
+- name: Running latest maintenance tasks
   hosts: all
   become: yes
+
+  vars_files:
+    - vars/environment_vars.yml
 
   roles:
     - upgrade
     - basic-config
     - aws-credentials
+    - env-config
     - app-launch
+    - update-firmware
+    - docker-pull

@@ -4,7 +4,7 @@ set -eu
 
 echo Fetching the tagged version...
 
-git_tag=$(git for-each-ref refs/tags --sort=-taggerdate --count=1 --format=%\(refname:short\))
+git_tag=$(git for-each-ref refs/tags --sort=-creatordate --count=1 --format=%\(refname:short\))
 
 if [ -z "$git_tag" ]
 then

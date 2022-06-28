@@ -1,0 +1,23 @@
+---
+- name: Creating firmware directory
+  become_user: pi
+  file:
+    path: "{{ firmware_dir }}"
+    state: directory
+
+# TODO update this to pull from OTA bucket
+- name: Copying Functional Tests Firmware
+  become_user: pi
+  copy:
+    src: "{{ item }}"
+    dest: "{{ firmware_dir }}/{{ test_firmware }}"
+  with_fileglob:
+    - "{{ role_path }}/files/test-firmware/*.bin"
+
+- name: Copying Production Firmware
+  become_user: pi
+  copy:
+    src: "{{ item }}"
+    dest: "{{ firmware_dir }}/{{ prod_firmware }}"
+  with_fileglob:
+    - "{{ role_path }}/files/prod-firmware/*.bin"

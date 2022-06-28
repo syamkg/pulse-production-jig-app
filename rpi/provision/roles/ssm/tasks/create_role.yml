@@ -31,6 +31,6 @@
       --role-name "{{ iam_role_name }}" \
       --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
-- name: Give it 5 seconds to propagte role
+- name: Give it 5 seconds to propagate role
   pause:
     seconds: 5

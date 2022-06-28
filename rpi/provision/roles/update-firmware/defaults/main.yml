@@ -1,0 +1,8 @@
+---
+# Don't update these values
+# Use roles/vars/environment_vars.yml to update
+
+app_dir: /home/pi/test-jig
+firmware_dir: "{{ app_dir }}/pulse_jig/firmware"
+test_firmware: test-firmware.bin
+prod_firmware: prod-firmware.bin

@@ -7,7 +7,7 @@
     - basic-config
     - change-passwords
     - localisation
-    - hostname
+    - set-hostname
     - install-docker
       
   vars_prompt:

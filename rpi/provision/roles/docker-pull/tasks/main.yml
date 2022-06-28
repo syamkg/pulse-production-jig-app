@@ -1,0 +1,17 @@
+---
+- pause:
+    prompt: "
+    \nHow do you want to load Docker image to RPi? \n
+    [1] - pull - use docker pull on RPi \n
+    [2] - copy - Pull from local & copy to RPi (useful when there are firewall restrictions)
+    \n\nEnter number"
+  register: pull_method
+  run_once: True
+
+- name: Using "docker pull" to load the image on the RPi
+  import_tasks: pull.yml
+  when: pull_method.user_input == "1"
+
+- name: Copying image from local to RPi
+  import_tasks: copy.yml
+  when: pull_method.user_input == "2"

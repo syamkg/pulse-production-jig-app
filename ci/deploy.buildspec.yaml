@@ -16,7 +16,7 @@ phases:
       - docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BUILD_IMAGE_TAG
       - docker image ls
       - docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BUILD_IMAGE_TAG $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
-      - "[ ! -z \"$VERSION\" ] && docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BUILD_IMAGE_TAG $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$version || echo"
+      - "[ ! -z \"$VERSION\" ] && docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BUILD_IMAGE_TAG $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$VERSION || echo"
       - docker image ls
 
   post_build:
@@ -28,4 +28,4 @@ phases:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - echo Pushing the Docker image...
       - docker push $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
-      - "[ ! -z \"$VERSION\" ] && docker push $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$version || echo"
+      - "[ ! -z \"$VERSION\" ] && docker push $AWS_ACCOUNT_ID_TARGET.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$VERSION || echo"
