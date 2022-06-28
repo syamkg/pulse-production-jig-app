@@ -38,7 +38,7 @@ class Registrar:
         self._api = Api()
         self._network = False
 
-    def register_serial(self, hwspec: HWSpec):
+    def register_serial(self, hwspec: HWSpec, **kwargs):
         data = {
             "serial": hwspec.serial,
             "fab_id": self._format_hex(hwspec.thing_type_id),
@@ -47,32 +47,30 @@ class Registrar:
             "assembly_ver": hwspec.assembly_version,
             "manufacturer_id": self._format_hex(hwspec.manufacturer_id),
             "date_of_manufacture": hwspec.assembly_timestamp,
-            "provisioning_firmware_ver": hwspec.factory_test_firmware_version,
-            "provisioning_client_ver": self._get_provisioning_client_ver(),
         }
 
         if self._is_pulse(hwspec.thing_type_id):
-            data["dev_eui"] = ""  # TODO implement
-            data["join_eui"] = settings.lora.join_eui
-            data["app_key"] = ""  # TODO implement
-            data["provisioned_firmware_ver"] = ""  # TODO implement
+            data["dev_eui"] = kwargs["dev_eui"]
+        else:
+            data["cable_length"] = str(kwargs["cable_length"]) + "mm"
 
         response = self._api.add_item(data)
         logger.info(response.json()["message"])
         logger.debug("\n" + self._pretty_print(response.text))
         return True if response.status_code == 201 else False
 
-    def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str, error: str = ""):
+    def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str, **kwargs):
         data = {
             "status": status,
-            "failure_reason": error,
             "log": logs,
             "provisioning_firmware_ver": hwspec.factory_test_firmware_version,
             "provisioning_client_ver": self._get_provisioning_client_ver(),
         }
 
         if self._is_pulse(hwspec.thing_type_id):
-            data["provisioned_firmware_ver"] = ""  # TODO implement
+            data["provisioned_firmware_ver"] = kwargs["prod_firmware_version"]
+            data["join_eui"] = kwargs["join_eui"]
+            data["app_key"] = kwargs["app_key"]
 
         response = self._api.provisioning_record(hwspec.serial, data)
         logger.info(response.json()["message"])

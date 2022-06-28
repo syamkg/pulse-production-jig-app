@@ -6,7 +6,7 @@ import serial
 
 from .timeout import Timeout, TimeoutNever
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("jig_client")
 
 # Import the correct platform specific comports implementation.
 # There doesn't seem to be a better way of doing this at the moment.
@@ -89,8 +89,11 @@ class JigClient:
         self._port.write(f"{line}".encode("utf-8"))
         self._log += line
 
-    def _is_response_successful(self, body: str) -> bool:
-        return body.strip().split("\n")[-1] == "PASS"
+    def _is_response_successful(self, body: str, success_key: str) -> bool:
+        """Check of commend returned the given success key
+        E.g. a PASS or OK or whatever
+        """
+        return body.strip().split("\n")[-1] == success_key
 
     @property
     def log(self):
@@ -163,6 +166,14 @@ class JigClient:
 
         return body
 
+    def platform(self, cmd: str) -> str:
+        """Sends a `platform` command to the device.
+
+        :param cmd: the platform command to run
+        :return: The command's response body.
+        """
+        return self.send_command(f"platform {cmd}", False)
+
     def enable_external_port(self, port_number: int):
         """Need to run these commands in-order to enable
         external ports to read hw-spec"""
@@ -176,13 +187,6 @@ class JigClient:
         self.send_command("port-enable none", False)
         self.platform("extern-ports-disable")
         self.platform("prp-disable")
-
-    def platform(self, cmd: str) -> str:
-        """Sends a `platform` command to the device.
-        :param cmd: the platform command to run
-        :return: The command's response body.
-        """
-        return self.send_command(f"platform {cmd}", False)
 
     def hwspec_load(self, target: str) -> bool:
         """Sends a `hwspec-load` command to the device.
@@ -218,7 +222,11 @@ class JigClient:
         return self.send_command(f"hwspec-save {target}", has_body=False)
 
     def test_ta3k(self, port: int) -> bool:
-        return self.run_test_cmd(f"test-ta3k {_to_port_flags(port)} 1")
+        """Run `test-ta3k` command on the given port
+        :param port: Port number as an int
+        :return bool: If test command is a pass or fail
+        """
+        return self.run_test_cmd(f"test-ta3k -v {_to_port_flags(port)} 1", timeout=10)
 
     def probe_await_connect(self) -> Optional[int]:
         resp = self.send_command("probe-await connect", timeout=-1)
@@ -229,17 +237,18 @@ class JigClient:
     def probe_await_recovery(self):
         return self.send_command("probe-await recovery", timeout=-1)
 
-    def run_test_cmd(self, cmd: str) -> bool:
+    def run_test_cmd(self, cmd: str, timeout: int = 2) -> bool:
         """Runs the given test command and whether it passed or
         not. The test command is expected to conform to the standard
         test output - the last line of the body should be either
         `PASS` or `FAIL` to indicate the status.
 
         :param cmd: the command str to send, including parameters.
+        :param timeout: The timeout for each command
         :return: True if the test passed, false otherwise.
         """
-        resp = self.send_command(cmd, timeout=10)
-        return self._is_response_successful(resp)
+        resp = self.send_command(cmd, timeout=timeout)
+        return self._is_response_successful(resp, "PASS")
 
     def lora_deveui(self) -> str:
         """Sends a `lora-deveui` command to the device.
@@ -252,6 +261,29 @@ class JigClient:
         :return: The command's response body.
         """
         return self.send_command("firmware-version")
+
+    def hwchunk(self, cmd: str) -> str:
+        """Sends a `hwchunk` command to the device.
+        :param cmd: the hwchunk command to run
+        :return: The command's response body.
+        """
+        return self.send_command(f"hwchunk {cmd}")
+
+    def write_cable_length(self, length: int) -> bool:
+        """Writes the specified cable length to the hwspec
+        :param length: Length of the cable in millimeters
+        :return bool: If cable length was successfully saved
+        """
+        self.hwchunk(f"write probe probe {length}")
+        resp = self.hwchunk("verify probe")
+        return self._is_response_successful(resp, "OK")
+
+    def read_cable_length(self) -> int:
+        """Extract the cable length from the `hwchunk dump` command
+        :return str: cable length (e.g. 1500mm)
+        """
+        resp = self.hwchunk("dump probe probe")
+        return int(resp.split("cable length: ")[1].split("mm")[0])
 
     @staticmethod
     def find_device() -> Optional[str]:
