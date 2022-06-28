@@ -21,7 +21,7 @@ if [ -n "${mount_point}" ]; then
 fi
 
 # Remove any junk mount points before attempting re-mount
-sudo rm -r /media/pi/XDOT*
+sudo rm -rf /media/pi/XDOT*
 
 # Then mount the XDOT programmer
 device=$( lsblk -fp | awk '/XDOT/ {print $1}' )

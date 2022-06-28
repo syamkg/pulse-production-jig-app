@@ -132,6 +132,8 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self.proceed()
 
     def waiting_for_target(self):
+        if self.reset_logs:
+            self._ftf.reset_logs()
         port_no = self._ftf.probe_await_connect()
         if port_no is None:
             logger.error("INVALID PROBE DETECTED!")
@@ -146,7 +148,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
                 self._inner_loop()
             except Exception as e:
                 logger.error(str(e))
-                self.pcb_lost()
+                self.retry()
 
     def loading_device_rego(self):
         try:
