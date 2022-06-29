@@ -19,7 +19,7 @@ class Api:
         self._host = settings.api.host
         self._stage = settings.api.stage
         self._service = "execute-api"
-        self._timeout = 30
+        self._timeout = 10
 
     def _auth(self) -> AWS4Auth:
         credentials = botocore.session.Session().get_credentials()
