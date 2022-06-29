@@ -205,9 +205,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
         # cable_length has to be mm
         success = self._ftf.write_cable_length(self.cable_length_mm)
 
-        # If writing the cable length fails we need to clear our mess
         if not success:
-            self._ftf.hwchunk("clear probe")
             self.retry()
             return
 
