@@ -38,7 +38,7 @@ class Registrar:
         self._api = Api()
         self._network = False
 
-    def register_serial(self, hwspec: HWSpec, dev_eui: str = "", cable_length: int = 0):
+    def register_serial(self, hwspec: HWSpec, cable_length: int = 0):
         data = {
             "serial": hwspec.serial,
             "fab_id": self._format_hex(hwspec.thing_type_id),
@@ -49,9 +49,7 @@ class Registrar:
             "date_of_manufacture": hwspec.assembly_timestamp,
         }
 
-        if self._is_pulse(hwspec.thing_type_id):
-            data["dev_eui"] = dev_eui
-        else:
+        if not self._is_pulse(hwspec.thing_type_id):
             data["cable_length"] = str(cable_length) + "mm"
 
         response = self._api.add_item(data)
@@ -59,26 +57,13 @@ class Registrar:
         logger.debug("\n" + self._pretty_print(response.text))
         return True if response.status_code == 201 else False
 
-    def submit_provisioning_record(
-        self,
-        hwspec: HWSpec,
-        status: str,
-        logs: str,
-        prod_firmware_version: str = "",
-        join_eui: str = "",
-        app_key: str = "",
-    ):
+    def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str):
         data = {
             "status": status,
             "log": logs,
             "provisioning_firmware_ver": hwspec.factory_test_firmware_version,
             "provisioning_client_ver": self._get_provisioning_client_ver(),
         }
-
-        if self._is_pulse(hwspec.thing_type_id):
-            data["provisioned_firmware_ver"] = prod_firmware_version
-            data["join_eui"] = join_eui
-            data["app_key"] = app_key
 
         response = self._api.provisioning_record(hwspec.serial, data)
         logger.info(response.json()["message"])
