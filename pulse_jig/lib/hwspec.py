@@ -20,7 +20,7 @@ class HWSpec:
     hw_revision: str = ""
     assembly_id: int = 0x00
     assembly_version: str = ""
-    assembly_timestamp: str = ""
+    assembly_timestamp: int = 0
     manufacturer_name: str = ""
     manufacturer_id: int = 0x00
     factory_test_firmware_version: str = ""
@@ -32,7 +32,7 @@ class HWSpec:
         self.hw_revision = ftf.hwspec_get("hw_revision")
         self.assembly_id = int(ftf.hwspec_get("assembly_id"), 16)
         self.assembly_version = ftf.hwspec_get("assembly_version")
-        self.assembly_timestamp = ftf.hwspec_get("assembly_timestamp")
+        self.assembly_timestamp = self._parse_assembly_timestamp(ftf.hwspec_get("assembly_timestamp"))
         self.manufacturer_name = ftf.hwspec_get("manufacturer_name")
         self.manufacturer_id = int(ftf.hwspec_get("manufacturer_id"), 16)
         self.factory_test_firmware_version = ftf.hwspec_get("factory_test_firmware_version")
@@ -45,7 +45,7 @@ class HWSpec:
         self.hw_revision = settings.device.hw_revision
         self.assembly_id = settings.device.assembly_id
         self.assembly_version = settings.device.assembly_version
-        self.assembly_timestamp = datetime.fromtimestamp(float(timestamp)).strftime("%Y-%m-%d")
+        self.assembly_timestamp = timestamp
         self.manufacturer_name = settings.device.manufacturer_name
         self.manufacturer_id = settings.device.manufacturer_id
         self.factory_test_firmware_version = ftf.firmware_version()
@@ -63,7 +63,15 @@ class HWSpec:
         ftf.hwspec_set("factory_test_firmware_version", self.factory_test_firmware_version)
 
     @staticmethod
-    def _generate_serial(timestamp) -> str:
+    def _generate_serial(timestamp: int) -> str:
         minter_id = settings.device.minter_id
         device_type_id = settings.device.thing_type_id
         return f"W{minter_id}-{device_type_id}-{timestamp}"
+
+    @staticmethod
+    def _parse_assembly_timestamp(timestamp: str) -> int:
+        try:
+            return int(timestamp)
+        except ValueError:
+            dt = datetime.strptime(timestamp, "%Y-%m-%d")
+            return int(datetime.timestamp(dt))

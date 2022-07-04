@@ -31,7 +31,7 @@ class Provisioner:
     class QRCode:
         sn: str
         rev: str
-        dom: str
+        dom: int
 
     @dataclass
     class Mode:
