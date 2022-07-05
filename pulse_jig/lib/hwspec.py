@@ -22,7 +22,6 @@ class HWSpec:
     assembly_timestamp: int = 0
     manufacturer_name: str = ""
     manufacturer_id: int = 0x00
-    factory_test_firmware_version: str = ""
 
     def get(self, ftf: JigClient):
         self.serial = ftf.hwspec_get("serial")
@@ -34,9 +33,8 @@ class HWSpec:
         self.assembly_timestamp = int(ftf.hwspec_get("assembly_timestamp"))
         self.manufacturer_name = ftf.hwspec_get("manufacturer_name")
         self.manufacturer_id = int(ftf.hwspec_get("manufacturer_id"), 16)
-        self.factory_test_firmware_version = ftf.hwspec_get("factory_test_firmware_version")
 
-    def set(self, ftf: JigClient):
+    def set(self):
         timestamp = int(time.time())
         self.serial = self._generate_serial(timestamp)
         self.thing_type_name = settings.device.thing_type_name
@@ -47,7 +45,6 @@ class HWSpec:
         self.assembly_timestamp = timestamp
         self.manufacturer_name = settings.device.manufacturer_name
         self.manufacturer_id = settings.device.manufacturer_id
-        self.factory_test_firmware_version = ftf.firmware_version()
 
     def save(self, ftf: JigClient):
         ftf.hwspec_set("serial", self.serial)
@@ -59,7 +56,6 @@ class HWSpec:
         ftf.hwspec_set("assembly_timestamp", str(self.assembly_timestamp))
         ftf.hwspec_set("manufacturer_name", self.manufacturer_name)
         ftf.hwspec_set("manufacturer_id", str(self.manufacturer_id))
-        ftf.hwspec_set("factory_test_firmware_version", self.factory_test_firmware_version)
 
     @staticmethod
     def _generate_serial(timestamp: int) -> str:

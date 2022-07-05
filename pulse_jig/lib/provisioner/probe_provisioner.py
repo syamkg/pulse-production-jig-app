@@ -200,7 +200,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
     def generate_hwspec(self):
         self.hwspec = HWSpec()
-        self.hwspec.set(self._ftf)
+        self.hwspec.set()
         self.proceed()
 
     def save_hwspec(self):
@@ -236,7 +236,9 @@ class ProbeProvisioner(Provisioner, CommonStates):
             self.retry()
 
     def submitting_provisioning_record(self):
-        success = self._registrar.submit_provisioning_record(self.hwspec, self.provisional_status.name, self._ftf.log)
+        success = self._registrar.submit_provisioning_record(
+            self.hwspec, self.provisional_status.name, self._ftf.log, self.firmware_version
+        )
         if success:
             self.proceed()
         else:

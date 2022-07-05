@@ -72,11 +72,11 @@ class Registrar:
             self._network = NetworkStatus.ERROR
             return False
 
-    def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str):
+    def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str, firmware_version: str):
         data = {
             "status": status,
             "log": logs,
-            "provisioning_firmware_ver": hwspec.factory_test_firmware_version,
+            "provisioning_firmware_ver": firmware_version,
             "provisioning_client_ver": self._get_provisioning_client_ver(),
         }
 
