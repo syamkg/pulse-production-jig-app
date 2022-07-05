@@ -1,6 +1,5 @@
 import time
 from dataclasses import dataclass
-from datetime import datetime
 
 from pulse_jig.config import settings
 from .jig_client import JigClient
@@ -32,7 +31,7 @@ class HWSpec:
         self.hw_revision = ftf.hwspec_get("hw_revision")
         self.assembly_id = int(ftf.hwspec_get("assembly_id"), 16)
         self.assembly_version = ftf.hwspec_get("assembly_version")
-        self.assembly_timestamp = self._parse_assembly_timestamp(ftf.hwspec_get("assembly_timestamp"))
+        self.assembly_timestamp = int(ftf.hwspec_get("assembly_timestamp"))
         self.manufacturer_name = ftf.hwspec_get("manufacturer_name")
         self.manufacturer_id = int(ftf.hwspec_get("manufacturer_id"), 16)
         self.factory_test_firmware_version = ftf.hwspec_get("factory_test_firmware_version")
@@ -67,11 +66,3 @@ class HWSpec:
         minter_id = settings.device.minter_id
         device_type_id = settings.device.thing_type_id
         return f"W{minter_id}-{device_type_id}-{timestamp}"
-
-    @staticmethod
-    def _parse_assembly_timestamp(timestamp: str) -> int:
-        try:
-            return int(timestamp)
-        except ValueError:
-            dt = datetime.strptime(timestamp, "%Y-%m-%d")
-            return int(datetime.timestamp(dt))
