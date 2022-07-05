@@ -2,6 +2,22 @@ import PySimpleGUI as sg
 
 from pulse_jig.config import settings
 
+repair_mode_warning = []
+if settings.app.hwspec_repair_mode:
+    repair_mode_warning = [
+        [
+            sg.Text(
+                "WARNING: Repair mode is active!",
+                justification="center",
+                text_color="white",
+                background_color="red",
+                font=("Arial", 15),
+                expand_x=True,
+            ),
+        ],
+        [sg.Sizer(0, 10)],
+    ]
+
 
 def layout():
     sg.theme("Black")
@@ -18,6 +34,7 @@ def layout():
                                     sg.Frame(
                                         "",
                                         layout=[
+                                            *repair_mode_warning,
                                             [
                                                 sg.Text("Manufacturer: "),
                                                 sg.Text(settings.device.manufacturer_name, text_color="gray"),

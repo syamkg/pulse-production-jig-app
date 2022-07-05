@@ -2,12 +2,28 @@ import PySimpleGUI as sg
 
 from pulse_jig.config import settings
 
+repair_mode_warning = []
+if settings.app.hwspec_repair_mode:
+    repair_mode_warning = [
+        [
+            sg.Text(
+                "WARNING: Repair mode is active!",
+                justification="center",
+                text_color="white",
+                background_color="red",
+                font=("Arial", 11),
+                expand_x=True,
+            ),
+        ],
+    ]
+
 
 def layout():
     sg.theme("Black")
 
     return [
         [
+            *repair_mode_warning,
             sg.Column(
                 layout=[
                     [sg.Sizer(450, 0)],

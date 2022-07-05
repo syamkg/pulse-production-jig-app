@@ -163,6 +163,12 @@ class ProbeProvisioner(Provisioner, CommonStates):
             self.pcb_lost()
 
         try:
+            # If repair_mode is set we'll clear the hwspec on probe
+            # before attempting to read. This will ensure to re-write
+            # the hwspec to the device
+            if settings.app.hwspec_repair_mode:
+                self._ftf.hwspec_destroy("probe")
+
             if self._ftf.hwspec_load("probe"):
                 self.hwspec = HWSpec()
                 self.hwspec.get(self._ftf)

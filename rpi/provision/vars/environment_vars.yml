@@ -22,6 +22,7 @@ app:
   test_firmware_path: "firmware/{{ test_firmware }}"
   prod_firmware_path: "firmware/{{ prod_firmware }}"
   skip_test_firmware_load: false
+  hwspec_repair_mode: false
 device:
   minter_id: 0x00
   thing_type_name: ta3k

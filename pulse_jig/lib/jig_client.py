@@ -221,6 +221,13 @@ class JigClient:
         """
         return self.send_command(f"hwspec-save {target}", has_body=False)
 
+    def hwspec_destroy(self, target: str) -> str:
+        """Sends a `hwspec-destroy` command to the device.
+        :param target: the target to destroy the hwspec from
+        :return: The command's response body.
+        """
+        return self.send_command(f"hwspec-destroy {target}", has_body=False)
+
     def test_ta3k(self, port: int) -> bool:
         """Run `test-ta3k` command on the given port
         :param port: Port number as an int

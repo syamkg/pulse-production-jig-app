@@ -12,6 +12,7 @@ app:
   test_firmware_path: firmware/test-firmware.bin
   prod_firmware_path: firmware/prod-firmware.bin
   skip_test_firmware_load: false
+  hwspec_repair_mode: false
 device:
   minter_id:
   thing_type_name:
