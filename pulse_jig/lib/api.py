@@ -1,3 +1,4 @@
+import json
 import logging
 
 import botocore.session
@@ -35,12 +36,29 @@ class Api:
 
     def add_item(self, data: dict) -> Response:
         url = self._url("device")
-        return self._session().post(url, json=data, timeout=self._timeout)
+        response = self._session().post(url, json=data, timeout=self._timeout)
+        log(response)
+        return response
 
     def provisioning_record(self, serial: str, data: dict) -> Response:
         url = self._url(f"device/{serial}/provisioning_record")
-        return self._session().post(url, json=data, timeout=self._timeout)
+        response = self._session().post(url, json=data, timeout=self._timeout)
+        log(response)
+        return response
 
     def auth_check(self) -> Response:
         url = self._url("auth/check")
-        return self._session().get(url, timeout=self._timeout)
+        response = self._session().get(url, timeout=self._timeout)
+        return response
+
+
+def log(response: Response):
+    logger.info(response.json()["message"])
+    logger.debug("\n" + pretty_print(response.text))
+
+
+def pretty_print(data):
+    try:
+        return json.dumps(json.loads(data), sort_keys=False, indent=4)
+    except (ValueError, TypeError):
+        return json.dumps(data, sort_keys=False, indent=4)

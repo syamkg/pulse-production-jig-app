@@ -129,6 +129,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self._ftf = JigClient(self._port)
         self._pulse_manager.reset_device()
         self._ftf.skip_boot_header()
+        self.firmware_version = self._ftf.firmware_version()
         self.proceed()
 
     def waiting_for_target(self):

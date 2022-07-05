@@ -1,5 +1,7 @@
 import PySimpleGUI as sg
 
+from pulse_jig.config import settings
+
 
 def layout():
     sg.theme("Black")
@@ -41,6 +43,17 @@ def layout():
                                         expand_x=True,
                                         expand_y=True,
                                     )
+                                ],
+                                [sg.HorizontalSeparator(color="gray")],
+                                [
+                                    sg.Text(
+                                        f"Jig App Version: v{settings.VERSION}",
+                                        font=("Courier New", 8, "bold"),
+                                    ),
+                                    sg.Text(
+                                        key="-FIRMWARE_VERSION-",
+                                        font=("Courier New", 8, "bold"),
+                                    ),
                                 ],
                             ],
                             expand_x=True,

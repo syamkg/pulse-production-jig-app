@@ -42,7 +42,7 @@ def _parse_target(name: str) -> Target:
 def _configure_logging(debug):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     logging.getLogger("transitions").setLevel(logging.INFO if debug else logging.ERROR)
-    logging.getLogger("botocore").setLevel(logging.INFO if debug else logging.ERROR)
+    logging.getLogger("botocore").setLevel(logging.WARN if debug else logging.ERROR)
 
 
 @click.command()
@@ -82,7 +82,7 @@ def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense
         raise RuntimeError("Invalid target")
 
     app = JigGUI()
-    app.run(provisioner)
+    app.run(provisioner, registrar)
 
 
 if __name__ == "__main__":

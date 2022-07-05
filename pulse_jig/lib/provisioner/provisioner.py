@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
 from ..hwspec import HWSpec
-from ..registrar import Registrar
+from ..registrar import Registrar, NetworkStatus
 
 logger = logging.getLogger("provisioner")
 
@@ -45,6 +45,7 @@ class Provisioner:
         qrcode: Optional["Provisioner.QRCode"]
         reset_logs: bool
         mode: Optional["Provisioner.Mode"]
+        firmware_version: Optional[str]
 
     def __init__(self, registrar: Registrar):
         self.reset()
@@ -54,6 +55,7 @@ class Provisioner:
         self.provisional_status = Provisioner.Status.UNKNOWN
         self.reset_logs = False
         self.mode = self.Mode()
+        self.firmware_version: str = "0.0.0"
 
     def _send_event(self, name: str):
         for listener in self._listeners:
@@ -65,6 +67,7 @@ class Provisioner:
                     qrcode=self.qrcode,
                     reset_logs=self.reset_logs,
                     mode=self.mode,
+                    firmware_version=self.firmware_version,
                 ),
             )
 
@@ -95,7 +98,7 @@ class Provisioner:
         return self.provisional_status == Provisioner.Status.PASSED
 
     def has_network(self) -> bool:
-        return self._registrar.network
+        return self._registrar.network_status == NetworkStatus.CONNECTED
 
     def set_status_passed(self):
         self.provisional_status = Provisioner.Status.PASSED

@@ -1,3 +1,4 @@
+import enum
 import io
 import json
 import logging
@@ -9,6 +10,7 @@ import qrcode
 
 from pulse_jig.config import settings
 from ..provisioner.provisioner import Provisioner
+from ..registrar import NetworkStatus
 from ..timeout import Timeout
 from ..ui.layouts.app_main_layout import layout as app_layout
 from ..ui.layouts.mode_set_layout import layout as mode_layout
@@ -57,7 +59,7 @@ class JigGUI:
     def __init__(self):
         self.current_status = Provisioner.Status.UNKNOWN
 
-    def run(self, provisioner):
+    def run(self, provisioner, registrar):
         self._app_window()
         self._mode_window()
 
@@ -76,8 +78,9 @@ class JigGUI:
                     self._update_state(event)
                     self._set_status(data[event].status)
                     self._update_qr(data[event])
+                    self._update_firmware_version(data[event])
             self._update_logs(event, data)
-            self._update_network_status(provisioner.has_network())
+            self._update_network_status(registrar.network_status)
 
     def _init_logs(self):
         self._log_queue = queue.Queue()
@@ -104,6 +107,12 @@ class JigGUI:
             data = _generate_qrcode(state.qrcode.__dict__)
         self.window["-QRCODE-"].update(data=data)
 
+    def _update_firmware_version(self, state):
+        firmware_version = state.firmware_version
+        self.window["-FIRMWARE_VERSION-"].update(
+            f"Firmware Version: v{firmware_version}",
+        )
+
     def _set_status(self, status: Provisioner.Status):
         opts = {
             Provisioner.Status.UNKNOWN: ("", "black"),
@@ -123,11 +132,15 @@ class JigGUI:
         # based on our inside knowledge
         self.window["-STATE-"].update(name.replace("_", " ").capitalize())
 
-    def _update_network_status(self, network_status):
-        if network_status:
-            status_msg = {"value": "Connected", "text_color": "green"}
+    def _update_network_status(self, network_status: enum.Enum):
+        if network_status == NetworkStatus.CONNECTED:
+            status_msg = {"value": network_status.value, "text_color": "green"}
+        elif network_status == NetworkStatus.TIMEOUT:
+            status_msg = {"value": network_status.value, "text_color": "orange"}
+        elif network_status in [NetworkStatus.NOT_CONNECTED, NetworkStatus.ERROR]:
+            status_msg = {"value": network_status.value, "text_color": "red"}
         else:
-            status_msg = {"value": "Not Connected", "text_color": "red"}
+            status_msg = {"value": "", "text_color": "white"}
         self.window["-NETWORK-"].update(**status_msg)
 
     def _update_mode(self, provisioner):

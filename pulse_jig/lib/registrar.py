@@ -1,8 +1,8 @@
 import enum
-import json
 import logging
 import threading
 from time import sleep
+from typing import Optional
 
 import requests
 
@@ -16,6 +16,13 @@ logger = logging.getLogger("registrar")
 class ThingType(enum.Enum):
     PULSE = 258
     PROBE = 513
+
+
+class NetworkStatus(enum.Enum):
+    CONNECTED = "Connected"
+    NOT_CONNECTED = "Not Connected"
+    TIMEOUT = "Request Timeout"
+    ERROR = "Network Error"
 
 
 def threaded(fn):
@@ -36,9 +43,9 @@ def threaded(fn):
 class Registrar:
     def __init__(self):
         self._api = Api()
-        self._network = False
+        self._network = NetworkStatus.NOT_CONNECTED
 
-    def register_serial(self, hwspec: HWSpec, cable_length: int = 0):
+    def register_serial(self, hwspec: HWSpec, cable_length: Optional[int] = 0):
         data = {
             "serial": hwspec.serial,
             "fab_id": self._format_hex(hwspec.thing_type_id),
@@ -49,13 +56,21 @@ class Registrar:
             "date_of_manufacture": hwspec.assembly_timestamp,
         }
 
-        if not self._is_pulse(hwspec.thing_type_id):
+        if cable_length != 0:
             data["cable_length"] = str(cable_length) + "mm"
 
-        response = self._api.add_item(data)
-        logger.info(response.json()["message"])
-        logger.debug("\n" + self._pretty_print(response.text))
-        return True if response.status_code == 201 else False
+        try:
+            response = self._api.add_item(data)
+            return True if response.status_code == 201 else False
+        except requests.exceptions.ConnectionError:
+            self._network = NetworkStatus.NOT_CONNECTED
+            return False
+        except requests.exceptions.ReadTimeout:
+            self._network = NetworkStatus.TIMEOUT
+            return False
+        except requests.exceptions.RequestException:
+            self._network = NetworkStatus.ERROR
+            return False
 
     def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str):
         data = {
@@ -65,36 +80,39 @@ class Registrar:
             "provisioning_client_ver": self._get_provisioning_client_ver(),
         }
 
-        response = self._api.provisioning_record(hwspec.serial, data)
-        logger.info(response.json()["message"])
-        logger.debug("\n" + self._pretty_print(response.text))
-        return True if response.status_code == 201 else False
+        try:
+            response = self._api.provisioning_record(hwspec.serial, data)
+            return True if response.status_code == 201 else False
+        except requests.exceptions.ConnectionError:
+            self._network = NetworkStatus.NOT_CONNECTED
+            return False
+        except requests.exceptions.ReadTimeout:
+            self._network = NetworkStatus.TIMEOUT
+            return False
+        except requests.exceptions.RequestException:
+            self._network = NetworkStatus.ERROR
+            return False
 
     @threaded
     def network_check(self):
         while True:
             try:
-                self._network = self._api.auth_check().status_code == 200
+                if self._api.auth_check().status_code == 200:
+                    self._network = NetworkStatus.CONNECTED
+                else:
+                    self._network = NetworkStatus.ERROR
             except requests.exceptions.ConnectionError:
-                self._network = False
-            status = "Connected" if self._network else "Not connected"
-            logger.debug(f"Network check: {status}")
+                self._network = NetworkStatus.NOT_CONNECTED
+            except requests.exceptions.ReadTimeout:
+                self._network = NetworkStatus.TIMEOUT
+            except requests.exceptions.RequestException:
+                self._network = NetworkStatus.ERROR
+            logger.debug(f"network_check(): {self._network.value}")
             sleep(settings.network.ping_interval)
 
     @property
-    def network(self) -> bool:
+    def network_status(self) -> enum.Enum:
         return self._network
-
-    @staticmethod
-    def _pretty_print(data):
-        try:
-            return json.dumps(json.loads(data), sort_keys=False, indent=4)
-        except (ValueError, TypeError):
-            return json.dumps(data, sort_keys=False, indent=4)
-
-    @staticmethod
-    def _is_pulse(thing_type_id: int) -> bool:
-        return thing_type_id == ThingType.PULSE.value
 
     @staticmethod
     def _get_provisioning_client_ver() -> str:
