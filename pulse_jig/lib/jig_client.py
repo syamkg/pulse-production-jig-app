@@ -89,11 +89,8 @@ class JigClient:
         self._port.write(f"{line}".encode("utf-8"))
         self._log += line
 
-    def _is_response_successful(self, body: str, success_key: str) -> bool:
-        """Check of commend returned the given success key
-        E.g. a PASS or OK or whatever
-        """
-        return body.strip().split("\n")[-1] == success_key
+    def _is_response_successful(self, body: str) -> bool:
+        return body.strip().split("\n")[-1] == "PASS"
 
     @property
     def log(self):
@@ -255,7 +252,7 @@ class JigClient:
         :return: True if the test passed, false otherwise.
         """
         resp = self.send_command(cmd, timeout=timeout)
-        return self._is_response_successful(resp, "PASS")
+        return self._is_response_successful(resp)
 
     def lora_deveui(self) -> str:
         """Sends a `lora-deveui` command to the device.
@@ -269,28 +266,31 @@ class JigClient:
         """
         return self.send_command("firmware-version")
 
-    def hwchunk(self, cmd: str) -> str:
-        """Sends a `hwchunk` command to the device.
-        :param cmd: the hwchunk command to run
+    def hwchunk_get_probe(self) -> str:
+        """Read from the "probe" chunk of a probe
+        :return ProbeSpec: Parsed output
+        """
+        return self.send_command(f"hwchunk dump probe probe")
+
+    def hwchunk_write_probe(self, cable_length: int) -> str:
+        """Write to the "probe" chunk of a probe
+        :probe_spec: What's going to be written
         :return: The command's response body.
         """
-        return self.send_command(f"hwchunk {cmd}")
+        return self.send_command(f"hwchunk write probe probe {cable_length}")
 
-    def write_cable_length(self, length: int) -> bool:
-        """Writes the specified cable length to the hwspec
-        :param length: Length of the cable in millimeters
-        :return bool: If cable length was successfully saved
-        """
-        self.hwchunk(f"write probe probe {length}")
-        resp = self.hwchunk("verify probe")
-        return self._is_response_successful(resp, "OK")
+    def hwchunk_verify(self, target: str) -> bool:
+        """Sends hwchunk verify command to the device
+        :target: Target device pulse or probe
+        :return bool: If the chunk list is correct and all CRCs match."""
+        resp = self.send_command(f"hwchunk verify {target}")
+        return self._is_response_successful(resp)
 
-    def read_cable_length(self) -> int:
-        """Extract the cable length from the `hwchunk dump` command
-        :return str: cable length (e.g. 1500mm)
-        """
-        resp = self.hwchunk("dump probe probe")
-        return int(resp.split("cable length: ")[1].split("mm")[0])
+    def hwchunk_clear(self, target: str) -> str:
+        """Sends hwchunk clear command to the device
+        :target: Target device pulse or probe
+        :return str: The command's response body."""
+        return self.send_command(f"hwchunk clear {target}")
 
     @staticmethod
     def find_device() -> Optional[str]:

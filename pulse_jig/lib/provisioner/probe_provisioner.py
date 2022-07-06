@@ -1,6 +1,7 @@
 import enum
 import logging
 from dataclasses import dataclass
+from typing import Optional
 
 import serial
 from transitions import Machine
@@ -10,6 +11,7 @@ from .common_states import CommonStates
 from .provisioner import Provisioner
 from ..hwspec import HWSpec
 from ..jig_client import JigClient, JigClientException
+from ..probe_spec import ProbeSpec
 
 logger = logging.getLogger("provisioner")
 
@@ -201,6 +203,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
     def generate_hwspec(self):
         self.hwspec = HWSpec()
         self.hwspec.set()
+
+        # We'll set the probe_spec at the same time as hwspec
+        self.probe_spec = ProbeSpec()
+        self.probe_spec.set(self.mode.cable_length)
         self.proceed()
 
     def save_hwspec(self):
@@ -208,28 +214,31 @@ class ProbeProvisioner(Provisioner, CommonStates):
         self._ftf.enable_external_port(self._port_no)
         self._ftf.hwspec_save("probe")
 
-        # Need to write cable length only after `hwspec-save`
-        # cable_length has to be mm
-        success = self._ftf.write_cable_length(self.cable_length_mm)
-
-        if not success:
-            self.retry()
-            return
+        # Need to write probe spec only after `hwspec-save`
+        # and attempt to verify the written probe spec
+        self.probe_spec.save(self._ftf)
+        success = self._ftf.hwchunk_verify("probe")
 
         self._ftf.disable_external_port()
+
+        if not success:
+            self.fail()
+            return
+
         self.proceed()
 
     def update_qrcode(self):
         if self.has_passed():
+            self.probe_spec = ProbeSpec()
             self.qrcode = self.QRCode(
                 sn=self.hwspec.serial,
                 rev=self.hwspec.hw_revision,
                 dom=self.hwspec.assembly_timestamp,
-                len=f"{self.hwspec_cable_length_m}m",
+                len=f"{self.probe_spec_cable_length_m}m",
             )
 
     def registering_device(self):
-        registered = self._registrar.register_serial(self.hwspec, cable_length=self.cable_length_mm)
+        registered = self._registrar.register_serial(self.hwspec, cable_length=self.probe_spec.cable_length)
         if registered:
             self.proceed()
         else:
@@ -244,15 +253,19 @@ class ProbeProvisioner(Provisioner, CommonStates):
         else:
             self.retry()
 
-    @property
-    def cable_length_mm(self) -> int:
-        """Returns mode.cable_length in mm"""
-        return int(self.mode.cable_length * 1000)  # type: ignore
+    def reset(self):
+        super().reset()
+        self.probe_spec: Optional[ProbeSpec] = None
 
     @property
-    def hwspec_cable_length_m(self) -> float:
-        """Reads cable length from hwspec & returns in meters"""
-        self._ftf.enable_external_port(self._port_no)
-        hwspec_cable_length = self._ftf.read_cable_length()
-        self._ftf.disable_external_port()
-        return hwspec_cable_length / 1000
+    def probe_spec_cable_length_m(self) -> float:
+        """Reads cable length from hwspec & returns in meters
+        If the cable length was not found Fail with ValueError
+        """
+        try:
+            self._ftf.enable_external_port(self._port_no)
+            self.probe_spec.get(self._ftf)
+            self._ftf.disable_external_port()
+            return self.probe_spec.cable_length / 1000
+        except IndexError:
+            raise ValueError("Cable length not found!")
