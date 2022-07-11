@@ -32,6 +32,7 @@ class Provisioner:
         sn: str
         rev: str
         dom: int
+        cert: str
 
     @dataclass
     class Mode:

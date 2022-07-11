@@ -13,6 +13,7 @@ device:
   assembly_version: 0.0.0
   manufacturer_name: Woodside
   manufacturer_id: 0x01
+  iecex_cert:
   cable_lengths: [1.5, 2.0]
 api:
   region: ap-southeast-2

@@ -22,6 +22,7 @@ class HWSpec:
     assembly_timestamp: int = 0
     manufacturer_name: str = ""
     manufacturer_id: int = 0x00
+    iecex_cert: str = ""
 
     def get(self, ftf: JigClient):
         self.serial = ftf.hwspec_get("serial")
@@ -33,6 +34,7 @@ class HWSpec:
         self.assembly_timestamp = int(ftf.hwspec_get("assembly_timestamp"))
         self.manufacturer_name = ftf.hwspec_get("manufacturer_name")
         self.manufacturer_id = int(ftf.hwspec_get("manufacturer_id"), 16)
+        self.iecex_cert = ftf.hwspec_get("iecex_cert")
 
     def set(self):
         timestamp = int(time.time())
@@ -45,6 +47,7 @@ class HWSpec:
         self.assembly_timestamp = timestamp
         self.manufacturer_name = settings.device.manufacturer_name
         self.manufacturer_id = settings.device.manufacturer_id
+        self.iecex_cert = settings.device.iecex_cert
 
     def save(self, ftf: JigClient):
         ftf.hwspec_set("serial", self.serial)
@@ -56,6 +59,7 @@ class HWSpec:
         ftf.hwspec_set("assembly_timestamp", str(self.assembly_timestamp))
         ftf.hwspec_set("manufacturer_name", self.manufacturer_name)
         ftf.hwspec_set("manufacturer_id", str(self.manufacturer_id))
+        ftf.hwspec_set("iecex_cert", self.iecex_cert)
 
     @staticmethod
     def _generate_serial(timestamp: int) -> str:

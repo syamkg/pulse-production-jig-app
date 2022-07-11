@@ -14,6 +14,7 @@ settings = Dynaconf(
             "device.assembly_version",
             "device.manufacturer_name",
             "device.manufacturer_id",
+            "device.iecex_cert",
             must_exist=True,
         ),
         Validator("api.region", "api.host", "api.stage", must_exist=True),

@@ -205,6 +205,7 @@ class JigClient:
 
     def hwspec_set(self, key: str, value: str) -> str:
         """Sends a `hwspec-set` command to the device.
+        Only save to hwspec if the both `key` & `value` is given
         :param key: the key to write
         :param value: the value to write against the key
         :return: The command's response body.

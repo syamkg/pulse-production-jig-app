@@ -234,6 +234,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
                 sn=self.hwspec.serial,
                 rev=self.hwspec.hw_revision,
                 dom=self.hwspec.assembly_timestamp,
+                cert=self.hwspec.iecex_cert,
                 len=f"{self.probe_spec_cable_length_m}m",
             )
 

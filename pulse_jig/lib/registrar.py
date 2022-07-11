@@ -54,6 +54,7 @@ class Registrar:
             "assembly_ver": hwspec.assembly_version,
             "manufacturer_id": self._format_hex(hwspec.manufacturer_id),
             "date_of_manufacture": hwspec.assembly_timestamp,
+            "iecex_cert": hwspec.iecex_cert,
         }
 
         if cable_length != 0:

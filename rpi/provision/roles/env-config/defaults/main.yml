@@ -22,6 +22,7 @@ device:
   assembly_version:
   manufacturer_name:
   manufacturer_id:
+  iecex_cert:
   cable_lengths: [1.5, 2.0]
 api:
   region: ap-southeast-2
