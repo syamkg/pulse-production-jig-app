@@ -91,7 +91,7 @@ def layout():
                                             ],
                                         ],
                                         border_width=0,
-                                        pad=(60, 50),
+                                        pad=(60, (40, 20)),
                                         expand_x=True,
                                         expand_y=True,
                                     )

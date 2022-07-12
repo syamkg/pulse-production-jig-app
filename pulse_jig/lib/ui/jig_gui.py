@@ -15,6 +15,8 @@ from ..timeout import Timeout
 from ..ui.layouts.app_main_layout import layout as app_layout
 from ..ui.layouts.mode_set_layout import layout as mode_layout
 
+logger = logging.getLogger("jig_gui")
+
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -51,7 +53,7 @@ class QueueHandler(logging.Handler):
         super().__init__()
         self.log_queue = log_queue
 
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         self.log_queue.put(record)
 
 
@@ -85,7 +87,7 @@ class JigGUI:
     def _init_logs(self):
         self._log_queue = queue.Queue()
         self._queue_handler = QueueHandler(self._log_queue)
-        self._queue_handler.setFormatter(logging.Formatter("[%(levelname)s:%(name)s] %(message)s"))
+        self._queue_handler.setFormatter(logging.Formatter("[%(levelname)-4.4s:%(name)-11.11s] %(message)s"))
         logging.getLogger().addHandler(self._queue_handler)
 
     def _update_logs(self, event, data):
@@ -168,6 +170,7 @@ class JigGUI:
                 else:
                     provisioner.restart()
 
+                logger.info(f"Mode changed: {provisioner.mode.cable_length} to {data['-CABLE_LENGTH-']}")
                 provisioner.mode.cable_length = data["-CABLE_LENGTH-"]
                 provisioner.mode.manufacturer = settings.device.manufacturer_name
                 provisioner.mode.device = settings.device.thing_type_name

@@ -40,7 +40,11 @@ def _parse_target(name: str) -> Target:
 
 
 def _configure_logging(debug):
-    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO,
+        format="[%(asctime)s] [%(levelname)-5s] [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     logging.getLogger("transitions").setLevel(logging.INFO if debug else logging.ERROR)
     logging.getLogger("botocore").setLevel(logging.WARN if debug else logging.ERROR)
 
