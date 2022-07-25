@@ -47,13 +47,15 @@ def parse_mode(mode: dict) -> str:
 
 def validate_mode_selection_input(data) -> bool:
     valid = True
-    for key in settings.mode_vars:
-        if data[f"-{key.upper()}-"] not in settings.mode_vars.get(key):
-            valid = False
+    if settings.mode_vars:
+        for key in settings.mode_vars:
+            if data[f"-{key.upper()}-"] not in settings.mode_vars.get(key):
+                valid = False
     return valid
 
 
 def set_mode_values(mode: dict, data):
-    for key in settings.mode_vars:
-        if key in mode.__dict__:
-            setattr(mode, key, data[f"-{key.upper()}-"])
+    if settings.mode_vars:
+        for key in settings.mode_vars:
+            if key in mode.__dict__:
+                setattr(mode, key, data[f"-{key.upper()}-"])
