@@ -45,7 +45,14 @@ class Registrar:
         self._api = Api()
         self._network = NetworkStatus.NOT_CONNECTED
 
-    def register_serial(self, hwspec: HWSpec, cable_length: Optional[int] = 0):
+    def register_serial(
+        self,
+        hwspec: HWSpec,
+        cable_length: Optional[int] = 0,
+        dev_eui: Optional[str] = "",
+        join_eui: Optional[str] = "",
+        app_key: Optional[str] = "",
+    ):
         data = {
             "serial": hwspec.serial,
             "fab_id": self._format_hex(hwspec.thing_type_id),
@@ -60,6 +67,15 @@ class Registrar:
         if cable_length != 0:
             data["cable_length"] = str(cable_length) + "mm"
 
+        if dev_eui != "":
+            data["dev_eui"] = dev_eui
+
+        if join_eui != "":
+            data["join_eui"] = join_eui
+
+        if app_key != "":
+            data["app_key"] = app_key
+
         try:
             response = self._api.add_item(data)
             return True if response.status_code == 201 else False
@@ -73,13 +89,23 @@ class Registrar:
             self._network = NetworkStatus.ERROR
             return False
 
-    def submit_provisioning_record(self, hwspec: HWSpec, status: str, logs: str, firmware_version: str):
+    def submit_provisioning_record(
+        self,
+        hwspec: HWSpec,
+        status: str,
+        logs: str,
+        test_firmware_version: str,
+        prod_firmware_version: str = "",
+    ):
         data = {
             "status": status,
             "log": logs,
-            "provisioning_firmware_ver": firmware_version,
+            "provisioning_firmware_ver": test_firmware_version,
             "provisioning_client_ver": self._get_provisioning_client_ver(),
         }
+
+        if prod_firmware_version != "":
+            data["provisioned_firmware_ver"] = prod_firmware_version
 
         try:
             response = self._api.provisioning_record(hwspec.serial, data)
@@ -112,7 +138,7 @@ class Registrar:
             sleep(settings.network.ping_interval)
 
     @property
-    def network_status(self) -> enum.Enum:
+    def network_status(self) -> NetworkStatus:
         return self._network
 
     @staticmethod

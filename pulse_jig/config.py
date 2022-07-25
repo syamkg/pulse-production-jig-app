@@ -17,10 +17,10 @@ settings = Dynaconf(
             "device.iecex_cert",
             must_exist=True,
         ),
+        Validator("mode_vars", must_exist=True),
         Validator("api.region", "api.host", "api.stage", must_exist=True),
-        Validator("lora.join_eui", must_exist=True),
-        # app_key should not be present outside of development as it will be generated uniquely for each device
-        Validator("lora.app_key", must_exist=None),
+        Validator("lora.test.join_eui", "lora.test.app_key", "lora.config.join_eui", must_exist=True),
+        Validator("network.ping_interval", must_exist=True),
         Validator("VERSION", must_exist=True),
     ],
 )

@@ -60,6 +60,7 @@ class JigClient:
         self._log = ""
         self._terminator = "\r\n"
         self._prompt = "> "
+        self._boot_header_separator = "=" * 62
 
     @staticmethod
     def _is_end_of_body(line: str) -> bool:
@@ -74,6 +75,29 @@ class JigClient:
         while timer.active:
             if self._readline() == self._prompt:
                 break
+
+    def read_boot_header(self) -> str:
+        reading_header = False
+        header = ""
+
+        self._port.timeout = 0.1
+        timer = Timeout(2)
+
+        while timer.active:
+            line = self._readline()
+
+            # Boot header separator is in the beginning and the end of the boot header.
+            # So we'll toggle-on the `reading_header` when we found the beginning separator
+            # and toggle-off it when we have end separator
+            if line == self._boot_header_separator:
+                reading_header = not reading_header
+                header += line + "\n"
+                continue
+
+            if reading_header:
+                header += line + "\n"
+
+        return header.strip()
 
     def _readline(self) -> str:
         line = self._port.readline().decode("utf-8")
@@ -205,7 +229,6 @@ class JigClient:
 
     def hwspec_set(self, key: str, value: str) -> str:
         """Sends a `hwspec-set` command to the device.
-        Only save to hwspec if the both `key` & `value` is given
         :param key: the key to write
         :param value: the value to write against the key
         :return: The command's response body.
@@ -233,13 +256,39 @@ class JigClient:
         """
         return self.run_test_cmd(f"test-ta3k -v {_to_port_flags(port)} 1", timeout=10)
 
+    def test_self(self) -> bool:
+        """Run `test-self` command on the device
+        :return bool: If test command is a pass or fail
+        """
+        return self.run_test_cmd("test-self -v", timeout=10)
+
+    def test_port(self) -> bool:
+        """Run `test-port` command on all ports of the device
+        :return bool: If test command is a pass or fail
+        """
+        return self.run_test_cmd("test-port -v 0x0f 1", timeout=30)
+
+    def test_lora_connect(self, sub_band: str, join_eui: str, app_key: str) -> bool:
+        """Run `test-lora-connect` command on the device
+        :return bool: If test command is a pass or fail
+        """
+        return self.run_test_cmd(f"test-lora-connect {sub_band} {join_eui} {app_key}", timeout=90)
+
     def probe_await_connect(self) -> Optional[int]:
+        """Sends `probe-await connect` command to the device.
+        This will wait indefinitely until a probe is connected.
+        :return: Optional connected port number.
+        """
         resp = self.send_command("probe-await connect", timeout=-1)
         if "Found on port" not in resp:
             return None
         return int((resp.split(":", 1)[1]).strip())
 
     def probe_await_recovery(self):
+        """Sends `probe-await recovery` command to the device.
+        This will wait indefinitely until the probe is removed.
+        :return: The command's response body.
+        """
         return self.send_command("probe-await recovery", timeout=-1)
 
     def run_test_cmd(self, cmd: str, timeout: int = 2) -> bool:
@@ -259,7 +308,45 @@ class JigClient:
         """Sends a `lora-deveui` command to the device.
         :return: The command's response body.
         """
-        return self.send_command("lora-deveui")
+        return self.send_command("lora-deveui get")
+
+    def lora_config(self, join_eui: str, app_key: str) -> str:
+        """Sends a `lora-config` command to the device.
+        This will configure the LoRa settings on the device.
+
+        :param join_eui: LoRa join_eui str
+        :param app_key: LoRa app_key str
+        :return: The command's response body.
+        """
+        return self.send_command(f"lora-config {join_eui} {app_key}")
+
+    def pulse_cfg_init(self) -> str:
+        """Sends a `pulse-cfg init` command to the device.
+        Initializes nvm with a default config.
+        (overwrites any existing config.)
+        :return: The command's response body.
+        """
+        return self.send_command(f"pulse-cfg init")
+
+    def pulse_cfg_load(self) -> str:
+        """Sends a `pulse-cfg load` command to the device.
+        :return: The command's response body.
+        """
+        return self.send_command(f"pulse-cfg load")
+
+    def pulse_cfg_save(self) -> str:
+        """Sends a `pulse-cfg save` command to the device.
+        :return: The command's response body.
+        """
+        return self.send_command(f"pulse-cfg save")
+
+    def pulse_cfg_set_pulse(self, key: str, value: int) -> str:
+        """Configure the pulse with the given values
+        :param key: the key to write
+        :param value: the value to write against the key
+        :return: The command's response body.
+        """
+        return self.send_command(f"pulse-cfg set pulse {key} {value}")
 
     def firmware_version(self) -> str:
         """Sends a `firmware_version` command to the device.

@@ -10,7 +10,7 @@ from pulse_jig.config import settings
 from .common_states import CommonStates
 from .provisioner import Provisioner
 from ..hwspec import HWSpec
-from ..jig_client import JigClient, JigClientException
+from ..jig_client import JigClientException
 from ..probe_spec import ProbeSpec
 
 logger = logging.getLogger("provisioner")
@@ -122,16 +122,6 @@ class ProbeProvisioner(Provisioner, CommonStates):
             self._port.close()
 
         self._pulse_manager.on_removal(handler)
-
-        self.proceed()
-
-    def loading_test_firmware(self):
-        if not settings.app.skip_test_firmware_load:
-            self._pulse_manager.load_firmware(self._test_firmware_path)
-        self._ftf = JigClient(self._port)
-        self._pulse_manager.reset_device()
-        self._ftf.skip_boot_header()
-        self.firmware_version = self._ftf.firmware_version()
         self.proceed()
 
     def waiting_for_target(self):
@@ -189,12 +179,12 @@ class ProbeProvisioner(Provisioner, CommonStates):
     def running_tests(self):
         passed = self._ftf.test_ta3k(self._port_no)
         if passed:
-            logger.info("Tests passed!")
+            logger.info("Tests Passed!")
             self.set_status_passed()
+            self.proceed()
         else:
             logger.error("Tests Failed!")
-            self.set_status_failed()
-        self.proceed()
+            self.fail()
 
     def waiting_for_target_removal(self):
         self._ftf.probe_await_recovery()
@@ -247,7 +237,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
     def submitting_provisioning_record(self):
         success = self._registrar.submit_provisioning_record(
-            self.hwspec, self.provisional_status.name, self._ftf.log, self.firmware_version
+            hwspec=self.hwspec,
+            status=self.provisional_status.name,
+            logs=self._ftf.log,
+            test_firmware_version=self.test_firmware_version,
         )
         if success:
             self.proceed()

@@ -2,20 +2,23 @@ import PySimpleGUI as sg
 
 from pulse_jig.config import settings
 
-repair_mode_warning = []
-if settings.app.hwspec_repair_mode:
-    repair_mode_warning = [
-        [
-            sg.Text(
-                "WARNING: Repair mode is active!",
-                justification="center",
-                text_color="white",
-                background_color="red",
-                font=("Arial", 11),
-                expand_x=True,
-            ),
-        ],
-    ]
+
+def repair_mode_warning() -> list:
+    warning = []
+    if settings.app.hwspec_repair_mode:
+        warning = [
+            [
+                sg.Text(
+                    "WARNING: Repair mode is active!",
+                    justification="center",
+                    text_color="white",
+                    background_color="red",
+                    font=("Arial", 11),
+                    expand_x=True,
+                ),
+            ],
+        ]
+    return warning
 
 
 def layout():
@@ -23,7 +26,7 @@ def layout():
 
     return [
         [
-            *repair_mode_warning,
+            *repair_mode_warning(),
             sg.Column(
                 layout=[
                     [sg.Sizer(450, 0)],
@@ -63,11 +66,15 @@ def layout():
                                 [sg.HorizontalSeparator(color="gray")],
                                 [
                                     sg.Text(
-                                        f"Jig App Version: v{settings.VERSION}",
+                                        f"Jig App: v{settings.VERSION}",
                                         font=("Courier New", 8, "bold"),
                                     ),
                                     sg.Text(
-                                        key="-FIRMWARE_VERSION-",
+                                        key="-TEST_FIRMWARE_VERSION-",
+                                        font=("Courier New", 8, "bold"),
+                                    ),
+                                    sg.Text(
+                                        key="-PROD_FIRMWARE_VERSION-",
                                         font=("Courier New", 8, "bold"),
                                     ),
                                 ],

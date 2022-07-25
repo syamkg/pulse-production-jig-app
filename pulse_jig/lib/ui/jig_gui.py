@@ -1,16 +1,13 @@
-import enum
-import io
-import json
 import logging
 import queue
 import threading
 
 import PySimpleGUI as sg
-import qrcode
 
-from pulse_jig.config import settings
+from . import helpers as h
 from ..provisioner.provisioner import Provisioner
-from ..registrar import NetworkStatus
+from ..registrar import Registrar, NetworkStatus
+from ..target import Target
 from ..timeout import Timeout
 from ..ui.layouts.app_main_layout import layout as app_layout
 from ..ui.layouts.mode_set_layout import layout as mode_layout
@@ -19,9 +16,14 @@ logger = logging.getLogger("jig_gui")
 
 
 def threaded(fn):
+    """
+    Decorator that multithreads the target function
+    with the given parameters. Returns the thread
+    created for the function
+    """
+
     def wrapper(*args, **kwargs):
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs, daemon=True)
-        thread.start()
         return thread
 
     return wrapper
@@ -34,18 +36,6 @@ def provisioner_thread(window, provisioner):
 
     provisioner.add_listener(handler)
     provisioner.run()
-
-
-def _generate_qrcode(data: dict) -> bytes:
-    qr = qrcode.QRCode(version=8, box_size=5, border=3)
-    qr.add_data(json.dumps(data))
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="white", back_color="black")
-
-    bio = io.BytesIO()
-    img.get_image().save(bio, format="PNG")
-
-    return bio.getvalue()
 
 
 class QueueHandler(logging.Handler):
@@ -61,8 +51,13 @@ class JigGUI:
     def __init__(self):
         self.current_status = Provisioner.Status.UNKNOWN
 
-    def run(self, provisioner, registrar):
+    def run(self, provisioner: Provisioner, registrar: Registrar, target: Target):
         self._app_window()
+
+        # We'll just initiate the thread here but, we won't start it here
+        self.thread = provisioner_thread(self.window, provisioner)
+
+        # show the "mode selection window"
         self._mode_window()
 
         self._init_logs()
@@ -74,8 +69,7 @@ class JigGUI:
             elif event == sg.TIMEOUT_KEY:
                 pass
             else:
-                self._set_mode(event, data, provisioner)
-                self._update_mode(provisioner)
+                self._update_mode(event, data, provisioner)
                 if event in data:
                     self._update_state(event)
                     self._set_status(data[event].status)
@@ -106,14 +100,12 @@ class JigGUI:
     def _update_qr(self, state):
         data = None
         if state.status == Provisioner.Status.PASSED:
-            data = _generate_qrcode(state.qrcode.__dict__)
+            data = h.generate_qrcode(state.qrcode.__dict__)
         self.window["-QRCODE-"].update(data=data)
 
     def _update_firmware_version(self, state):
-        firmware_version = state.firmware_version
-        self.window["-FIRMWARE_VERSION-"].update(
-            f"Firmware Version: v{firmware_version}",
-        )
+        self.window["-TEST_FIRMWARE_VERSION-"].update(f"Test Firmware: v{state.test_firmware_version}")
+        self.window["-PROD_FIRMWARE_VERSION-"].update(f"Prod Firmware: v{state.prod_firmware_version}")
 
     def _set_status(self, status: Provisioner.Status):
         opts = {
@@ -134,48 +126,32 @@ class JigGUI:
         # based on our inside knowledge
         self.window["-STATE-"].update(name.replace("_", " ").capitalize())
 
-    def _update_network_status(self, network_status: enum.Enum):
-        if network_status == NetworkStatus.CONNECTED:
-            status_msg = {"value": network_status.value, "text_color": "green"}
-        elif network_status == NetworkStatus.TIMEOUT:
-            status_msg = {"value": network_status.value, "text_color": "orange"}
-        elif network_status in [NetworkStatus.NOT_CONNECTED, NetworkStatus.ERROR]:
-            status_msg = {"value": network_status.value, "text_color": "red"}
-        else:
-            status_msg = {"value": "", "text_color": "white"}
+    def _update_network_status(self, network_status: NetworkStatus):
+        status_msg = h.network_status_text(network_status)
         self.window["-NETWORK-"].update(**status_msg)
 
-    def _update_mode(self, provisioner):
-        mode_text = ""
-        for item in provisioner.mode.__dict__:
-            if mode_text != "":
-                mode_text += ", "
-            mode_text += f"{item}: {provisioner.mode.__dict__[item]}"
-            if item == "cable_length":
-                mode_text += "m"
-        self.window["-MODE-"].update(mode_text)
-
-    def _set_mode(self, event, data, provisioner):
+    def _update_mode(self, event, data, provisioner):
         if event == "waiting_for_mode_set" or event == "-CHANGE_MODE-":
             self.window_mode.force_focus()
         elif event == "-SET_MODE-":
-            if data["-CABLE_LENGTH-"] not in settings.device.cable_lengths:
-                self.window_mode["-ERROR-"].update("Please select a value")
-            else:
+            if h.validate_mode_selection_input(data):
                 self.window_mode["-ERROR-"].update("")
 
-                # TODO can be improved for Pulse
-                if provisioner.mode.cable_length == 0:
-                    provisioner_thread(self.window, provisioner)
+                # Start the thread if not alive.
+                # Otherwise, we'll just restart the loop
+                if not self.thread.is_alive():
+                    self.thread.start()
                 else:
                     provisioner.restart()
 
-                logger.info(f"Mode changed: {provisioner.mode.cable_length} to {data['-CABLE_LENGTH-']}")
-                provisioner.mode.cable_length = data["-CABLE_LENGTH-"]
-                provisioner.mode.manufacturer = settings.device.manufacturer_name
-                provisioner.mode.device = settings.device.thing_type_name
+                # Set values to each field in provisioner.mode
+                h.set_mode_values(provisioner.mode, data)
                 self.window.force_focus()
-                self._update_mode(provisioner)
+            else:
+                self.window_mode["-ERROR-"].update("Please select a value")
+
+        mode_text = h.parse_mode(provisioner.mode)
+        self.window["-MODE-"].update(mode_text)
 
     def _app_window(self):
         self.window = sg.Window(

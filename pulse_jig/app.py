@@ -1,4 +1,3 @@
-import enum
 import logging
 import sys
 from typing import Optional
@@ -11,12 +10,7 @@ from lib.jig_client import JigClient
 from lib.ui.jig_gui import JigGUI
 from lib.provisioner.provisioner import Provisioner
 from lib.registrar import Registrar
-
-
-class Target(enum.Enum):
-    PULSE = "pulse"
-    PROBE = "probe"
-    FAKE = "fake"
+from lib.target import Target
 
 
 def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
@@ -26,6 +20,15 @@ def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pc
     pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
 
     return ProbeProvisioner(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+
+
+def _create_pulse_provisioner(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
+    from lib.provisioner.pulse_provisioner import PulseProvisioner
+    from lib.pulse_manager import PulseManager
+
+    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
+
+    return PulseProvisioner(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
 
 
 def _create_fake_provisioner(registrar: Registrar) -> Provisioner:
@@ -78,15 +81,20 @@ def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense
             reset_pin=reset_pin,
             pcb_sense_pin=pcb_sense_pin,
         )
+    elif Target.PULSE == provider_target:
+        provisioner = _create_pulse_provisioner(
+            dev=dev,
+            registrar=registrar,
+            reset_pin=reset_pin,
+            pcb_sense_pin=pcb_sense_pin,
+        )
     elif Target.FAKE == provider_target:
         provisioner = _create_fake_provisioner(registrar)
-    elif Target.PULSE == provider_target:
-        raise RuntimeError("Not implemented")
     else:
         raise RuntimeError("Invalid target")
 
     app = JigGUI()
-    app.run(provisioner, registrar)
+    app.run(provisioner, registrar, provider_target)
 
 
 if __name__ == "__main__":

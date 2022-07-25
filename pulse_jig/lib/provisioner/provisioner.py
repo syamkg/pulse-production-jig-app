@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
+from pulse_jig.config import settings
 from ..hwspec import HWSpec
 from ..registrar import Registrar, NetworkStatus
 
@@ -29,6 +30,12 @@ class Provisioner:
 
     @dataclass
     class QRCode:
+        """
+        Class containing common attributes for the QR code.
+        Extend this in extended provisioner class to add
+        target specific attributes.
+        """
+
         sn: str
         rev: str
         dom: int
@@ -36,8 +43,21 @@ class Provisioner:
 
     @dataclass
     class Mode:
-        manufacturer: str = ""
-        device: str = ""
+        """
+        Class containing common attributes for the mode.
+        In general these have are fixed values set via settings.
+
+        Extend this in extended provisioner class to add
+        target specific attributes.
+
+        If any of the added attributes need to be set via UI,
+        then add them to the settings under `mode_vars`
+        with the exact attribute name.
+        Options/values for dropdown can be added as an array.
+        """
+
+        manufacturer: str = settings.device.manufacturer_name
+        device: str = settings.device.thing_type_name
 
     @dataclass
     class EventData:
@@ -46,7 +66,8 @@ class Provisioner:
         qrcode: Optional["Provisioner.QRCode"]
         reset_logs: bool
         mode: Optional["Provisioner.Mode"]
-        firmware_version: Optional[str]
+        test_firmware_version: Optional[str]
+        prod_firmware_version: Optional[str]
 
     def __init__(self, registrar: Registrar):
         self.reset()
@@ -56,7 +77,8 @@ class Provisioner:
         self.provisional_status = Provisioner.Status.UNKNOWN
         self.reset_logs = False
         self.mode = self.Mode()
-        self.firmware_version: str = "0.0.0"
+        self.test_firmware_version: str = "0.0.0"
+        self.prod_firmware_version: str = "0.0.0"
 
     def _send_event(self, name: str):
         for listener in self._listeners:
@@ -68,7 +90,8 @@ class Provisioner:
                     qrcode=self.qrcode,
                     reset_logs=self.reset_logs,
                     mode=self.mode,
-                    firmware_version=self.firmware_version,
+                    test_firmware_version=self.test_firmware_version,
+                    prod_firmware_version=self.prod_firmware_version,
                 ),
             )
 
