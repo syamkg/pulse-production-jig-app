@@ -20,6 +20,7 @@ class PulseManager:
         self._reset_pin.off()
         time.sleep(0.5)
         self._reset_pin.on()
+        time.sleep(0.5)
 
     @property
     def is_connected(self):

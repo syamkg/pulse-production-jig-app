@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from typing import Optional
 
 import serial
@@ -68,12 +69,19 @@ class JigClient:
 
     def skip_boot_header(self) -> None:
         self._read_until_prompt(5)
+        time.sleep(0.1)
 
     def _read_until_prompt(self, timeout: float) -> None:
+        # Read until the "prompt ("> ") is found.
+        # But if the prompt is in the first line read, will ignore that.
+        # The reason being, that's not the prompt we're after.
+        # That prompt is from the last command - not the one from the boot header
         self._port.timeout = 0.1
         timer = Timeout(timeout)
+        lines_read = 0
         while timer.active:
-            if self._readline() == self._prompt:
+            lines_read += 1
+            if self._readline() == self._prompt and lines_read > 1:
                 break
 
     def read_boot_header(self) -> str:

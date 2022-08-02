@@ -248,6 +248,7 @@ class PulseProvisioner(Provisioner, CommonStates):
 
     def reset(self):
         super().reset()
+        self.reset_gui_logs: bool = True
         self.prod_firmware_version: Optional[str] = "0.0.0"
         self.config_app_key = generate_app_key()
 

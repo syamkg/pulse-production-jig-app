@@ -75,7 +75,7 @@ class Provisioner:
         self._listeners: List[Callable] = []
         self.status = Provisioner.Status.UNKNOWN
         self.provisional_status = Provisioner.Status.UNKNOWN
-        self.reset_logs = False
+        self.reset_gui_logs = False
         self.mode = self.Mode()
         self.test_firmware_version: str = "0.0.0"
         self.prod_firmware_version: str = "0.0.0"
@@ -88,7 +88,7 @@ class Provisioner:
                     hwspec=self.hwspec,
                     status=self.status,
                     qrcode=self.qrcode,
-                    reset_logs=self.reset_logs,
+                    reset_logs=self.reset_gui_logs,
                     mode=self.mode,
                     test_firmware_version=self.test_firmware_version,
                     prod_firmware_version=self.prod_firmware_version,
@@ -149,4 +149,3 @@ class Provisioner:
         self.hwspec: Optional[HWSpec] = None
         self.status: Provisioner.Status = Provisioner.Status.UNKNOWN
         self.qrcode: Optional[Provisioner.QRCode] = None
-        self.reset_logs: bool = True
