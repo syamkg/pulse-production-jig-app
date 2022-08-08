@@ -10,7 +10,7 @@ from pulse_jig.config import settings
 from .common_states import CommonStates
 from .provisioner import Provisioner
 from ..hwspec import HWSpec
-from ..jig_client import JigClientException
+from ..jig_client import JigClientException, JigClient
 from ..probe_spec import ProbeSpec
 
 logger = logging.getLogger("provisioner")
@@ -201,7 +201,14 @@ class ProbeProvisioner(Provisioner, CommonStates):
     def save_hwspec(self):
         self.hwspec.save(self._ftf)
         self._ftf.enable_external_port(self._port_no)
-        self._ftf.hwspec_save("probe")
+
+        # If saving to hwspec failed, it's fair to assume
+        # the probe is write-protected
+        try:
+            self._ftf.hwspec_save("probe")
+        except JigClient.CommandFailed:
+            self.fail()
+            return
 
         # Need to write probe spec only after `hwspec-save`
         # and attempt to verify the written probe spec
