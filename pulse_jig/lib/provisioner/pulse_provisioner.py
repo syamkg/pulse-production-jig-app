@@ -82,20 +82,27 @@ class PulseProvisioner(Provisioner, CommonStates):
         # On retry set state to RETRY and wait for the device to be removed
         m.add_transition("retry", "*", States.WAITING_FOR_PCB_REMOVAL, before="set_status_retry")
 
-        # On failure set state to FAILED and submit results
-        m.add_transition("fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail")
+        # On failure set state to FAILED and submit results if there is hwspec, else prompt to remove target
+        m.add_transition(
+            "fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail", conditions="has_hwspec"
+        )
+        m.add_transition("fail", "*", States.WAITING_FOR_PCB_REMOVAL, before="set_status_fail", unless="has_hwspec")
 
-        # Some error conditions
-        m.add_transition("serial_lost", "*", States.WAITING_FOR_SERIAL)
-        m.add_transition("pcb_lost", "*", States.WAITING_FOR_SERIAL)
-
-        # Manually restart the loop
-        m.add_transition("restart", "*", States.WAITING_FOR_PCB_REMOVAL)
+        # Start from the beginning if the xDot or PCB lost
+        m.add_transition("device_lost", "*", States.WAITING_FOR_SERIAL)
 
         m.on_enter_WAITING_FOR_PCB("set_status_waiting")
         m.on_enter_LOADING_DEVICE_REGO("set_status_inprogress")
         m.on_enter_WAITING_FOR_PCB_REMOVAL("promote_provision_status")
         m.on_exit_WAITING_FOR_PCB_REMOVAL("reset")
+
+    def run(self):
+        while True:
+            try:
+                self._inner_loop()
+            except Exception as e:
+                logger.error(str(e))
+                self.device_lost()
 
     def waiting_for_pcb(self):
         while not self._pulse_manager.is_connected:
@@ -107,8 +114,7 @@ class PulseProvisioner(Provisioner, CommonStates):
         # by the main loop.
         #
         # We can't just raise an exception here because
-        # it wont get caught due to threading issues
-        # i expect
+        # it won't get caught due to threading issues
         def handler():
             self._port.close()
 
@@ -130,14 +136,6 @@ class PulseProvisioner(Provisioner, CommonStates):
 
         self.prod_firmware_version = get_prod_firmware_version(header)
         self.proceed()
-
-    def run(self):
-        while True:
-            try:
-                self._inner_loop()
-            except Exception as e:
-                logger.error(str(e))
-                self.pcb_lost()
 
     def loading_device_rego(self):
         try:

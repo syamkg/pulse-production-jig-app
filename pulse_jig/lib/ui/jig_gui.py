@@ -139,10 +139,11 @@ class JigGUI:
 
                 # Start the thread if not alive.
                 # Otherwise, we'll just restart the loop
+                # trigger "retry"
                 if not self.thread.is_alive():
                     self.thread.start()
                 else:
-                    provisioner.restart()
+                    provisioner.retry()
 
                 # Set values to each field in provisioner.mode
                 h.set_mode_values(provisioner.mode, data)

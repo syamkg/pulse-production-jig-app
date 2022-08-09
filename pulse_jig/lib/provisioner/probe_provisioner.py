@@ -85,27 +85,28 @@ class ProbeProvisioner(Provisioner, CommonStates):
         # On retry set state to RETRY and wait for the device to be removed
         m.add_transition("retry", "*", States.WAITING_FOR_TARGET_REMOVAL, before="set_status_retry")
 
-        # On failure set state to FAILED and submit results
-        m.add_transition("fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail")
-
-        # Handle bad probes being detected while waiting for a target
+        # On failure set state to FAILED and submit results if there is hwspec, else prompt to remove target
         m.add_transition(
-            "bad_probe", States.WAITING_FOR_TARGET, States.WAITING_FOR_TARGET_REMOVAL, before="set_status_fail"
+            "fail", "*", States.SUBMITTING_PROVISIONING_RECORD, before="set_status_fail", conditions="has_hwspec"
         )
+        m.add_transition("fail", "*", States.WAITING_FOR_TARGET_REMOVAL, before="set_status_fail", unless="has_hwspec")
 
-        # Some error conditions
-        m.add_transition("serial_lost", "*", States.WAITING_FOR_SERIAL)
-        m.add_transition("pcb_lost", "*", States.WAITING_FOR_PCB)
-        m.add_transition("target_lost", "*", States.WAITING_FOR_TARGET)
-
-        # Manually restart the loop
-        m.add_transition("restart", "*", States.WAITING_FOR_TARGET_REMOVAL)
+        # Start from the beginning if the xDot or PCB or Probe lost
+        m.add_transition("device_lost", "*", States.WAITING_FOR_SERIAL)
 
         m.on_enter_WAITING_FOR_TARGET("set_status_waiting")
         m.on_enter_WAITING_FOR_TARGET("start_iteration")
         m.on_enter_LOADING_DEVICE_REGO("set_status_inprogress")
         m.on_enter_WAITING_FOR_TARGET_REMOVAL("promote_provision_status")
         m.on_exit_WAITING_FOR_TARGET_REMOVAL("reset")
+
+    def run(self):
+        while True:
+            try:
+                self._inner_loop()
+            except Exception as e:
+                logger.error(str(e))
+                self.device_lost()
 
     def waiting_for_pcb(self):
         while not self._pulse_manager.is_connected:
@@ -117,8 +118,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
         # by the main loop.
         #
         # We can't just raise an exception here because
-        # it wont get caught due to threading issues
-        # i expect
+        # it won't get caught due to threading issues
         def handler():
             self._port.close()
 
@@ -129,31 +129,15 @@ class ProbeProvisioner(Provisioner, CommonStates):
         port_no = self._ftf.probe_await_connect()
         if port_no is None:
             logger.error("INVALID PROBE DETECTED!")
-            self.bad_probe()
+            self.fail()
             return
         self._port_no = port_no
         self.proceed()
 
-    def run(self):
-        while True:
-            try:
-                self._inner_loop()
-            except Exception as e:
-                logger.error(str(e))
-                self.retry()
-
     def loading_device_rego(self):
         try:
             self._ftf.enable_external_port(self._port_no)
-        except JigClientException:
-            # If a JigClientException occurred here then it
-            # shouldn't be the probe because it is isolated
-            # from the system until after this command.
-            # Going to assume this means the pulse was
-            # unplugged.
-            self.pcb_lost()
 
-        try:
             # If repair_mode is set we'll clear the hwspec on probe
             # before attempting to read. This will ensure to re-write
             # the hwspec to the device

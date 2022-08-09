@@ -131,7 +131,7 @@ class JigClient:
     def reset_logs(self):
         self._log = ""
 
-    def send_command(self, cmd: str, has_body: bool = True, timeout: int = 2) -> str:
+    def send_command(self, cmd: str, has_body: bool = True, timeout: Optional[float] = 2) -> str:
         """Sends the given command to the device and returns
         the body from the response.
         :param cmd: the command to send, including any parameters.
@@ -170,12 +170,12 @@ class JigClient:
         elif ack != "+OK":
             raise JigClientException(f"Command not acknowledged: {ack}")
 
-    def _parse_command_body(self, timeout: int):
+    def _parse_command_body(self, timeout: Optional[float]):
         # Parse command body
         line = ""
         lines = []
 
-        timer = Timeout(timeout) if timeout >= 0 else TimeoutNever()
+        timer = Timeout(timeout) if timeout else TimeoutNever()
 
         while not timer.expired:
             self._port.timeout = timer.remaining
@@ -287,7 +287,7 @@ class JigClient:
         This will wait indefinitely until a probe is connected.
         :return: Optional connected port number.
         """
-        resp = self.send_command("probe-await connect", timeout=-1)
+        resp = self.send_command("probe-await connect", timeout=None)
         if "Found on port" not in resp:
             return None
         return int((resp.split(":", 1)[1]).strip())
@@ -297,7 +297,7 @@ class JigClient:
         This will wait indefinitely until the probe is removed.
         :return: The command's response body.
         """
-        return self.send_command("probe-await recovery", timeout=-1)
+        return self.send_command("probe-await recovery", timeout=None)
 
     def run_test_cmd(self, cmd: str, timeout: int = 2) -> bool:
         """Runs the given test command and whether it passed or

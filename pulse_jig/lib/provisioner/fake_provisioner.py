@@ -65,7 +65,7 @@ class FakeProvisioner(Provisioner):
 
         # Some error conditions
         m.add_transition("serial_lost", "*", States.WAITING_FOR_SERIAL)
-        m.add_transition("pcb_lost", "*", States.WAITING_FOR_PCB)
+        m.add_transition("device_lost", "*", States.WAITING_FOR_PCB)
         m.add_transition("target_lost", "*", States.WAITING_FOR_TARGET)
 
         m.on_exit_WAITING_FOR_TARGET("reset")
