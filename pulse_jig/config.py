@@ -4,7 +4,8 @@ settings = Dynaconf(
     envvar_prefix="JIG",
     settings_files=["settings.yaml", ".secrets.yaml"],
     validators=[
-        Validator("app.test_firmware_path", must_exist=True),
+        Validator("app.target", must_exist=True, is_in=["pulse-r1b", "ta3k", "fake"]),
+        Validator("app.debug", "app.test_firmware_path", must_exist=True),
         Validator(
             "device.minter_id",
             "device.thing_type_name",

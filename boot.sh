@@ -45,7 +45,7 @@ printf "
 *********************************************\n" "${now}" >> "${log_file}"
 
 (
-DISPLAY=:0 "${APP_DIR}"/run.sh python app.py -t "${TARGET}" >> "${log_file}" 2>&1 &
+DISPLAY=:0 "${APP_DIR}"/run.sh python app.py >> "${log_file}" 2>&1 &
 echo "20" ; sleep 8
 echo "40" ; sleep 8
 echo "50" ; sleep 6

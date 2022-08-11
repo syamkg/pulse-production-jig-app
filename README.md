@@ -44,12 +44,12 @@ Extra reading: https://github.com/anothrNick/github-tag-action
 
 ```shell
 cd pulse_jig
-python app.py -t <TARGET>
+python app.py 
 ```
 
 Add `DISPLAY=:0` if running via SSH
 ```shell
-DISPLAY=:0 python app.py -t <TARGET>
+DISPLAY=:0 python app.py
 ```
 
 ## Running in docker

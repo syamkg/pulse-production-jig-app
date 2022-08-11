@@ -6,6 +6,7 @@ import click
 
 sys.path.append("..")
 
+from pulse_jig.config import settings
 from lib.jig_client import JigClient
 from lib.ui.jig_gui import JigGUI
 from lib.provisioner.provisioner import Provisioner
@@ -53,27 +54,20 @@ def _configure_logging(debug):
 
 
 @click.command()
-@click.option(
-    "--target",
-    "-t",
-    required=True,
-    type=click.Choice(["pulse-r1b", "ta3k", "fake"], case_sensitive=False),
-)
 @click.option("--dev", default=lambda: JigClient.find_device())
-@click.option("--debug", "-d", default=False, is_flag=True)
 @click.option("--reset-pin", default=6)
 @click.option("--pcb-sense-pin", default=5)
-def main(target: str, dev: Optional[str], debug: bool, reset_pin: int, pcb_sense_pin: int):
+def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int):
     if dev is None:
         print("Could not detect device")
         exit(1)
 
-    _configure_logging(debug)
+    _configure_logging(settings.app.debug)
 
     registrar = Registrar()
     registrar.network_check()
 
-    provider_target = _parse_target(target)
+    provider_target = _parse_target(settings.app.target)
     if Target.PROBE == provider_target:
         provisioner = _create_probe_provisioner(
             dev=dev,

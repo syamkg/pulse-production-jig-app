@@ -11,7 +11,7 @@ build:
 	docker buildx build --platform linux/arm/v7 -t pulse-jig .
 
 run: guard-APP_DIR
-	APP_DIR=$(APP_DIR) ./run.sh python app.py -t $(TARGET)
+	APP_DIR=$(APP_DIR) ./run.sh python app.py
 
 run-shell: guard-APP_DIR
 	APP_DIR=$(APP_DIR) ./run.sh bash

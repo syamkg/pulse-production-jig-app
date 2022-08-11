@@ -1,5 +1,7 @@
 ---
 app:
+  target: ta3k
+  debug: true
   test_firmware_path: firmware/test-firmware.bin
   prod_firmware_path: firmware/prod-firmware.bin
   skip_firmware_load: false
