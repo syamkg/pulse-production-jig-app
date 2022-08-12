@@ -29,7 +29,7 @@ def layout():
             *repair_mode_warning(),
             sg.Column(
                 layout=[
-                    [sg.Sizer(450, 0)],
+                    [sg.Sizer(482, 0)],
                     [
                         sg.Frame(
                             "State",
@@ -89,7 +89,7 @@ def layout():
             ),
             sg.Column(
                 layout=[
-                    [sg.Sizer(350, 0)],
+                    [sg.Sizer(306, 0)],
                     [
                         sg.Frame(
                             "",
@@ -109,7 +109,7 @@ def layout():
                             ],
                             vertical_alignment="center",
                             expand_x=True,
-                            pad=(4, (12, 4)),
+                            pad=(3, (12, 3)),
                         )
                     ],
                     [
@@ -123,7 +123,6 @@ def layout():
                         )
                     ],
                 ],
-                element_justification="center",
                 expand_y=True,
                 expand_x=True,
             ),
@@ -131,32 +130,29 @@ def layout():
         [
             sg.Column(
                 layout=[
-                    [sg.Sizer(200, 0)],
                     [
                         sg.Frame(
                             "Network",
-                            layout=[[sg.Text(key="-NETWORK-", font=("Arial", 12))], [sg.Sizer(0, 5)]],
+                            layout=[[sg.Text(key="-NETWORK-", font=("Arial", 12))]],
                             expand_x=True,
                             element_justification="center",
+                            size=(160, 55),
                         )
                     ],
                 ],
             ),
             sg.Column(
                 layout=[
-                    [sg.Sizer(400, 0)],
                     [
                         sg.Frame(
-                            "Mode",
-                            layout=[[sg.Text(key="-MODE-", font=("Arial", 10))], [sg.Sizer(0, 7)]],
-                            expand_x=True,
+                            "Mode", layout=[[sg.Text(key="-MODE-", font=("Arial", 10))]], expand_x=True, size=(450, 55)
                         )
                     ],
                 ],
             ),
             sg.Column(
                 layout=[
-                    [sg.Sizer(200, 8)],
+                    [sg.Sizer(160, 8)],
                     [
                         sg.Button(
                             "Change Mode",

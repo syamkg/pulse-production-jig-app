@@ -56,6 +56,7 @@ def layout():
                             "Please set the following value(s)",
                             layout=[
                                 [
+                                    sg.Sizer(0, 380),
                                     sg.Frame(
                                         "",
                                         layout=[
@@ -88,26 +89,25 @@ def layout():
                                                     text_color="red",
                                                     justification="center",
                                                     expand_x=True,
-                                                    expand_y=True,
-                                                )
-                                            ],
-                                            [
-                                                sg.Text(
-                                                    f"v{settings.VERSION}",
-                                                    text_color="gray",
-                                                    justification="right",
-                                                    expand_x=True,
-                                                    expand_y=True,
-                                                    font=("Arial", 12),
                                                 )
                                             ],
                                         ],
                                         border_width=0,
-                                        pad=(60, (40, 20)),
+                                        pad=(60, 10),
                                         expand_x=True,
-                                        expand_y=True,
+                                        vertical_alignment="center",
+                                    ),
+                                ],
+                                [
+                                    sg.Text(
+                                        f"v{settings.VERSION}",
+                                        text_color="gray",
+                                        justification="right",
+                                        expand_x=True,
+                                        font=("Arial", 12),
+                                        pad=(30, 0),
                                     )
-                                ]
+                                ],
                             ],
                             font=("Arial", 22),
                             title_location=sg.TITLE_LOCATION_TOP,

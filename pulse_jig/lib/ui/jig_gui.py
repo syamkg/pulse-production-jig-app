@@ -162,6 +162,8 @@ class JigGUI:
             resizable=True,
             finalize=True,
             font=("Arial", 10),
+            element_padding=3,
+            margins=(0, 0),
         )
 
         self.window.set_cursor("none")

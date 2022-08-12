@@ -8,7 +8,7 @@ from ..registrar import NetworkStatus
 
 
 def generate_qrcode(data: dict) -> bytes:
-    qr = qrcode.QRCode(version=8, box_size=5, border=3)
+    qr = qrcode.QRCode(version=10, box_size=4, border=3)
     qr.add_data(json.dumps(data))
     qr.make(fit=True)
     img = qr.make_image(fill_color="white", back_color="black")
