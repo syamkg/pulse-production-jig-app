@@ -149,3 +149,16 @@ class Provisioner:
         self.hwspec: Optional[HWSpec] = None
         self.status: Provisioner.Status = Provisioner.Status.UNKNOWN
         self.qrcode: Optional[Provisioner.QRCode] = None
+
+    def reset_logs(self):
+        # Clear firmware logs if exists.
+        if hasattr(self, "_ftf"):
+            self._ftf.reset_logs()
+
+        # Clear GUI logs
+        # 1. Set reset_gui_logs flag to True
+        self.reset_gui_logs: bool = True
+        # 2. Send an additional event to GUI
+        self._send_event(self.state.value)
+        # 3. Toggle back the reset_gui_logs flag
+        self.reset_gui_logs: bool = False

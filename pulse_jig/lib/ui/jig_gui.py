@@ -88,7 +88,7 @@ class JigGUI:
         try:
             timeout = Timeout(0.1)
             while not timeout.expired:
-                if event == "waiting_for_target" and data[event].reset_logs:
+                if data and event in data and data[event].reset_logs:
                     self.window["-LOG-"].update("")
                 else:
                     record = self._log_queue.get(block=False)

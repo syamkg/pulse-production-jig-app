@@ -96,6 +96,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
         m.on_enter_WAITING_FOR_TARGET("set_status_waiting")
         m.on_enter_WAITING_FOR_TARGET("start_iteration")
+        m.on_enter_WAITING_FOR_TARGET("reset_logs")
         m.on_enter_LOADING_DEVICE_REGO("set_status_inprogress")
         m.on_enter_WAITING_FOR_TARGET_REMOVAL("promote_provision_status")
         m.on_exit_WAITING_FOR_TARGET_REMOVAL("reset")
@@ -260,9 +261,3 @@ class ProbeProvisioner(Provisioner, CommonStates):
         # running / locked by the last iteration.
         self._pulse_manager.reset_device()
         self._ftf.skip_boot_header()
-
-        # After we power cycle the Pulse, we need to clear
-        # the firmware and GUI logs.
-        # This is to ensure we have an empty log for the new iteration.
-        self._ftf.reset_logs()
-        self.reset_gui_logs: bool = True
