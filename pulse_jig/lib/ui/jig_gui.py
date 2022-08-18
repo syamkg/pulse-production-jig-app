@@ -7,7 +7,6 @@ import PySimpleGUI as sg
 from . import helpers as h
 from ..provisioner.provisioner import Provisioner
 from ..registrar import Registrar, NetworkStatus
-from ..target import Target
 from ..timeout import Timeout
 from ..ui.layouts.app_main_layout import layout as app_layout
 from ..ui.layouts.mode_set_layout import layout as mode_layout
@@ -51,7 +50,7 @@ class JigGUI:
     def __init__(self):
         self.current_status = Provisioner.Status.UNKNOWN
 
-    def run(self, provisioner: Provisioner, registrar: Registrar, target: Target):
+    def run(self, provisioner: Provisioner, registrar: Registrar):
         self._app_window()
 
         # We'll just initiate the thread here but, we won't start it here

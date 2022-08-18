@@ -5,6 +5,9 @@ import time
 from pathlib import Path
 
 import gpiozero
+import serial
+
+from .timeout import Timeout, TimeoutNever
 
 logger = logging.getLogger(__name__)
 
@@ -56,3 +59,34 @@ class PulseManager:
         copy_thread.join()
         logger.debug("giving xdot 10 seconds")
         time.sleep(10)
+
+    def check_for_header(self, port: serial.Serial, timeout: float = None) -> bool:
+        """Monitors the port for a boot header from the firmware.
+        Keep reading until the end of the boot header to verify.
+        If found return True.
+        The check consumes all available data
+        from the port.
+
+        :param port: the serial port to monitor
+        :param timeout: The maximum number of seconds to monitor for.
+                        None to wait indefinitely
+        :return bool:
+        """
+        terminator = "\r\n"
+        boot_header_separator = "=" * 62
+
+        timer = Timeout(timeout) if timeout else TimeoutNever()
+        while not timer.expired:
+            time.sleep(0.2)
+            boot_header_size = 10  # Number of lines including the separator & starting blank line
+            boot_header_separator_count = 0
+            line_count = 0
+            while port.in_waiting > 0:
+                line = port.readline().decode("utf-8")
+                line = line.rstrip(terminator)
+                line_count += 1
+                if line == boot_header_separator:
+                    boot_header_separator_count += 1
+                if boot_header_separator_count == 2 and line_count == boot_header_size:
+                    return True
+        return False

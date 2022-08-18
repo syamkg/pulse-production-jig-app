@@ -57,7 +57,7 @@ class Provisioner:
         """
 
         manufacturer: str = settings.device.manufacturer_name
-        device: str = settings.device.thing_type_name
+        target: str = settings.app.target
 
     @dataclass
     class EventData:

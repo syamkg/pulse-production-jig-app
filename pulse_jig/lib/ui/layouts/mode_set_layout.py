@@ -23,24 +23,36 @@ def repair_mode_warning() -> list:
 
 
 def mode_selection_elements() -> list:
+    # Dynamically build the UI elements for the items in
+    # the `mode_vars` config item. If the item value is a list
+    # then a dropdown will be built & just a text field
+    # for a string/number value
     elements = []
     if settings.mode_vars:
         for key in settings.mode_vars:
-            element = [
-                sg.Text(key.replace("_", " ").title()),
-                sg.Combo(
-                    ["--Select one--"] + settings.mode_vars.get(key),
-                    key=f"-{key.upper()}-",
-                    default_value="--Select one--",
-                    readonly=True,
-                    background_color="white",
-                    text_color="black",
-                    expand_x=True,
-                    font=("Arial", 20),
-                ),
-            ]
-            elements.append(element)
-            elements.append([sg.Sizer(0, 20)])
+            if isinstance(settings.mode_vars.get(key), list):
+                element = [
+                    sg.Text(key.replace("_", " ").title()),
+                    sg.Combo(
+                        ["--Select one--"] + settings.mode_vars.get(key),
+                        key=f"-{key.upper()}-",
+                        default_value="--Select one--",
+                        readonly=True,
+                        background_color="white",
+                        text_color="black",
+                        expand_x=True,
+                        font=("Arial", 20),
+                    ),
+                ]
+                elements.append(element)
+                elements.append([sg.Sizer(0, 20)])
+            else:
+                element = [
+                    sg.Text(key.replace("_", " ").title() + ": "),
+                    sg.Text(settings.mode_vars.get(key), text_color="gray"),
+                ]
+                elements.append(element)
+                elements.append([sg.Sizer(0, 10)])
     return elements
 
 
@@ -67,8 +79,8 @@ def layout():
                                             ],
                                             [sg.Sizer(0, 10)],
                                             [
-                                                sg.Text("Device: "),
-                                                sg.Text(settings.device.thing_type_name, text_color="gray"),
+                                                sg.Text("Target: "),
+                                                sg.Text(settings.app.target, text_color="gray"),
                                             ],
                                             [sg.Sizer(0, 10)],
                                             *mode_selection_elements(),

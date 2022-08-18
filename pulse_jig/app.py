@@ -23,24 +23,32 @@ def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pc
     return ProbeProvisioner(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
 
 
-def _create_pulse_provisioner(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
-    from lib.provisioner.pulse_provisioner import PulseProvisioner
+def _create_pulse_provisioner_phase_1(
+    dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int
+) -> Provisioner:
+    from lib.provisioner.pulse_provisioner_phase_1 import PulseProvisionerPhase1
     from lib.pulse_manager import PulseManager
 
     pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
 
-    return PulseProvisioner(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+    return PulseProvisionerPhase1(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+
+
+def _create_pulse_provisioner_phase_2(
+    dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int
+) -> Provisioner:
+    from lib.provisioner.pulse_provisioner_phase_2 import PulseProvisionerPhase2
+    from lib.pulse_manager import PulseManager
+
+    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
+
+    return PulseProvisionerPhase2(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
 
 
 def _create_fake_provisioner(registrar: Registrar) -> Provisioner:
     from lib.provisioner.fake_provisioner import FakeProvisioner
 
     return FakeProvisioner(registrar)
-
-
-def _parse_target(name: str) -> Target:
-    targets = {"pulse-r1b": Target.PULSE, "ta3k": Target.PROBE, "fake": Target.FAKE}
-    return targets[name]
 
 
 def _configure_logging(debug):
@@ -67,28 +75,36 @@ def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int):
     registrar = Registrar()
     registrar.network_check()
 
-    provider_target = _parse_target(settings.app.target)
-    if Target.PROBE == provider_target:
+    target = settings.app.target
+
+    if Target.TA3K == target:
         provisioner = _create_probe_provisioner(
             dev=dev,
             registrar=registrar,
             reset_pin=reset_pin,
             pcb_sense_pin=pcb_sense_pin,
         )
-    elif Target.PULSE == provider_target:
-        provisioner = _create_pulse_provisioner(
+    elif Target.PULSE_R1B_PHASE_1 == target:
+        provisioner = _create_pulse_provisioner_phase_1(
             dev=dev,
             registrar=registrar,
             reset_pin=reset_pin,
             pcb_sense_pin=pcb_sense_pin,
         )
-    elif Target.FAKE == provider_target:
+    elif Target.PULSE_R1B_PHASE_2 == target:
+        provisioner = _create_pulse_provisioner_phase_2(
+            dev=dev,
+            registrar=registrar,
+            reset_pin=reset_pin,
+            pcb_sense_pin=pcb_sense_pin,
+        )
+    elif Target.FAKE == target:
         provisioner = _create_fake_provisioner(registrar)
     else:
         raise RuntimeError("Invalid target")
 
     app = JigGUI()
-    app.run(provisioner, registrar, provider_target)
+    app.run(provisioner, registrar)
 
 
 if __name__ == "__main__":
