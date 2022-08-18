@@ -262,7 +262,7 @@ class JigClient:
         :param port: Port number as an int
         :return bool: If test command is a pass or fail
         """
-        return self.run_test_cmd(f"test-ta3k -v {_to_port_flags(port)} 1", timeout=10)
+        return self.run_test_cmd(f"test-ta3k -v {_to_port_flags(port)} 1", timeout=20)
 
     def test_self(self) -> bool:
         """Run `test-self` command on the device
