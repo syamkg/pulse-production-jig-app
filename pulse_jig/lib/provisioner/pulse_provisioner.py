@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 
 import serial
 
@@ -10,6 +11,12 @@ logger = logging.getLogger("provisioner")
 
 
 class PulseProvisioner(Provisioner):
+    @dataclass
+    class QRCode(Provisioner.QRCode):
+        deveui: str
+        ass_id: str
+        ass_ver: str
+
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)
         self._init_state_machine()
@@ -55,6 +62,9 @@ class PulseProvisioner(Provisioner):
                 rev=self.hwspec.hw_revision,
                 dom=self.hwspec.assembly_timestamp,
                 cert=self.hwspec.iecex_cert,
+                deveui=self.dev_eui,
+                ass_id="{:#04x}".format(self.hwspec.assembly_id),
+                ass_ver=self.hwspec.assembly_version,
             )
 
     def submitting_provisioning_record(self):

@@ -88,6 +88,9 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
                 self.fail()
                 return
 
+            # Read & save dev_eui for future reference
+            self.dev_eui = self._ftf.lora_deveui()
+
             self._ftf.platform("prp-disable")
             self.proceed()
         except JigClientException as e:
@@ -110,3 +113,4 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
     def reset(self):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
+        self.dev_eui: Optional[str] = None

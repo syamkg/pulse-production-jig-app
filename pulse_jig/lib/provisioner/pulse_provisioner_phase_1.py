@@ -119,6 +119,9 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
             else:
                 self.hwspec = None
 
+            # Read & save dev_eui for future reference
+            self.dev_eui = self._ftf.lora_deveui()
+
             self._ftf.platform("prp-disable")
             self.proceed()
         except JigClientException as e:
@@ -172,10 +175,9 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
         self.proceed()
 
     def registering_device(self):
-        dev_eui = self._ftf.lora_deveui()
         registered = self._registrar.register_serial(
             self.hwspec,
-            dev_eui=dev_eui,
+            dev_eui=self.dev_eui,
             join_eui=settings.lora.config.join_eui,
             app_key=self.config_app_key,
         )
@@ -188,6 +190,7 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
         self.config_app_key = generate_app_key()
+        self.dev_eui: Optional[str] = None
 
 
 def generate_app_key():
