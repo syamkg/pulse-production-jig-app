@@ -44,7 +44,7 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
 
         # Expected working path
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
-        m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE, before="reset")
+        m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE)
         m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO, conditions="has_network")
         m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
         m.add_transition("proceed", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, conditions="has_passed")
@@ -81,7 +81,8 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
         m.add_transition("device_lost", "*", States.WAITING_FOR_SERIAL)
 
         m.on_enter_WAITING_FOR_PCB("set_status_waiting")
-        m.on_enter_LOADING_DEVICE_REGO("set_status_inprogress")
+        m.on_enter_WAITING_FOR_PCB("start_iteration")
+        m.on_enter_LOADING_TEST_FIRMWARE("set_status_inprogress")
         m.on_enter_WAITING_FOR_PCB_REMOVAL("promote_provision_status")
         m.on_exit_WAITING_FOR_PCB_REMOVAL("reset")
         m.on_exit_WAITING_FOR_PCB_REMOVAL("reset_logs")
@@ -189,6 +190,10 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
     def reset(self):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
+
+    def start_iteration(self):
+        # Before starting an iteration we need
+        # to generate a new app key.
         self.config_app_key = generate_app_key()
         self.dev_eui: Optional[str] = None
 
