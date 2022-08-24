@@ -33,7 +33,11 @@ settings = Dynaconf(
             must_exist=True,
         ),
         Validator("mode_vars", must_exist=True),
-        Validator("mode_vars.cable_length", must_exist=True, when=Validator("app.target", eq=Target.TA3K)),
+        Validator(
+            "mode_vars.cable_length",
+            must_exist=True,
+            when=Validator("app.target", is_in=[Target.TA3K, Target.TA6K, Target.TA11K]),
+        ),
         Validator("api.region", "api.host", "api.stage", must_exist=True),
         Validator("lora.test.join_eui", "lora.test.app_key", "lora.config.join_eui", must_exist=True),
         Validator("network.ping_interval", must_exist=True),

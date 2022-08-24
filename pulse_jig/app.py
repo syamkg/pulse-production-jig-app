@@ -14,13 +14,31 @@ from lib.registrar import Registrar
 from lib.target import Target
 
 
-def _create_probe_provisioner(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
-    from lib.provisioner.probe_provisioner import ProbeProvisioner
+def _create_probe_provisioner_ta3k(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
+    from lib.provisioner.probe_provisioner_ta3k import ProbeProvisionerTa3k
     from lib.pulse_manager import PulseManager
 
     pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
 
-    return ProbeProvisioner(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+    return ProbeProvisionerTa3k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+
+
+def _create_probe_provisioner_ta6k(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
+    from lib.provisioner.probe_provisioner_ta6k import ProbeProvisionerTa6k
+    from lib.pulse_manager import PulseManager
+
+    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
+
+    return ProbeProvisionerTa6k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+
+
+def _create_probe_provisioner_ta11k(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
+    from lib.provisioner.probe_provisioner_ta11k import ProbeProvisionerTa11k
+    from lib.pulse_manager import PulseManager
+
+    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
+
+    return ProbeProvisionerTa11k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
 
 
 def _create_pulse_provisioner_phase_1(
@@ -78,7 +96,21 @@ def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int):
     target = settings.app.target
 
     if Target.TA3K == target:
-        provisioner = _create_probe_provisioner(
+        provisioner = _create_probe_provisioner_ta3k(
+            dev=dev,
+            registrar=registrar,
+            reset_pin=reset_pin,
+            pcb_sense_pin=pcb_sense_pin,
+        )
+    elif Target.TA6K == target:
+        provisioner = _create_probe_provisioner_ta6k(
+            dev=dev,
+            registrar=registrar,
+            reset_pin=reset_pin,
+            pcb_sense_pin=pcb_sense_pin,
+        )
+    elif Target.TA11K == target:
+        provisioner = _create_probe_provisioner_ta11k(
             dev=dev,
             registrar=registrar,
             reset_pin=reset_pin,

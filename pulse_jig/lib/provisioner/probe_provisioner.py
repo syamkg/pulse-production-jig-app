@@ -160,16 +160,6 @@ class ProbeProvisioner(Provisioner, CommonStates):
             # the functional test firmware (should have been caught in dev)
             self.fail()
 
-    def running_tests(self):
-        passed = self._ftf.test_ta3k(self._port_no)
-        if passed:
-            logger.info("Tests Passed!")
-            self.set_status_passed()
-            self.proceed()
-        else:
-            logger.error("Tests Failed!")
-            self.fail()
-
     def waiting_for_target_removal(self):
         self._ftf.probe_await_recovery()
         self.proceed()
