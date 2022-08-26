@@ -4,6 +4,7 @@ from typing import Optional
 
 from transitions import Machine
 
+from pulse_jig.config import settings
 from .common_states import CommonStates
 from .pulse_provisioner import PulseProvisioner
 from ..hwspec import HWSpec
@@ -103,6 +104,12 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
 
     def running_tests(self):
         passed = self._ftf.test_self()
+
+        if passed:
+            passed = self._ftf.test_lora_connect(
+                settings.lora.test.sub_band, settings.lora.test.join_eui, settings.lora.test.app_key
+            )
+
         if passed:
             logger.info("Tests Passed!")
             self.set_status_passed()
