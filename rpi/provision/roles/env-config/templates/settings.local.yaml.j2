@@ -11,7 +11,7 @@ device:
   thing_type_id: {{ '%#04x' % device.thing_type_id }}
   hw_revision: {{ device.hw_revision }}
   assembly_id: {{ '%#04x' % device.assembly_id }}
-  assembly_version: {{ device.assembly_version }}
+  assembly_version: {{ '%#04x' % device.assembly_version }}
   manufacturer_name: {{ device.manufacturer_name }}
   manufacturer_id: {{ '%#04x' % device.manufacturer_id }}
   cable_lengths: {{ device.cable_lengths }}

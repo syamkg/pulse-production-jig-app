@@ -18,7 +18,7 @@ class HWSpec:
     thing_type_id: int = 0x00
     hw_revision: str = ""
     assembly_id: int = 0x00
-    assembly_version: str = ""
+    assembly_version: int = 0x00
     assembly_timestamp: int = 0
     manufacturer_name: str = ""
     manufacturer_id: int = 0x00
@@ -30,7 +30,7 @@ class HWSpec:
         self.thing_type_id = int(ftf.hwspec_get("thing_type_id"), 16)
         self.hw_revision = ftf.hwspec_get("hw_revision")
         self.assembly_id = int(ftf.hwspec_get("assembly_id"), 16)
-        self.assembly_version = ftf.hwspec_get("assembly_version")
+        self.assembly_version = int(ftf.hwspec_get("assembly_version"), 16)
         self.assembly_timestamp = int(ftf.hwspec_get("assembly_timestamp"))
         self.manufacturer_name = ftf.hwspec_get("manufacturer_name")
         self.manufacturer_id = int(ftf.hwspec_get("manufacturer_id"), 16)
@@ -55,7 +55,7 @@ class HWSpec:
         ftf.hwspec_set("thing_type_id", str(self.thing_type_id))
         ftf.hwspec_set("hw_revision", self.hw_revision)
         ftf.hwspec_set("assembly_id", str(self.assembly_id))
-        ftf.hwspec_set("assembly_version", self.assembly_version)
+        ftf.hwspec_set("assembly_version", str(self.assembly_version))
         ftf.hwspec_set("assembly_timestamp", str(self.assembly_timestamp))
         ftf.hwspec_set("manufacturer_name", self.manufacturer_name)
         ftf.hwspec_set("manufacturer_id", str(self.manufacturer_id))

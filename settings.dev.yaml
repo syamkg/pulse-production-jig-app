@@ -12,7 +12,7 @@ device:
   thing_type_id: 0x201
   hw_revision: r2.0
   assembly_id: 0x00
-  assembly_version: 0.0.0
+  assembly_version: 0x00
   manufacturer_name: Woodside
   manufacturer_id: 0x01
   iecex_cert: Not set

@@ -64,7 +64,7 @@ class PulseProvisioner(Provisioner):
                 cert=self.hwspec.iecex_cert,
                 deveui=self.dev_eui,
                 ass_id="{:#04x}".format(self.hwspec.assembly_id),
-                ass_ver=self.hwspec.assembly_version,
+                ass_ver="{:#04x}".format(self.hwspec.assembly_version),
             )
 
     def submitting_provisioning_record(self):

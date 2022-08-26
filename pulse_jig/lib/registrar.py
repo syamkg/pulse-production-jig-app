@@ -58,7 +58,7 @@ class Registrar:
             "fab_id": self._format_hex(hwspec.thing_type_id),
             "fab_ver": hwspec.hw_revision,
             "assembly_id": self._format_hex(hwspec.assembly_id),
-            "assembly_ver": hwspec.assembly_version,
+            "assembly_ver": self._format_hex(hwspec.assembly_version),
             "manufacturer_id": self._format_hex(hwspec.manufacturer_id),
             "date_of_manufacture": hwspec.assembly_timestamp,
             "iecex_cert": hwspec.iecex_cert,
