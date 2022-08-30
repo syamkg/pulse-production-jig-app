@@ -10,16 +10,24 @@
 - debug:
     var: command_output.stdout_lines
 
+- name: Create temporary directory on local for docker image
+  become: no
+  delegate_to: localhost
+  tempfile:
+    state: directory
+    suffix: jig-app
+  register: temp_image_dir
+
 - name: Saving Docker image as .tar
   become: no
   delegate_to: localhost
   shell:
-    cmd: "docker save -o {{ role_path }}/files/pulse-jig.tar pulse-jig"
+    cmd: "docker save -o {{ temp_image_dir.path }}/pulse-jig.tar pulse-jig"
 
 - name: Copying image over to RPi
   become: no
   copy:
-    src: "{{ role_path }}/files/pulse-jig.tar"
+    src: "{{ temp_image_dir.path }}/pulse-jig.tar"
     dest: "{{ app_dir }}"
 
 - name: Loading the copied Docker image
