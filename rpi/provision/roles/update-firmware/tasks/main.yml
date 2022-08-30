@@ -5,19 +5,11 @@
     path: "{{ firmware_dir }}"
     state: directory
 
-# TODO update this to pull from OTA bucket
-- name: Copying Functional Tests Firmware
+- name: Copying Firmware(s) to Jig
   become_user: pi
   copy:
     src: "{{ item }}"
-    dest: "{{ firmware_dir }}/{{ test_firmware }}"
-  with_fileglob:
-    - "{{ role_path }}/files/test-firmware/*.bin"
-
-- name: Copying Production Firmware
-  become_user: pi
-  copy:
-    src: "{{ item }}"
-    dest: "{{ firmware_dir }}/{{ prod_firmware }}"
-  with_fileglob:
-    - "{{ role_path }}/files/prod-firmware/*.bin"
+    dest: "{{ firmware_dir }}"
+  with_items:
+    - "../../pulse_jig/firmware/{{ test_firmware }}"
+    - "../../pulse_jig/firmware/{{ prod_firmware }}"
