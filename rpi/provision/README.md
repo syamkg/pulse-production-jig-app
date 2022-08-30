@@ -23,23 +23,14 @@ In the order they should be executed & their roles,
    1. disable-wifi
    2. remove-ssh-key
    3. disable-password-auth
-   5. env-config
-   6. app-launch
+5. update_jig
+   1. env-config
+   2. app-launch
+   3. upgrade
    4. update-firmware
-5. maintenance 
-   1. upgrade
-   2. basic-config
-   3. aws-credentials
-   4. env-config
-   5. app-launch
-   6. update-firmware
+   5. docker-pull
 
 ### Ansible variables 
 
-In general, you don't have to change the `default` variables for any role. Not changing any of the `deafult` variables
-will help us to maintain the consistency between jigs.
-
-You'll be prompt to enter instance specific values for each playbook if required. 
-
-`initialise_prod` & `maintenance` will source an additional variable file `vars/environment_vars`. This will override 
-the `default` values for, `env-config`, `app-launch` & `update-firmware`. Feel free to update these values as required.
+`update_jig` will source an additional variable file `vars/environment_vars`. 
+Feel free to update these values as required.

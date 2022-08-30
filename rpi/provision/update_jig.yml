@@ -1,5 +1,5 @@
 ---
-- name: Running latest maintenance tasks
+- name: Environment config, and update packages, firmwares and the jig app
   hosts: all
   become: yes
 
@@ -7,10 +7,8 @@
     - vars/environment_vars.yml
 
   roles:
-    - upgrade
-    - basic-config
-    - aws-credentials
     - env-config
     - app-launch
+    - upgrade
     - update-firmware
     - docker-pull

@@ -10,15 +10,18 @@
   template:
     src: app.env.j2
     dest: "{{ app_dir }}/app.env"
+    force: no
     
 - name: Copying settings.local.yaml
   become_user: pi
   template:
     src: settings.local.yaml.j2
     dest: "{{ app_dir }}/settings.local.yaml"
+    force: no
 
 - name: Copying settings.yaml
   become_user: pi
   template:
     src: settings.yaml.j2
     dest: "{{ app_dir }}/settings.yaml"
+    force: no
