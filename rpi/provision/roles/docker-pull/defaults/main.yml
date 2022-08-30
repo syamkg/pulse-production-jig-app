@@ -1,6 +1,0 @@
----
-# Don't update these values
-# Use roles/vars/environment_vars.yml to update
-
-app_dir: /home/pi/test-jig
-aws_account_id: aws_account_id_not_set

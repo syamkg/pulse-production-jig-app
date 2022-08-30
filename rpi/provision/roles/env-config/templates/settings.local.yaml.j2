@@ -4,7 +4,8 @@ app:
   debug: {{ app.debug }}
   test_firmware_path: {{ app.test_firmware_path }}
   prod_firmware_path: {{ app.prod_firmware_path }}
-  skip_test_firmware_load: {{ app.skip_test_firmware_load }}
+  skip_firmware_load: {{ app.skip_firmware_load }}
+  hwspec_repair_mode: {{ app.hwspec_repair_mode }}
 device:
   minter_id: {{ '%#04x' % device.minter_id }}
   thing_type_name: {{ device.thing_type_name }}
@@ -14,13 +15,21 @@ device:
   assembly_version: {{ '%#04x' % device.assembly_version }}
   manufacturer_name: {{ device.manufacturer_name }}
   manufacturer_id: {{ '%#04x' % device.manufacturer_id }}
-  cable_lengths: {{ device.cable_lengths }}
+  iecex_cert: {{ device.iecex_cert }}
+mode_vars:  # don't remove this
+{% if mode_vars.cable_length is defined %}
+  cable_length: {{ mode_vars.cable_length }}
+{% endif %}
 api:
   region: {{ api.region }}
   host: {{ api.host }}
   stage: {{ api.stage }}
 lora:
-  join_eui: {{ lora.join_eui }}
-  app_key: {{ lora.app_key }}
+  test:
+    sub_band: {{ lora.test.sub_band }}
+    join_eui: {{ lora.test.join_eui }}
+    app_key: {{ lora.test.app_key }}
+  config:
+    join_eui: {{ lora.config.join_eui }}
 network:
   ping_interval: {{ network.ping_interval }} # in seconds

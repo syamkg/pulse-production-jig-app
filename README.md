@@ -83,7 +83,6 @@ This application uses [Dynaconf](https://www.dynaconf.com/) to maintain settings
 
 - `settings.yml`, used for settings that don't change between environments but we may wish to configure in special circumstances.
 - `settings.local.yaml`, used for environment specific settings. These are not committed to a repository.
-- `settings.dev.yaml`, used for local development work, copy to `settings.local.yaml` to get running locally quickly.
 
 Validation is performed on the combined resolved settings in `config.py`. It can be used to access settings in this way:
 

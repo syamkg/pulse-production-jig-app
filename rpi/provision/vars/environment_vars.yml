@@ -1,46 +1,56 @@
 ---
-# Use this to set environment values. This will overwrite default vars in
+# Use this to set environment values. They will be used in the following roles
 #   1. app-launch
 #   2. env-config
 #   3. update-firmware
+#   4. docker-pull
 #
 # Q: Should I commit the changes or not?
 # A: Flip a coin. But I wouldn't commit PROD endpoints - just-in-case
 
 # Variables for app.env
+# Usage: env-config, app-launch, update-firmware, docker-pull
 app_dir: /home/pi/test-jig
+# Usage: env-config, docker-pull
 aws_account_id: aws_account_id_not_set
 
 # Variable for update-firmware
+# Usage: update-firmware
 firmware_dir: "{{ app_dir }}/pulse_jig/firmware"
 test_firmware: test-firmware.bin
 prod_firmware: prod-firmware.bin
 
 # Variables for settings.local.yaml
+# Usage: env-config
 app:
   target: ta3k
   debug: false
   test_firmware_path: "firmware/{{ test_firmware }}"
   prod_firmware_path: "firmware/{{ prod_firmware }}"
-  skip_test_firmware_load: false
+  skip_firmware_load: false
   hwspec_repair_mode: false
 device:
-  minter_id: 0x00
-  thing_type_name: ta3k
+  minter_id: 0xff
+  thing_type_name: TA3K
   thing_type_id: 0x201
   hw_revision: r2.0
   assembly_id: 0x00
   assembly_version: 0x00
   manufacturer_name: Woodside
   manufacturer_id: 0x01
-  iecex_cert:
-  cable_lengths: [1.5, 2.0]
+  iecex_cert: Not set
+mode_vars:
+  cable_length: [1.5, 2.0]
 api:
   region: ap-southeast-2
   host: https://8k3h1lqdjd.execute-api.ap-southeast-2.amazonaws.com
   stage: dev
 lora:
-  join_eui: aa:aa:aa:aa:aa:aa:aa:aa
-  app_key: aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa
+  test:
+    sub_band: 7
+    join_eui: aa:aa:aa:aa:aa:aa:aa:aa
+    app_key: aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa:aa
+  config:
+    join_eui: aa:aa:aa:aa:aa:aa:aa:aa
 network:
   ping_interval: 30 # in seconds
