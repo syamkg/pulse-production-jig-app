@@ -5,16 +5,18 @@
     path: "{{ app_dir }}"
     state: directory
 
+- name: Creating jig app auto launch entry
+  template:
+    src: jig-app.desktop.j2
+    dest: /etc/xdg/autostart/jig-app.desktop
+
 - name: Copying boot scripts
   become_user: pi
   copy:
     src: "{{ item }}"
     dest: "{{ app_dir }}"
     mode: +x
-  with_fileglob:
-    - "{{ role_path }}/files/scripts/*"
-    
-- name: Creating jig app auto launch entry
-  template:
-    src: jig-app.desktop.j2
-    dest: /etc/xdg/autostart/jig-app.desktop
+  with_items:
+    - ../../run.sh
+    - ../../pull.sh
+    - ../../boot.sh

@@ -12,12 +12,6 @@ if [ -z "${APP_DIR}" ]; then
   error=1
 fi
 
-if [ -z "${TARGET}" ]; then
-  [ -n "${msg}" ] && msg="${msg}\n"
-  msg="${msg}TARGET is not set!"
-  error=1
-fi
-
 if [ "${error}" == 1 ]; then
   if [ -z "${msg}" ]; then
     error_msg="Error occurred!"
