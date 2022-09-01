@@ -99,7 +99,7 @@ class JigGUI:
     def _update_qr(self, state):
         data = None
         if state.status == Provisioner.Status.PASSED:
-            data = h.generate_qrcode(state.qrcode.__dict__)
+            data = h.generate_qrcode(str(state.qrcode))
         self.window["-QRCODE-"].update(data=data)
 
     def _update_firmware_version(self, state):

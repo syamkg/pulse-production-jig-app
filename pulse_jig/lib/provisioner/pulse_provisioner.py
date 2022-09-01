@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 
 import serial
 
@@ -16,6 +17,21 @@ class PulseProvisioner(Provisioner):
         deveui: str
         ass_id: str
         ass_ver: str
+
+        def __str__(self):
+            """
+            DO NOT CHANGE THIS STRUCTURE OR ORDER!!!
+            Laser engraver relies on this exact order
+            """
+            return (
+                f"{self.sn}\n"
+                f"{self.rev}\n"
+                f"{datetime.fromtimestamp(self.dom).strftime('%m/%y')}\n"
+                f"{self.cert}\n"
+                f"{self.deveui}\n"
+                f"{self.ass_id}\n"
+                f"{self.ass_ver}"
+            )
 
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)

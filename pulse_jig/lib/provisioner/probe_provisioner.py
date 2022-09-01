@@ -1,6 +1,7 @@
 import enum
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 import serial
@@ -39,6 +40,19 @@ class ProbeProvisioner(Provisioner, CommonStates):
     @dataclass
     class QRCode(Provisioner.QRCode):
         len: str
+
+        def __str__(self):
+            """
+            DO NOT CHANGE THIS STRUCTURE OR ORDER!!!
+            Laser engraver relies on this exact order
+            """
+            return (
+                f"{self.sn}\n"
+                f"{self.rev}\n"
+                f"{datetime.fromtimestamp(self.dom).strftime('%m/%y')}\n"
+                f"{self.cert}\n"
+                f"{self.len}"
+            )
 
     @dataclass
     class Mode(Provisioner.Mode):

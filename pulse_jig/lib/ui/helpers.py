@@ -1,5 +1,4 @@
 import io
-import json
 
 import qrcode
 
@@ -7,9 +6,9 @@ from pulse_jig.config import settings
 from ..registrar import NetworkStatus
 
 
-def generate_qrcode(data: dict) -> bytes:
-    qr = qrcode.QRCode(version=10, box_size=4, border=3)
-    qr.add_data(json.dumps(data))
+def generate_qrcode(data: str) -> bytes:
+    qr = qrcode.QRCode(version=8, box_size=5, border=3)
+    qr.add_data(data)
     qr.make(fit=True)
     img = qr.make_image(fill_color="white", back_color="black")
 
