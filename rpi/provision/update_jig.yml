@@ -7,8 +7,8 @@
     - vars/environment_vars.yml
 
   roles:
+    - upgrade
     - env-config
     - app-launch
-    - upgrade
     - update-firmware
     - docker-pull
