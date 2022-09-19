@@ -288,7 +288,7 @@ class JigClient:
         """Run `test-port` command on all ports of the device
         :return bool: If test command is a pass or fail
         """
-        return self.run_test_cmd("test-port -v 0x0f 1", timeout=30)
+        return self.run_test_cmd("test-port -v 0x0f 1", timeout=60)
 
     def test_lora_connect(self, sub_band: str, join_eui: str, app_key: str) -> bool:
         """Run `test-lora-connect` command on the device
