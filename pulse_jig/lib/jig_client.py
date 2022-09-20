@@ -84,7 +84,7 @@ class JigClient:
             if self._readline() == self._prompt and lines_read > 1:
                 break
 
-    def read_boot_header(self) -> str:
+    def read_boot_header(self, with_prompt: bool = True) -> str:
         reading_header = False
         header = ""
 
@@ -103,6 +103,9 @@ class JigClient:
                 continue
 
             if reading_header:
+                header += line + "\n"
+
+            if with_prompt and header and line == self._prompt:
                 header += line + "\n"
 
         return header.strip()
