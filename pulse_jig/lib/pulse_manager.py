@@ -21,9 +21,9 @@ class PulseManager:
     def reset_device(self):
         logger.debug("reset_device()")
         self._reset_pin.off()
-        time.sleep(0.5)
+        time.sleep(0.2)
         self._reset_pin.on()
-        time.sleep(0.5)
+        time.sleep(0.2)
 
     @property
     def is_connected(self):
@@ -53,12 +53,11 @@ class PulseManager:
         logger.debug("starting copy")
         copy_thread = threading.Thread(target=do_copy)
         copy_thread.start()
-        time.sleep(0.5)
+        time.sleep(0.2)
         self._reset_pin.on()
         logger.debug("waiting for copy")
         copy_thread.join()
-        logger.debug("giving xdot 10 seconds")
-        time.sleep(10)
+        time.sleep(0.2)
 
     def check_for_header(self, port: serial.Serial, timeout: float = None) -> bool:
         """Monitors the port for a boot header from the firmware.
