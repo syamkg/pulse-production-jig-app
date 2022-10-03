@@ -1,3 +1,6 @@
+# this allows us to use forward references which are otherwise missing in even python3.10....
+# https://peps.python.org/pep-0563/#forward-references
+from __future__ import annotations
 import enum
 import logging
 from dataclasses import dataclass
@@ -6,6 +9,8 @@ from typing import Callable, Dict, List, Optional
 from pulse_jig.config import settings
 from ..hwspec import HWSpec
 from ..registrar import Registrar, NetworkStatus
+from lib.pulse_manager import PulseManager
+from lib.target import Target
 
 logger = logging.getLogger("provisioner")
 
@@ -68,6 +73,37 @@ class Provisioner:
         mode: Optional["Provisioner.Mode"]
         test_firmware_version: Optional[str]
         prod_firmware_version: Optional[str]
+
+    @staticmethod
+    def factory(registrar: Registrar, pulse_manager: PulseManager, dev: Optional[str]) -> Provisioner:
+        target = settings.app.target
+
+        if Target.TA3K == target:
+            from lib.provisioner.probe_provisioner_ta3k import ProbeProvisionerTa3k
+
+            return ProbeProvisionerTa3k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+        elif Target.TA6K == target:
+            from lib.provisioner.probe_provisioner_ta6k import ProbeProvisionerTa6k
+
+            return ProbeProvisionerTa6k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+        elif Target.TA11K == target:
+            from lib.provisioner.probe_provisioner_ta11k import ProbeProvisionerTa11k
+
+            return ProbeProvisionerTa11k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+        elif Target.PULSE_R1B_PHASE_1 == target:
+            from lib.provisioner.pulse_provisioner_phase_1 import PulseProvisionerPhase1
+
+            return PulseProvisionerPhase1(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+        elif Target.PULSE_R1B_PHASE_2 == target:
+            from lib.provisioner.pulse_provisioner_phase_2 import PulseProvisionerPhase2
+
+            return PulseProvisionerPhase2(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+        elif Target.FAKE == target:
+            from lib.provisioner.fake_provisioner import FakeProvisioner
+
+            return FakeProvisioner(registrar)
+        else:
+            raise RuntimeError("Invalid target")
 
     def __init__(self, registrar: Registrar):
         self.reset()

@@ -11,62 +11,7 @@ from lib.jig_client import JigClient
 from lib.ui.jig_gui import JigGUI
 from lib.provisioner.provisioner import Provisioner
 from lib.registrar import Registrar
-from lib.target import Target
-
-
-def _create_probe_provisioner_ta3k(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
-    from lib.provisioner.probe_provisioner_ta3k import ProbeProvisionerTa3k
-    from lib.pulse_manager import PulseManager
-
-    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
-
-    return ProbeProvisionerTa3k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-
-
-def _create_probe_provisioner_ta6k(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
-    from lib.provisioner.probe_provisioner_ta6k import ProbeProvisionerTa6k
-    from lib.pulse_manager import PulseManager
-
-    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
-
-    return ProbeProvisionerTa6k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-
-
-def _create_probe_provisioner_ta11k(dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int) -> Provisioner:
-    from lib.provisioner.probe_provisioner_ta11k import ProbeProvisionerTa11k
-    from lib.pulse_manager import PulseManager
-
-    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
-
-    return ProbeProvisionerTa11k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-
-
-def _create_pulse_provisioner_phase_1(
-    dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int
-) -> Provisioner:
-    from lib.provisioner.pulse_provisioner_phase_1 import PulseProvisionerPhase1
-    from lib.pulse_manager import PulseManager
-
-    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
-
-    return PulseProvisionerPhase1(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-
-
-def _create_pulse_provisioner_phase_2(
-    dev: str, registrar: Registrar, reset_pin: int, pcb_sense_pin: int
-) -> Provisioner:
-    from lib.provisioner.pulse_provisioner_phase_2 import PulseProvisionerPhase2
-    from lib.pulse_manager import PulseManager
-
-    pulse_manager = PulseManager(reset_pin=reset_pin, pcb_sense_pin=pcb_sense_pin, xdot_volume="/media/pi/XDOT")
-
-    return PulseProvisionerPhase2(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-
-
-def _create_fake_provisioner(registrar: Registrar) -> Provisioner:
-    from lib.provisioner.fake_provisioner import FakeProvisioner
-
-    return FakeProvisioner(registrar)
+from lib.pulse_manager import PulseManager
 
 
 def _configure_logging(debug):
@@ -83,7 +28,8 @@ def _configure_logging(debug):
 @click.option("--dev", default=lambda: JigClient.find_device())
 @click.option("--reset-pin", default=6)
 @click.option("--pcb-sense-pin", default=5)
-def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int):
+@click.option("--xdot-volume", default="/media/pi/XDOT")
+def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int, xdot_volume: str):
     if dev is None:
         print("Could not detect device")
         exit(1)
@@ -95,45 +41,8 @@ def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int):
 
     target = settings.app.target
 
-    if Target.TA3K == target:
-        provisioner = _create_probe_provisioner_ta3k(
-            dev=dev,
-            registrar=registrar,
-            reset_pin=reset_pin,
-            pcb_sense_pin=pcb_sense_pin,
-        )
-    elif Target.TA6K == target:
-        provisioner = _create_probe_provisioner_ta6k(
-            dev=dev,
-            registrar=registrar,
-            reset_pin=reset_pin,
-            pcb_sense_pin=pcb_sense_pin,
-        )
-    elif Target.TA11K == target:
-        provisioner = _create_probe_provisioner_ta11k(
-            dev=dev,
-            registrar=registrar,
-            reset_pin=reset_pin,
-            pcb_sense_pin=pcb_sense_pin,
-        )
-    elif Target.PULSE_R1B_PHASE_1 == target:
-        provisioner = _create_pulse_provisioner_phase_1(
-            dev=dev,
-            registrar=registrar,
-            reset_pin=reset_pin,
-            pcb_sense_pin=pcb_sense_pin,
-        )
-    elif Target.PULSE_R1B_PHASE_2 == target:
-        provisioner = _create_pulse_provisioner_phase_2(
-            dev=dev,
-            registrar=registrar,
-            reset_pin=reset_pin,
-            pcb_sense_pin=pcb_sense_pin,
-        )
-    elif Target.FAKE == target:
-        provisioner = _create_fake_provisioner(registrar)
-    else:
-        raise RuntimeError("Invalid target")
+    pulse_manager = PulseManager(reset_pin, pcb_sense_pin, xdot_volume)
+    provisioner = Provisioner.factory(registrar, pulse_manager, dev)
 
     app = JigGUI()
     app.run(provisioner, registrar)
