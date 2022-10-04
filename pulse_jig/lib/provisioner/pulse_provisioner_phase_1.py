@@ -10,6 +10,7 @@ from .common_states import CommonStates
 from .pulse_provisioner import PulseProvisioner
 from ..hwspec import HWSpec
 from ..jig_client import JigClientException
+from lib.target import Target
 
 logger = logging.getLogger("provisioner")
 
@@ -35,6 +36,10 @@ class States(enum.Enum):
 
 
 class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
+    def __init__(self, registrar, pulse_manager, dev):
+        super().__init__(registrar, pulse_manager, dev)
+        self.mode.target = Target.PULSE_R1B_PHASE_1
+
     def _init_state_machine(self):
         m = Machine(
             model=self,
@@ -88,7 +93,7 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
         m.on_exit_WAITING_FOR_PCB_REMOVAL("reset_logs")
 
     def waiting_for_pcb(self):
-        while not self._pulse_manager.is_connected:
+        while self.is_running() and not self._pulse_manager.is_connected:
             pass
 
         # Now if the pulse board is removed we will close

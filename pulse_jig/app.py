@@ -39,13 +39,11 @@ def main(dev: Optional[str], reset_pin: int, pcb_sense_pin: int, xdot_volume: st
     registrar = Registrar()
     registrar.network_check()
 
-    target = settings.app.target
-
     pulse_manager = PulseManager(reset_pin, pcb_sense_pin, xdot_volume)
-    provisioner = Provisioner.factory(registrar, pulse_manager, dev)
+    provisioner_factory = Provisioner.build_factory(registrar, pulse_manager, dev)
 
     app = JigGUI()
-    app.run(provisioner, registrar)
+    app.run(provisioner_factory, registrar)
 
 
 if __name__ == "__main__":

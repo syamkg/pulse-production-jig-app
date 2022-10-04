@@ -3,6 +3,7 @@ import shutil
 import threading
 import time
 from pathlib import Path
+from typing import Callable, Optional
 
 import gpiozero
 import serial
@@ -59,7 +60,9 @@ class PulseManager:
         copy_thread.join()
         time.sleep(0.2)
 
-    def check_for_header(self, port: serial.Serial, timeout: float = None) -> bool:
+    def check_for_header(
+        self, port: serial.Serial, timeout: float = None, continue_test: Optional[Callable[[], bool]] = None
+    ) -> bool:
         """Monitors the port for a boot header from the firmware.
         Keep reading until the end of the boot header to verify.
         If found return True.
@@ -73,9 +76,11 @@ class PulseManager:
         """
         terminator = "\r\n"
         boot_header_separator = "=" * 62
+        if continue_test is None:
+            continue_test = lambda: True
 
         timer = Timeout(timeout) if timeout else TimeoutNever()
-        while not timer.expired:
+        while continue_test() and not timer.expired:
             time.sleep(0.2)
             boot_header_size = 10  # Number of lines including the separator & starting blank line
             boot_header_separator_count = 0

@@ -116,12 +116,14 @@ class ProbeProvisioner(Provisioner, CommonStates):
         m.on_exit_WAITING_FOR_TARGET_REMOVAL("reset")
 
     def run(self):
-        while True:
+        while self.is_running():
             try:
                 self._inner_loop()
             except Exception as e:
                 logger.error(str(e))
                 self.device_lost()
+
+        logger.info("probe_provisioner provisioning thread terminated")
 
     def waiting_for_pcb(self):
         while not self._pulse_manager.is_connected:

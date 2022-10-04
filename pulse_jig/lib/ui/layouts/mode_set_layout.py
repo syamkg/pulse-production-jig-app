@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 
 from pulse_jig.config import settings
+from lib.target import Target
 
 
 def repair_mode_warning() -> list:
@@ -56,6 +57,24 @@ def mode_selection_elements() -> list:
     return elements
 
 
+def target_element():
+    if not settings.app.allow_target_change:
+        return sg.Text(settings.app.target, key="-TARGET-", text_color="gray")
+    else:
+        return (
+            sg.Combo(
+                [e.value for e in Target],
+                key="-TARGET-",
+                default_value=settings.app.target,
+                readonly=True,
+                background_color="white",
+                text_color="black",
+                expand_x=True,
+                font=("Arial", 20),
+            ),
+        )
+
+
 def layout():
     sg.theme("Black")
 
@@ -80,7 +99,7 @@ def layout():
                                             [sg.Sizer(0, 10)],
                                             [
                                                 sg.Text("Target: "),
-                                                sg.Text(settings.app.target, text_color="gray"),
+                                                *target_element(),
                                             ],
                                             [sg.Sizer(0, 10)],
                                             *mode_selection_elements(),
