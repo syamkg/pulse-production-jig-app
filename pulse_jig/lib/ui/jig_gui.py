@@ -145,13 +145,12 @@ class JigGUI:
 
                 # Set values to each field in provisioner.mode
                 h.set_mode_values(self.provisioner.mode, data)
+                mode_text = h.parse_mode(self.provisioner.mode)
+                self.window["-MODE-"].update(mode_text)
 
                 self.window.force_focus()
             else:
                 self.window_mode["-ERROR-"].update("Please select a value")
-
-        mode_text = h.parse_mode(self.provisioner.mode)
-        self.window["-MODE-"].update(mode_text)
 
     def _app_window(self):
         self.window = sg.Window(
