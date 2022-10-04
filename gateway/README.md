@@ -45,7 +45,8 @@ Now for the manual part because Python is broken on the Conduit OS:
 
 ```bash
 aws ssm create-activation \
-  --description "conduit ssm agent test" \
+  --description "conduit-gateway" \
+  --default-instance-name "conduit-gateway" \
   --registration-limit 1 \
   --iam-role service-role/AmazonEC2RunCommandRoleForManagedInstances
 ```
@@ -54,14 +55,14 @@ aws ssm create-activation \
 
 ```bash
 # gain the IP (10.42.0.25 here) from your DHCP logs, e.g. grep 'dnsmasq' /var/log/syslog
-rsync -r -e ssh roles/jig/files/ssm admin@10.42.0.25:/tmp/ssm
+rsync -r -e ssh roles/jig/files/ssm/ admin@10.42.0.25:/tmp/ssm
 ```
 
 3) Hop onto the Conduit, e.g. `ssh admin@10.42.0.25`
 4) Move the files to the correct locations:
 
 ```bash
-sudo mv /tmp/ssm/etc/amazon /etc
+sudo rm -rf /etc/amazon/ && sudo mv /tmp/ssm/etc/amazon /etc/
 sudo mv /tmp/ssm/etc/init.d/ssm-agent /etc/init.d/ssm-agent
 sudo mv /tmp/ssm/usr/bin/* /usr/bin/.
 ```
