@@ -44,12 +44,14 @@ class PulseProvisioner(Provisioner):
         self.mode = self.Mode()
 
     def run(self):
-        while True:
+        while self.is_running():
             try:
                 self._inner_loop()
             except Exception as e:
                 logger.error(str(e))
                 self.device_lost()
+
+        logger.info("pulse_provisioner provisioning thread terminated")
 
     def loading_prod_firmware(self):
         if not settings.app.skip_firmware_load:

@@ -23,6 +23,7 @@ def threaded(fn):
 
     def wrapper(*args, **kwargs):
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs, daemon=True)
+        thread.start()
         return thread
 
     return wrapper
@@ -49,12 +50,12 @@ class QueueHandler(logging.Handler):
 class JigGUI:
     def __init__(self):
         self.current_status = Provisioner.Status.UNKNOWN
+        self.provisioner = None
+        self.provisioner_thread = None
 
-    def run(self, provisioner: Provisioner, registrar: Registrar):
+    def run(self, provisioner_factory, registrar: Registrar):
+        self._provisioner_factory = provisioner_factory
         self._app_window()
-
-        # We'll just initiate the thread here but, we won't start it here
-        self.thread = provisioner_thread(self.window, provisioner)
 
         # show the "mode selection window"
         self._mode_window()
@@ -68,7 +69,7 @@ class JigGUI:
             elif event == sg.TIMEOUT_KEY:
                 pass
             else:
-                self._update_mode(event, data, provisioner)
+                self._update_mode(event, data)
                 if event in data:
                     self._update_state(event)
                     self._set_status(data[event].status)
@@ -129,29 +130,29 @@ class JigGUI:
         status_msg = h.network_status_text(network_status)
         self.window["-NETWORK-"].update(**status_msg)
 
-    def _update_mode(self, event, data, provisioner):
+    def _update_mode(self, event, data):
         if event == "waiting_for_mode_set" or event == "-CHANGE_MODE-":
             self.window_mode.force_focus()
         elif event == "-SET_MODE-":
             if h.validate_mode_selection_input(data):
                 self.window_mode["-ERROR-"].update("")
 
-                # Start the thread if not alive.
-                # Otherwise, we'll just restart the loop
-                # trigger "retry"
-                if not self.thread.is_alive():
-                    self.thread.start()
-                else:
-                    provisioner.retry()
+                if self.provisioner_thread:
+                    self.provisioner.terminate()
+
+                # for some reason this gets passed in via `data` if it comes from the Combo, but not if it's from the Text element, so we get it from window_mode instead
+                target = self.window_mode["-TARGET-"].get()
+                self.provisioner = self._provisioner_factory(target)
+                self.provisioner_thread = provisioner_thread(self.window, self.provisioner)
 
                 # Set values to each field in provisioner.mode
-                h.set_mode_values(provisioner.mode, data)
+                h.set_mode_values(self.provisioner.mode, data)
+                mode_text = h.parse_mode(self.provisioner.mode)
+                self.window["-MODE-"].update(mode_text)
+
                 self.window.force_focus()
             else:
                 self.window_mode["-ERROR-"].update("Please select a value")
-
-        mode_text = h.parse_mode(provisioner.mode)
-        self.window["-MODE-"].update(mode_text)
 
     def _app_window(self):
         self.window = sg.Window(

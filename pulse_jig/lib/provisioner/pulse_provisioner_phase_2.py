@@ -9,6 +9,7 @@ from .common_states import CommonStates
 from .pulse_provisioner import PulseProvisioner
 from ..hwspec import HWSpec
 from ..jig_client import JigClientException
+from lib.target import Target
 
 logger = logging.getLogger("provisioner")
 
@@ -30,6 +31,10 @@ class States(enum.Enum):
 
 
 class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
+    def __init__(self, registrar, pulse_manager, dev):
+        super().__init__(registrar, pulse_manager, dev)
+        self.mode.target = Target.PULSE_R1B_PHASE_2
+
     def _init_state_machine(self):
         m = Machine(
             model=self,
@@ -44,6 +49,7 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
         m.add_transition("proceed", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, conditions="has_passed")
         m.add_transition("proceed", States.LOADING_PROD_FIRMWARE, States.SUBMITTING_PROVISIONING_RECORD)
+        # XXX TODO this does nothing in phase 2 because it was never "plugged in" to begin with
         m.add_transition(
             "proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_PCB_REMOVAL, before="update_qrcode"
         )
@@ -53,6 +59,7 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD, unless="has_passed")
 
         # Wait for network if API is unreachable
+        # XXX TODO this doesn't work - it will actually continually load the test firmware if there is no network
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.WAITING_FOR_NETWORK, unless="has_network")
         m.add_transition("proceed", States.WAITING_FOR_NETWORK, States.WAITING_FOR_PCB, conditions="has_network")
 
@@ -74,9 +81,11 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         m.on_enter_LOADING_TEST_FIRMWARE("set_status_inprogress")
         m.on_enter_WAITING_FOR_PCB_REMOVAL("promote_provision_status")
 
+    # XXX TODO this is incorrectly named as it can actually only test if there is firmware over the serial (we have no PCB sense)
     def waiting_for_pcb(self):
-        while not self._pulse_manager.check_for_header(self._port) and not self._pulse_manager.is_connected:
-            pass
+        test = lambda: self.is_running()
+        # check_for_header will block until we have a header or we've stopped running
+        self._pulse_manager.check_for_header(self._port, continue_test=test)
         self.proceed()
 
     def loading_device_rego(self):

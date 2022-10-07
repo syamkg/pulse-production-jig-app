@@ -1,3 +1,6 @@
+# this allows us to use forward references which are otherwise missing in even python3.10....
+# https://peps.python.org/pep-0563/#forward-references
+from __future__ import annotations
 import enum
 import logging
 from dataclasses import dataclass
@@ -6,6 +9,8 @@ from typing import Callable, Dict, List, Optional
 from pulse_jig.config import settings
 from ..hwspec import HWSpec
 from ..registrar import Registrar, NetworkStatus
+from lib.pulse_manager import PulseManager
+from lib.target import Target
 
 logger = logging.getLogger("provisioner")
 
@@ -56,6 +61,7 @@ class Provisioner:
         Options/values for dropdown can be added as an array.
         """
 
+        # XXX TODO we should never be embedding "settings" this deeply into the state
         manufacturer: str = settings.device.manufacturer_name
         target: str = settings.app.target
 
@@ -69,7 +75,37 @@ class Provisioner:
         test_firmware_version: Optional[str]
         prod_firmware_version: Optional[str]
 
+    @staticmethod
+    def build_factory(registrar: Registrar, pulse_manager: PulseManager, dev: Optional[str]):
+        def factory(target: str) -> Provisioner:
+            if Target.TA3K == target:
+                from lib.provisioner.probe_provisioner_ta3k import ProbeProvisionerTa3k
+
+                return ProbeProvisionerTa3k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+            elif Target.TA6K == target:
+                from lib.provisioner.probe_provisioner_ta6k import ProbeProvisionerTa6k
+
+                return ProbeProvisionerTa6k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+            elif Target.TA11K == target:
+                from lib.provisioner.probe_provisioner_ta11k import ProbeProvisionerTa11k
+
+                return ProbeProvisionerTa11k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+            elif Target.PULSE_R1B_PHASE_1 == target:
+                from lib.provisioner.pulse_provisioner_phase_1 import PulseProvisionerPhase1
+
+                return PulseProvisionerPhase1(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+            elif Target.PULSE_R1B_PHASE_2 == target:
+                from lib.provisioner.pulse_provisioner_phase_2 import PulseProvisionerPhase2
+
+                return PulseProvisionerPhase2(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+            else:
+                raise RuntimeError("Invalid target")
+
+        return factory
+
     def __init__(self, registrar: Registrar):
+        logger.info(f"Starting provisioner: {self.__class__.__name__}")
+        self._running = True
         self.reset()
         self._registrar = registrar
         self._listeners: List[Callable] = []
@@ -96,8 +132,10 @@ class Provisioner:
             )
 
     def run(self):
-        while True:
+        while self.is_running():
             self._inner_loop()
+
+        logger.info("provisioner provisioning thread terminated")
 
     def _inner_loop(self):
         self._send_event(self.state.value)
@@ -162,3 +200,14 @@ class Provisioner:
         self._send_event(self.state.value)
         # 3. Toggle back the reset_gui_logs flag
         self.reset_gui_logs: bool = False
+
+    def terminate(self):
+        """
+        Sets this provsioning thread to end. This can only happen the next time that we transition to a new state,
+        so any blocking processes in a provisioner needs to also test that we are still running via `is_running`.
+        """
+        logger.info("setting terminate on provisioner")
+        self._running = False
+
+    def is_running(self) -> bool:
+        return self._running

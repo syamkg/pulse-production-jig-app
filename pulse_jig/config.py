@@ -10,6 +10,7 @@ settings = Dynaconf(
         Validator(
             "app.debug", "app.test_firmware_path", "app.skip_firmware_load", "app.hwspec_repair_mode", must_exist=True
         ),
+        Validator("app.allow_target_change", default=False),
         Validator(
             "app.prod_firmware_path",
             must_exist=True,
