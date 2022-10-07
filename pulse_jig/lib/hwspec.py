@@ -28,7 +28,7 @@ class HWSpec:
         self.serial = ftf.hwspec_get("serial")
         self.thing_type_name = ftf.hwspec_get("thing_type_name")
         self.thing_type_id = int(ftf.hwspec_get("thing_type_id"), 16)
-        self.hw_revision = ftf.hwspec_get("hw_revision")
+        self.hw_revision = str(ftf.hwspec_get("hw_revision"))
         self.assembly_id = int(ftf.hwspec_get("assembly_id"), 16)
         self.assembly_version = int(ftf.hwspec_get("assembly_version"), 16)
         self.assembly_timestamp = int(ftf.hwspec_get("assembly_timestamp"))
@@ -41,7 +41,7 @@ class HWSpec:
         self.serial = self._generate_serial(timestamp)
         self.thing_type_name = settings.device.thing_type_name
         self.thing_type_id = settings.device.thing_type_id
-        self.hw_revision = settings.device.hw_revision
+        self.hw_revision = str(settings.device.hw_revision)
         self.assembly_id = settings.device.assembly_id
         self.assembly_version = settings.device.assembly_version
         self.assembly_timestamp = timestamp

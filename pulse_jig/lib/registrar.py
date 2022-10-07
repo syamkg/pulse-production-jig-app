@@ -56,7 +56,7 @@ class Registrar:
         data = {
             "serial": hwspec.serial,
             "fab_id": self._format_hex(hwspec.thing_type_id),
-            "fab_ver": hwspec.hw_revision,
+            "fab_ver": str(hwspec.hw_revision),
             "assembly_id": self._format_hex(hwspec.assembly_id),
             "assembly_ver": self._format_hex(hwspec.assembly_version),
             "manufacturer_id": self._format_hex(hwspec.manufacturer_id),
