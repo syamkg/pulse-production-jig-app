@@ -59,7 +59,7 @@ def mode_selection_elements() -> list:
 
 def target_element():
     if not settings.app.allow_target_change:
-        return sg.Text(settings.app.target, key="-TARGET-", text_color="gray")
+        return [sg.Text(settings.app.target, key="-TARGET-", text_color="gray")]
     else:
         return (
             sg.Combo(
