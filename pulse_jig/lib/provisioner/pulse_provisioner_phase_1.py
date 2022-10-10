@@ -37,7 +37,7 @@ class States(enum.Enum):
 class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
-        self.mode.target = Target.PULSE_R1B_PHASE_1
+        self.mode.target = Target.PULSE_PHASE_1
 
     def _init_state_machine(self):
         m = Machine(

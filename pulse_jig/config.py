@@ -14,12 +14,12 @@ settings = Dynaconf(
         Validator(
             "app.prod_firmware_path",
             must_exist=True,
-            when=Validator("app.target", is_in=[Target.PULSE_R1B_PHASE_1, Target.PULSE_R1B_PHASE_2]),
+            when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2]),
         ),
         Validator(
             "app.hwspec_repair_mode",
             eq=False,
-            when=Validator("app.target", eq=Target.PULSE_R1B_PHASE_2),
+            when=Validator("app.target", eq=Target.PULSE_PHASE_2),
         ),
         Validator(
             "device.minter_id",

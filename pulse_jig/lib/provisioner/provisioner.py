@@ -90,11 +90,11 @@ class Provisioner:
                 from lib.provisioner.probe_provisioner_ta11k import ProbeProvisionerTa11k
 
                 return ProbeProvisionerTa11k(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-            elif Target.PULSE_R1B_PHASE_1 == target:
+            elif Target.PULSE_PHASE_1 == target:
                 from lib.provisioner.pulse_provisioner_phase_1 import PulseProvisionerPhase1
 
                 return PulseProvisionerPhase1(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
-            elif Target.PULSE_R1B_PHASE_2 == target:
+            elif Target.PULSE_PHASE_2 == target:
                 from lib.provisioner.pulse_provisioner_phase_2 import PulseProvisionerPhase2
 
                 return PulseProvisionerPhase2(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
