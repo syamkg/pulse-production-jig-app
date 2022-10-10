@@ -74,6 +74,8 @@ class Provisioner:
         mode: Optional["Provisioner.Mode"]
         test_firmware_version: Optional[str]
         prod_firmware_version: Optional[str]
+        # this controls whether we want to allow the user to reset the plugged in pulse manually
+        pcb_reset_enabled: bool
 
     @staticmethod
     def build_factory(registrar: Registrar, pulse_manager: PulseManager, dev: Optional[str]):
@@ -119,6 +121,8 @@ class Provisioner:
         self.mode = self.Mode()
         self.test_firmware_version: str = "0.0.0"
         self.prod_firmware_version: str = "0.0.0"
+        # this controls whether we want to allow the user to reset the plugged in pulse manually
+        self.pcb_reset_enabled = False
 
     def _send_event(self, name: str):
         for listener in self._listeners:
@@ -132,6 +136,7 @@ class Provisioner:
                     mode=self.mode,
                     test_firmware_version=self.test_firmware_version,
                     prod_firmware_version=self.prod_firmware_version,
+                    pcb_reset_enabled=self.pcb_reset_enabled,
                 ),
             )
 
@@ -187,10 +192,23 @@ class Provisioner:
     def promote_provision_status(self):
         self.status = self.provisional_status
 
+    def pcb_reset_button_enable(self):
+        self.pcb_reset_enabled = True
+
+    def pcb_reset_button_disable(self):
+        self.pcb_reset_enabled = False
+
     def reset(self):
         self.hwspec: Optional[HWSpec] = None
         self.status: Provisioner.Status = Provisioner.Status.UNKNOWN
         self.qrcode: Optional[Provisioner.QRCode] = None
+
+    def reset_device(self):
+        """
+        reset (as in cause it to restart) the device under test.
+        not all devices can be reset, this must be implemented case by case.
+        """
+        pass
 
     def reset_logs(self):
         # Clear firmware logs if exists.
