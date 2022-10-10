@@ -68,8 +68,6 @@ class JigGUI:
                 window.close()
             elif event == sg.TIMEOUT_KEY:
                 pass
-            elif event == "-RESET-":
-                self.provisioner.reset_device()
             else:
                 self._update_mode(event, data)
                 if event in data:
@@ -78,6 +76,8 @@ class JigGUI:
                     self._update_qr(data[event])
                     self._update_firmware_version(data[event])
                     self._update_pcb_reset(data[event])
+                if event == "-RESET-":
+                    self.provisioner.reset_device()
             self._update_logs(event, data)
             self._update_network_status(registrar.network_status)
 
