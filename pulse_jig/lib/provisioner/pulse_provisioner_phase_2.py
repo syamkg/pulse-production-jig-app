@@ -81,6 +81,10 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         m.on_enter_LOADING_TEST_FIRMWARE("set_status_inprogress")
         m.on_enter_WAITING_FOR_PCB_REMOVAL("promote_provision_status")
 
+        # only allow 'reset' button during "PCB" wait
+        m.on_enter_WAITING_FOR_PCB("pcb_reset_button_enable")
+        m.on_exit_WAITING_FOR_PCB("pcb_reset_button_disable")
+
     # XXX TODO this is incorrectly named as it can actually only test if there is firmware over the serial (we have no PCB sense)
     def waiting_for_pcb(self):
         test = lambda: self.is_running()

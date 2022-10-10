@@ -145,10 +145,27 @@ def layout():
                 layout=[
                     [
                         sg.Frame(
-                            "Mode", layout=[[sg.Text(key="-MODE-", font=("Arial", 10))]], expand_x=True, size=(450, 55)
+                            "Mode", layout=[[sg.Text(key="-MODE-", font=("Arial", 10))]], expand_x=True, size=(360, 55)
                         )
                     ],
                 ],
+            ),
+            sg.Column(
+                layout=[
+                    [sg.Sizer(80, 8)],
+                    [
+                        sg.Button(
+                            "Reset",
+                            key="-RESET-",
+                            font=("Arial", 12),
+                            expand_x=True,
+                            expand_y=True,
+                            disabled=True,
+                        ),
+                        sg.Sizer(0, 52),
+                    ],
+                ],
+                expand_x=True,
             ),
             sg.Column(
                 layout=[
