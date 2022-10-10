@@ -53,6 +53,9 @@ class PulseProvisioner(Provisioner):
 
         logger.info("pulse_provisioner provisioning thread terminated")
 
+    def reset_device(self):
+        self._pulse_manager.reset_device()
+
     def loading_prod_firmware(self):
         if not settings.app.skip_firmware_load:
             self._pulse_manager.load_firmware(self._prod_firmware_path)

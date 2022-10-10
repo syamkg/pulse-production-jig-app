@@ -68,6 +68,8 @@ class JigGUI:
                 window.close()
             elif event == sg.TIMEOUT_KEY:
                 pass
+            elif event == "-RESET-":
+                self.provisioner.reset_device()
             else:
                 self._update_mode(event, data)
                 if event in data:
@@ -75,6 +77,7 @@ class JigGUI:
                     self._set_status(data[event].status)
                     self._update_qr(data[event])
                     self._update_firmware_version(data[event])
+                    self._update_pcb_reset(data[event])
             self._update_logs(event, data)
             self._update_network_status(registrar.network_status)
 
@@ -106,6 +109,9 @@ class JigGUI:
     def _update_firmware_version(self, state):
         self.window["-TEST_FIRMWARE_VERSION-"].update(f"Test Firmware: v{state.test_firmware_version}")
         self.window["-PROD_FIRMWARE_VERSION-"].update(f"Prod Firmware: v{state.prod_firmware_version}")
+
+    def _update_pcb_reset(self, state):
+        self.window["-RESET-"].update(disabled=not state.pcb_reset_enabled)
 
     def _set_status(self, status: Provisioner.Status):
         opts = {
@@ -146,9 +152,11 @@ class JigGUI:
                 self.provisioner_thread = provisioner_thread(self.window, self.provisioner)
 
                 # Set values to each field in provisioner.mode
+                # XXX TODO managing all this state should be extracted elsewhere
                 h.set_mode_values(self.provisioner.mode, data)
                 mode_text = h.parse_mode(self.provisioner.mode)
                 self.window["-MODE-"].update(mode_text)
+                self.window["-RESET-"].update(disabled=True)
 
                 self.window.force_focus()
             else:
