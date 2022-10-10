@@ -23,6 +23,6 @@
   shell: usermod -aG docker pi
 
 - name: Install docker-compose
-  shell: pip3 -v install docker-compose
-  args:
-    creates: /usr/local/bin/docker-compose
+  apt:
+    name: docker-compose
+    update_cache: yes
