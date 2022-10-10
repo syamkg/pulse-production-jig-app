@@ -98,6 +98,10 @@ class Provisioner:
                 from lib.provisioner.pulse_provisioner_phase_2 import PulseProvisionerPhase2
 
                 return PulseProvisionerPhase2(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
+            elif Target.PULSE_PHASE_3 == target:
+                from lib.provisioner.pulse_provisioner_phase_3 import PulseProvisionerPhase3
+
+                return PulseProvisionerPhase3(registrar=registrar, pulse_manager=pulse_manager, dev=dev)
             else:
                 raise RuntimeError("Invalid target")
 
