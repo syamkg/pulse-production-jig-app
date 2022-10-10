@@ -47,16 +47,12 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE)
         m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO, conditions="has_network")
         m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
-        m.add_transition("proceed", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, conditions="has_passed")
-        m.add_transition("proceed", States.LOADING_PROD_FIRMWARE, States.SUBMITTING_PROVISIONING_RECORD)
+        m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD)
         # XXX TODO this does nothing in phase 2 because it was never "plugged in" to begin with
         m.add_transition(
             "proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_PCB_REMOVAL, before="update_qrcode"
         )
         m.add_transition("proceed", States.WAITING_FOR_PCB_REMOVAL, States.WAITING_FOR_SERIAL)
-
-        # Submit provision record if tests fail
-        m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD, unless="has_passed")
 
         # Wait for network if API is unreachable
         # XXX TODO this doesn't work - it will actually continually load the test firmware if there is no network
