@@ -73,6 +73,10 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         m.on_enter_LOADING_TEST_FIRMWARE("set_status_inprogress")
         m.on_enter_WAITING_FOR_PCB("promote_provision_status")
 
+        # only allow 'reset' button during "PCB" wait
+        m.on_enter_WAITING_FOR_PCB("pcb_reset_button_enable")
+        m.on_exit_WAITING_FOR_PCB("pcb_reset_button_disable")
+
     def waiting_for_pcb(self):
         test = lambda: self.is_running()
         # check_for_header will block until we have a header or we've stopped running
