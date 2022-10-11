@@ -1,3 +1,4 @@
+import os
 import logging
 import shutil
 import threading
@@ -36,6 +37,17 @@ class PulseManager:
     def on_removal(self, callback):
         self._pcb_sense_pin.when_released = callback
 
+    def _ensure_for_mount(self, timeout: Optional[float]):
+        """
+        Asserts that the mount is there.
+        """
+        timer = Timeout(timeout) if timeout else TimeoutNever()
+        while not timer.expired:
+            if os.path.exists(self._xdot_volume) and os.access(self._xdot_volume, os.W_OK):
+                break
+            else:
+                time.sleep(0.1)
+
     def load_firmware(self, firmware_path: Path):
         firmware_path = Path(firmware_path)
         # Note that on macos the copy returns instantly but on linux
@@ -49,6 +61,9 @@ class PulseManager:
                 shutil.copy(str(firmware_path), self._xdot_volume / firmware_path.name)
             except IOError as e:
                 logger.error(str(e))
+
+        # it takes time for the mount to be there
+        self._ensure_for_mount(10)
 
         self._reset_pin.off()
         logger.debug("starting copy")
