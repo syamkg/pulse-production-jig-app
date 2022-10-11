@@ -47,6 +47,18 @@ class PulseManager:
                 break
             else:
                 time.sleep(0.1)
+        # XXX TODO this is here because we can't quite detect when the mount is ready.
+        # the behaviour we see on the prod jigs, but not the test jig, is that when
+        # trying to copy the file to the mount it will report that there is not enough
+        # space. if you look at /var/log/syslog you will see that some time after the
+        # device is successfully mounted it changes the available space from 0 to xxxx
+        # bytes... so there is some different behaviour going on on the prod jigs.
+        # the better fix is to not use automount but explicitly mount it ourselves,
+        # which presumably will block perfectly until it is ready...
+        # however this is a significant change and we have encountered numerous 'edge
+        # cases' with mounting the device. for now we take this "tactical fix" and
+        # later we can fix it properly and do extensive testing.
+        time.sleep(2)
 
     def load_firmware(self, firmware_path: Path):
         firmware_path = Path(firmware_path)
