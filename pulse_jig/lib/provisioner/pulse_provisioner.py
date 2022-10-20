@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 
+import json
 import serial
 
 from pulse_jig.config import settings
@@ -23,6 +24,20 @@ class PulseProvisioner(Provisioner):
             DO NOT CHANGE THIS STRUCTURE OR ORDER!!!
             Laser engraver relies on this exact order
             """
+
+            # the purpose of this is to provide the exact json string that we want the engraver to use for the QR code.
+            # the other rows are for the other markings on the device.
+            # the reason for having the same data repeated in a different way is that we wish to make it as easy as possible for the company/ies doing this work for us.
+            qr_data = {
+                "devEUI": self.deveui,
+                "sn": self.sn,
+                "dom": self.dom,
+                "fab_ver": self.rev,
+                "assembly_id": self.ass_id,
+                "assembly_ver": self.ass_ver,
+                "cert": self.cert,
+            }
+
             return (
                 f"{self.sn}\n"
                 f"{self.rev}\n"
@@ -30,7 +45,8 @@ class PulseProvisioner(Provisioner):
                 f"{self.cert}\n"
                 f"{self.deveui}\n"
                 f"{self.ass_id}\n"
-                f"{self.ass_ver}"
+                f"{self.ass_ver}\n"
+                f"{json.dumps(qr_data, separators=(',', ':'))}"
             )
 
     def __init__(self, registrar, pulse_manager, dev):

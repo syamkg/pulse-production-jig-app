@@ -7,13 +7,16 @@ from ..registrar import NetworkStatus
 
 
 def generate_qrcode(data: str) -> bytes:
-    qr = qrcode.QRCode(version=8, box_size=5, border=3)
+    qr = qrcode.QRCode()
     qr.add_data(data)
+    # allow the library to determine the encoding settings based on the data it is given
     qr.make(fit=True)
     img = qr.make_image(fill_color="white", back_color="black")
+    # scale it to a fixed size
+    img = img.resize((300, 300))
 
     bio = io.BytesIO()
-    img.get_image().save(bio, format="PNG")
+    img.save(bio, format="PNG")
 
     return bio.getvalue()
 
