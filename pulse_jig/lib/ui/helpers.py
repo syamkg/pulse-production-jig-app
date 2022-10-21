@@ -11,7 +11,7 @@ def generate_qrcode(data: str) -> bytes:
     qr.add_data(data)
     # allow the library to determine the encoding settings based on the data it is given
     qr.make(fit=True)
-    img = qr.make_image(fill_color="white", back_color="black")
+    img = qr.make_image(fill_color="black", back_color="white")
     # scale it to a fixed size
     img = img.resize((300, 300))
 
