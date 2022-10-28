@@ -57,4 +57,4 @@ class CommonStates:
 
 
 def validate_test_firmware_load(header: str) -> bool:
-    return ("Starting Functional Tests Firmware" and ">") in header
+    return "Starting Functional Tests Firmware" in header and ">" in header
