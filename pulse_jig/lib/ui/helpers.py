@@ -1,6 +1,8 @@
 import io
+import re
 
 import qrcode
+from PySimpleGUI import Window
 
 from pulse_jig.config import settings
 from ..registrar import NetworkStatus
@@ -47,19 +49,26 @@ def parse_mode(mode: dict) -> str:
     return mode_text
 
 
-def validate_mode_selection_input(data) -> bool:
+def validate_mode_selection_input(window: Window) -> bool:
     valid = True
     if settings.mode_vars:
         for key in settings.mode_vars:
-            if isinstance(settings.mode_vars.get(key), list) and data[f"-{key.upper()}-"] not in settings.mode_vars.get(
-                key
-            ):
+            if isinstance(settings.mode_vars.get(key), list) and window[
+                f"-{key.upper()}-"
+            ].get() not in settings.mode_vars.get(key):
                 valid = False
     return valid
 
 
-def set_mode_values(mode: dict, data):
+def parse_selected_iecex_cert(selected: str) -> str:
+    return re.sub(" *\(.*\)", "", selected)
+
+
+def set_mode_values(mode: dict, window: Window):
     if settings.mode_vars:
         for key in settings.mode_vars:
-            if isinstance(settings.mode_vars.get(key), list) and key in mode.__dict__:
-                setattr(mode, key, data[f"-{key.upper()}-"])
+            if key in mode.__dict__:
+                value = window[f"-{key.upper()}-"].get()
+                if key == "iecex_cert":
+                    value = parse_selected_iecex_cert(window[f"-{key.upper()}-"].get())
+                setattr(mode, key, value)

@@ -6,7 +6,6 @@ import logging
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
-from pulse_jig.config import settings
 from ..hwspec import HWSpec
 from ..registrar import Registrar, NetworkStatus
 from lib.pulse_manager import PulseManager
@@ -61,9 +60,7 @@ class Provisioner:
         Options/values for dropdown can be added as an array.
         """
 
-        # XXX TODO we should never be embedding "settings" this deeply into the state
-        manufacturer: str = settings.device.manufacturer_name
-        target: str = settings.app.target
+        iecex_cert: str = ""
 
     @dataclass
     class EventData:

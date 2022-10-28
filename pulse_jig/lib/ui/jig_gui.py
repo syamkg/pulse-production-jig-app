@@ -140,7 +140,7 @@ class JigGUI:
         if event == "waiting_for_mode_set" or event == "-CHANGE_MODE-":
             self.window_mode.force_focus()
         elif event == "-SET_MODE-":
-            if h.validate_mode_selection_input(data):
+            if h.validate_mode_selection_input(self.window_mode):
                 self.window_mode["-ERROR-"].update("")
 
                 if self.provisioner_thread:
@@ -153,7 +153,7 @@ class JigGUI:
 
                 # Set values to each field in provisioner.mode
                 # XXX TODO managing all this state should be extracted elsewhere
-                h.set_mode_values(self.provisioner.mode, data)
+                h.set_mode_values(self.provisioner.mode, self.window_mode)
                 mode_text = h.parse_mode(self.provisioner.mode)
                 self.window["-MODE-"].update(mode_text)
                 self.window["-RESET-"].update(disabled=True)

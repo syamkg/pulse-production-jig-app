@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
-from pulse_jig.config import settings
 from lib.target import Target
+from pulse_jig.config import settings
 
 
 def repair_mode_warning() -> list:
@@ -50,7 +50,7 @@ def mode_selection_elements() -> list:
             else:
                 element = [
                     sg.Text(key.replace("_", " ").title() + ": "),
-                    sg.Text(settings.mode_vars.get(key), text_color="gray"),
+                    sg.Text(settings.mode_vars.get(key), key=f"-{key.upper()}-", text_color="gray"),
                 ]
                 elements.append(element)
                 elements.append([sg.Sizer(0, 10)])

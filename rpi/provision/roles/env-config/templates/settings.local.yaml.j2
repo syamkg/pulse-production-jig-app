@@ -15,8 +15,7 @@ device:
   assembly_version: {{ '%#04x' % device.assembly_version }}
   manufacturer_name: {{ device.manufacturer_name }}
   manufacturer_id: {{ '%#04x' % device.manufacturer_id }}
-  iecex_cert: {{ device.iecex_cert }}
-mode_vars:  # don't remove this
+mode_vars:
 {% if mode_vars.cable_length is defined %}
   cable_length: {{ mode_vars.cable_length }}
 {% endif %}

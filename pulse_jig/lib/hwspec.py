@@ -36,7 +36,7 @@ class HWSpec:
         self.manufacturer_id = int(ftf.hwspec_get("manufacturer_id"), 16)
         self.iecex_cert = ftf.hwspec_get("iecex_cert")
 
-    def set(self):
+    def set(self, iecex_cert):
         timestamp = int(time.time())
         self.serial = self._generate_serial(timestamp)
         self.thing_type_name = settings.device.thing_type_name
@@ -47,7 +47,7 @@ class HWSpec:
         self.assembly_timestamp = timestamp
         self.manufacturer_name = settings.device.manufacturer_name
         self.manufacturer_id = settings.device.manufacturer_id
-        self.iecex_cert = settings.device.iecex_cert
+        self.iecex_cert = iecex_cert
 
     def save(self, ftf: JigClient):
         ftf.hwspec_set("serial", self.serial)

@@ -182,7 +182,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
     def generate_hwspec(self):
         self.hwspec = HWSpec()
-        self.hwspec.set()
+        self.hwspec.set(self.mode.iecex_cert)
 
         # We'll set the probe_spec at the same time as hwspec
         self.probe_spec = ProbeSpec()

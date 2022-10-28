@@ -5,12 +5,12 @@ from typing import Optional
 
 from transitions import Machine
 
+from lib.target import Target
 from pulse_jig.config import settings
 from .common_states import CommonStates
 from .pulse_provisioner import PulseProvisioner
 from ..hwspec import HWSpec
 from ..jig_client import JigClientException
-from lib.target import Target
 
 logger = logging.getLogger("provisioner")
 
@@ -160,7 +160,7 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
 
     def generate_hwspec(self):
         self.hwspec = HWSpec()
-        self.hwspec.set()
+        self.hwspec.set(self.mode.iecex_cert)
         self.proceed()
 
     def save_hwspec(self):

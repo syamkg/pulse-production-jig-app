@@ -145,7 +145,24 @@ def layout():
                 layout=[
                     [
                         sg.Frame(
-                            "Mode", layout=[[sg.Text(key="-MODE-", font=("Arial", 10))]], expand_x=True, size=(360, 55)
+                            "Mode",
+                            layout=[
+                                [
+                                    sg.Multiline(
+                                        key="-MODE-",
+                                        font=("Arial", 10),
+                                        disabled=True,
+                                        border_width=0,
+                                        background_color="black",
+                                        expand_x=True,
+                                        expand_y=True,
+                                        no_scrollbar=True,
+                                        pad=(3, 0),
+                                    )
+                                ]
+                            ],
+                            expand_x=True,
+                            size=(360, 55),
                         )
                     ],
                 ],

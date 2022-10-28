@@ -30,10 +30,10 @@ settings = Dynaconf(
             "device.assembly_version",
             "device.manufacturer_name",
             "device.manufacturer_id",
-            "device.iecex_cert",
             must_exist=True,
         ),
         Validator("mode_vars", must_exist=True),
+        Validator("mode_vars.iecex_cert", must_exist=True, default="N/A"),
         Validator(
             "mode_vars.cable_length",
             must_exist=True,
