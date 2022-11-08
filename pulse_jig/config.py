@@ -21,6 +21,7 @@ settings = Dynaconf(
             eq=False,
             when=Validator("app.target", is_in=[Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
         ),
+        Validator("app.test_port_min_threshold", default=0.4),
         Validator(
             "device.minter_id",
             "device.thing_type_name",

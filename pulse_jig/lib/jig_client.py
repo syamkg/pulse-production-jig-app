@@ -260,26 +260,26 @@ class JigClient:
         """
         return self.send_command(f"hwspec-destroy {target}", has_body=False)
 
-    def test_ta3k(self, port: int) -> bool:
+    def test_ta3k(self, port: int, min_threshold: float) -> bool:
         """Run `test-ta3k` command on the given port
         :param port: Port number as an int
         :return bool: If test command is a pass or fail
         """
-        return self.run_test_cmd(f"test-ta3k -v {_to_port_flags(port)} 1", timeout=20)
+        return self.run_test_cmd(f"test-ta3k -v -a {min_threshold} {_to_port_flags(port)} 1", timeout=20)
 
-    def test_ta6k(self, port: int) -> bool:
+    def test_ta6k(self, port: int, min_threshold: float) -> bool:
         """Run `test-ta6k` command on the given port
         :param port: Port number as an int
         :return bool: If test command is a pass or fail
         """
-        return self.run_test_cmd(f"test-ta6k -v {_to_port_flags(port)} 1", timeout=10)
+        return self.run_test_cmd(f"test-ta6k -v -a {min_threshold} {_to_port_flags(port)} 1", timeout=10)
 
-    def test_ta11k(self, port: int) -> bool:
+    def test_ta11k(self, port: int, min_threshold: float) -> bool:
         """Run `test-ta11k` command on the given port
         :param port: Port number as an int
         :return bool: If test command is a pass or fail
         """
-        return self.run_test_cmd(f"test-ta11k -v {_to_port_flags(port)} 1", timeout=10)
+        return self.run_test_cmd(f"test-ta11k -v -a {min_threshold} {_to_port_flags(port)} 1", timeout=10)
 
     def test_self(self) -> bool:
         """Run `test-self` command on the device
