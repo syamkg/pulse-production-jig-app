@@ -33,8 +33,6 @@ class PulseProvisioner(Provisioner):
                 "sn": self.sn,
                 "dom": self.dom,
                 "fab_ver": self.rev,
-                "assembly_id": self.ass_id,
-                "assembly_ver": self.ass_ver,
                 "cert": self.cert,
             }
 
