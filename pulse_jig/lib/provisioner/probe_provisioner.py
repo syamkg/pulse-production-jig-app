@@ -39,7 +39,7 @@ class States(enum.Enum):
 class ProbeProvisioner(Provisioner, CommonStates):
     @dataclass
     class QRCode(Provisioner.QRCode):
-        len: str
+        len: float
 
         def __str__(self):
             """
@@ -48,10 +48,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
             """
             return (
                 f"{self.sn}\n"
-                f"{self.rev}\n"
+                f"r{self.rev.removeprefix('r')}\n"
                 f"{datetime.fromtimestamp(self.dom).strftime('%m/%y')}\n"
                 f"{self.cert}\n"
-                f"{self.len}"
+                f"{self.len}m"
             )
 
     @dataclass
@@ -222,7 +222,7 @@ class ProbeProvisioner(Provisioner, CommonStates):
                 rev=self.hwspec.hw_revision,
                 dom=self.hwspec.assembly_timestamp,
                 cert=self.hwspec.iecex_cert,
-                len=f"{self.probe_spec_cable_length_m}m",
+                len=self.probe_spec_cable_length_m,
             )
 
     def registering_device(self):
