@@ -4,6 +4,7 @@ import threading
 
 import PySimpleGUI as sg
 
+from pulse_jig.config import settings
 from . import helpers as h
 from ..provisioner.provisioner import Provisioner
 from ..registrar import Registrar, NetworkStatus
@@ -143,13 +144,16 @@ class JigGUI:
             if h.validate_mode_selection_input(self.window_mode):
                 self.window_mode["-ERROR-"].update("")
 
-                if self.provisioner_thread:
+                if self.provisioner_thread and settings.app.allow_target_change:
                     self.provisioner.terminate()
+                    self.provisioner_thread = None
 
-                # for some reason this gets passed in via `data` if it comes from the Combo, but not if it's from the Text element, so we get it from window_mode instead
-                target = self.window_mode["-TARGET-"].get()
-                self.provisioner = self._provisioner_factory(target)
-                self.provisioner_thread = provisioner_thread(self.window, self.provisioner)
+                if not self.provisioner_thread:
+                    # for some reason this gets passed in via `data` if it comes from the Combo,
+                    # but not if it's from the Text element, so we get it from window_mode instead
+                    target = self.window_mode["-TARGET-"].get()
+                    self.provisioner = self._provisioner_factory(target)
+                    self.provisioner_thread = provisioner_thread(self.window, self.provisioner)
 
                 # Set values to each field in provisioner.mode
                 # XXX TODO managing all this state should be extracted elsewhere

@@ -12,6 +12,11 @@ settings = Dynaconf(
         ),
         Validator("app.allow_target_change", default=False),
         Validator(
+            "app.allow_target_change",
+            ne=True,
+            when=Validator("app.target", is_in=[Target.TA3K, Target.TA6K, Target.TA11K]),
+        ),
+        Validator(
             "app.prod_firmware_path",
             must_exist=True,
             when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
