@@ -113,7 +113,7 @@ class PulseManager:
             boot_header_separator_count = 0
             line_count = 0
             while port.in_waiting > 0:
-                line = port.readline().decode("utf-8")
+                line = port.readline().decode("utf-8", "ignore")
                 line = line.rstrip(terminator)
                 line_count += 1
                 if line == boot_header_separator:
