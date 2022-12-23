@@ -45,13 +45,21 @@ class ProbeProvisioner(Provisioner, CommonStates):
             """
             DO NOT CHANGE THIS STRUCTURE OR ORDER!!!
             Laser engraver relies on this exact order
+
+            Due to a bug in the SmartStudio software (I think) if you ask it to
+            read the last non-empty line from the text file it will strip out the
+            last non-empty character from it.
+            For example, the cable_length will be 2.0 not 2.0m
+            To address this (in a hacky way) I added a "junk" last line which
+            we never need to read.
             """
             return (
                 f"{self.sn}\n"
                 f"r{self.rev.removeprefix('r')}\n"
                 f"{datetime.fromtimestamp(self.dom).strftime('%m/%y')}\n"
                 f"{self.cert}\n"
-                f"{self.len}m"
+                f"{self.len}m\n"
+                "."
             )
 
     @dataclass
