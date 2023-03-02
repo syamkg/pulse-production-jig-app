@@ -24,7 +24,7 @@ class States(enum.Enum):
     LOADING_TEST_FIRMWARE = enum.auto()
     WAITING_FOR_NETWORK = enum.auto()
     LOADING_DEVICE_REGO = enum.auto()
-    GENERATE_HWSPEC = enum.auto()
+    GENERATE_UPDATE_HWSPEC = enum.auto()
     REGISTERING_DEVICE = enum.auto()
     SAVE_HWSPEC = enum.auto()
     RUNNING_TESTS = enum.auto()
@@ -32,6 +32,10 @@ class States(enum.Enum):
     SUBMITTING_PROVISIONING_RECORD = enum.auto()
     UPDATE_QRCODE = enum.auto()
     WAITING_FOR_PCB_REMOVAL = enum.auto()
+
+
+# TESTING
+#   what happens when GENERATE_UPDATE_HWSPEC fails? can it? previous had conditions="has_hwspec" which was NOT handled
 
 
 class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
@@ -50,7 +54,11 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE)
         m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO, conditions="has_network")
-        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
+        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.GENERATE_UPDATE_HWSPEC)
+        m.add_transition("proceed", States.GENERATE_UPDATE_HWSPEC, States.CONFIGURING_DEVICE)
+        m.add_transition("proceed", States.CONFIGURING_DEVICE, States.REGISTERING_DEVICE)
+        m.add_transition("proceed", States.REGISTERING_DEVICE, States.SAVE_HWSPEC)
+        m.add_transition("proceed", States.SAVE_HWSPEC, States.RUNNING_TESTS)
         m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD)
         m.add_transition(
             "proceed", States.SUBMITTING_PROVISIONING_RECORD, States.WAITING_FOR_PCB_REMOVAL, before="update_qrcode"
@@ -60,13 +68,6 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
         # Wait for network if API is unreachable
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.WAITING_FOR_NETWORK, unless="has_network")
         m.add_transition("proceed", States.WAITING_FOR_NETWORK, States.WAITING_FOR_PCB, conditions="has_network")
-
-        # Register device if it doesn't have a hwspec
-        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.GENERATE_HWSPEC, unless="has_hwspec")
-        m.add_transition("proceed", States.GENERATE_HWSPEC, States.CONFIGURING_DEVICE, conditions="has_hwspec")
-        m.add_transition("proceed", States.CONFIGURING_DEVICE, States.REGISTERING_DEVICE)
-        m.add_transition("proceed", States.REGISTERING_DEVICE, States.SAVE_HWSPEC)
-        m.add_transition("proceed", States.SAVE_HWSPEC, States.RUNNING_TESTS)
 
         # On retry set state to RETRY and wait for the device to be removed
         m.add_transition("retry", "*", States.WAITING_FOR_PCB_REMOVAL, before="set_status_retry")
@@ -158,8 +159,9 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
 
         self.proceed()
 
-    def generate_hwspec(self):
-        self.hwspec = HWSpec()
+    def generate_update_hwspec(self):
+        if self.hwspec is None:
+            self.hwspec = HWSpec()
         self.hwspec.set(self.mode.iecex_cert)
         self.proceed()
 
