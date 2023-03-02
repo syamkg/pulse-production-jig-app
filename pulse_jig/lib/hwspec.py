@@ -48,7 +48,6 @@ class HWSpec:
         self.hw_revision = str(settings.device.hw_revision)
         self.assembly_id = settings.device.assembly_id
         self.assembly_version = settings.device.assembly_version
-        # TODO maybe the manufacturer should be immutable so that it can be re-run through our jig without "forging" this setting?
         self.manufacturer_name = settings.device.manufacturer_name
         self.manufacturer_id = settings.device.manufacturer_id
         self.iecex_cert = iecex_cert

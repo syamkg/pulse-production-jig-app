@@ -34,10 +34,6 @@ class States(enum.Enum):
     WAITING_FOR_PCB_REMOVAL = enum.auto()
 
 
-# TESTING
-#   what happens when GENERATE_UPDATE_HWSPEC fails? can it? previous had conditions="has_hwspec" which was NOT handled
-
-
 class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
