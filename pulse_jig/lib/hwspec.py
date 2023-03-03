@@ -37,14 +37,17 @@ class HWSpec:
         self.iecex_cert = ftf.hwspec_get("iecex_cert")
 
     def set(self, iecex_cert):
-        timestamp = int(time.time())
-        self.serial = self._generate_serial(timestamp)
-        self.thing_type_name = settings.device.thing_type_name
-        self.thing_type_id = settings.device.thing_type_id
+        # the serial and properties that it's composed of should never be overwritten
+        if not self.serial:
+            timestamp = int(time.time())
+            self.serial = self._generate_serial(timestamp)
+            self.assembly_timestamp = timestamp
+            self.thing_type_name = settings.device.thing_type_name
+            self.thing_type_id = settings.device.thing_type_id
+        # other properties are allowed to be changed
         self.hw_revision = str(settings.device.hw_revision)
         self.assembly_id = settings.device.assembly_id
         self.assembly_version = settings.device.assembly_version
-        self.assembly_timestamp = timestamp
         self.manufacturer_name = settings.device.manufacturer_name
         self.manufacturer_id = settings.device.manufacturer_id
         self.iecex_cert = iecex_cert
