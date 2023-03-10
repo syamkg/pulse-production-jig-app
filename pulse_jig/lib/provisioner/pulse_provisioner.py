@@ -54,7 +54,11 @@ class PulseProvisioner(Provisioner):
         self._port = serial.Serial(baudrate=115200)
         self._port.port = dev
         self._test_firmware_path = settings.app.test_firmware_path
-        self._prod_firmware_path = settings.app.prod_firmware_path
+        if settings.mode_vars.region_ch == "AU915":
+            self._prod_firmware_path = settings.app.prod_firmware_au915_path
+
+        if settings.mode_vars.region_ch == "AS923":
+            self._prod_firmware_path = settings.app.prod_firmware_au915_path
         self.mode = self.Mode()
 
     def run(self):

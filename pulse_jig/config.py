@@ -17,7 +17,12 @@ settings = Dynaconf(
             when=Validator("app.target", is_in=[Target.TA3K, Target.TA6K, Target.TA11K]),
         ),
         Validator(
-            "app.prod_firmware_path",
+            "app.prod_firmware_au915_path",
+            must_exist=True,
+            when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
+        ),
+        Validator(
+            "app.prod_firmware_au923_path",
             must_exist=True,
             when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
         ),
@@ -45,6 +50,7 @@ settings = Dynaconf(
             must_exist=True,
             when=Validator("app.target", is_in=[Target.TA3K, Target.TA6K, Target.TA11K]),
         ),
+        Validator("mode_vars.region_ch", must_exist=True, default="AU915"),
         Validator("api.region", "api.host", "api.stage", must_exist=True),
         Validator("lora.test.join_eui", "lora.test.app_key", "lora.config.join_eui", must_exist=True),
         Validator("network.ping_interval", must_exist=True),

@@ -18,7 +18,8 @@ aws_account_id: aws_account_id_not_set
 # Usage: update-firmware
 firmware_dir: "{{ app_dir }}/pulse_jig/firmware"
 test_firmware: test-firmware.bin
-prod_firmware: prod-firmware.bin
+prod_firmware_au915: prod-firmware-au915.bin
+prod_firmware_au923: prod-firmware-au923.bin
 
 # Variables for settings.local.yaml
 # Usage: env-config
@@ -26,7 +27,8 @@ app:
   target: ta3k
   debug: false
   test_firmware_path: "firmware/{{ test_firmware }}"
-  prod_firmware_path: "firmware/{{ prod_firmware }}"
+  prod_firmware_au915_path: "firmware/{{ prod_firmware_au915 }}"
+  prod_firmware_au923_path: "firmware/{{ prod_firmware_au923 }}"
   skip_firmware_load: false
   hwspec_repair_mode: false
 device:
@@ -40,6 +42,7 @@ device:
   manufacturer_id: 0x01
 mode_vars:
   cable_length: [1.5, 2.0]
+  region_ch: ["AU915", "AS923"]
 api:
   region: ap-southeast-2
   host: https://8k3h1lqdjd.execute-api.ap-southeast-2.amazonaws.com
