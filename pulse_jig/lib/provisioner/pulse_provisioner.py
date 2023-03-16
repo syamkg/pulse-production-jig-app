@@ -58,7 +58,7 @@ class PulseProvisioner(Provisioner):
             self._prod_firmware_path = settings.app.prod_firmware_au915_path
 
         if settings.mode_vars.region_ch == "AS923":
-            self._prod_firmware_path = settings.app.prod_firmware_au915_path
+            self._prod_firmware_path = settings.app.prod_firmware_as923_path
         self.mode = self.Mode()
 
     def run(self):
@@ -113,6 +113,7 @@ class PulseProvisioner(Provisioner):
             logs=self._ftf.log,
             test_firmware_version=self.test_firmware_version,
             prod_firmware_version=self.prod_firmware_version,
+            region_ch=settings.mode_vars.region_ch,
         )
         if success:
             self.proceed()

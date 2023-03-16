@@ -22,7 +22,7 @@ settings = Dynaconf(
             when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
         ),
         Validator(
-            "app.prod_firmware_au923_path",
+            "app.prod_firmware_as923_path",
             must_exist=True,
             when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
         ),
