@@ -8,6 +8,7 @@ import serial
 from pulse_jig.config import settings
 from .provisioner import Provisioner
 from ..jig_client import JigClient
+from ..ui.jig_gui import JigGUI
 
 logger = logging.getLogger("provisioner")
 
@@ -54,11 +55,21 @@ class PulseProvisioner(Provisioner):
         self._port = serial.Serial(baudrate=115200)
         self._port.port = dev
         self._test_firmware_path = settings.app.test_firmware_path
-        if settings.mode_vars.region_ch == "AU915":
+        self._gui = JigGUI()
+        self.region_ch_plan = None  # initialize the attribute to None
+        # check the selected option and set the relevant ch_plan path
+        region_ch_plan = self._gui.get_region_ch_plan_value()
+        print(region_ch_plan)
+        if region_ch_plan == "AU915":
             self._prod_firmware_path = settings.app.prod_firmware_au915_path
-
-        if settings.mode_vars.region_ch == "AS923":
+            self.region_ch_plan = "AU915"
+            print(f"AU915 selected")
+        elif region_ch_plan == "AS923":
             self._prod_firmware_path = settings.app.prod_firmware_as923_path
+            self.region_ch_plan = "AS923"
+            print(f"AS923 selected")
+        else:
+            raise RuntimeError("Invalid region")
         self.mode = self.Mode()
 
     def run(self):
@@ -113,7 +124,7 @@ class PulseProvisioner(Provisioner):
             logs=self._ftf.log,
             test_firmware_version=self.test_firmware_version,
             prod_firmware_version=self.prod_firmware_version,
-            region_ch=settings.mode_vars.region_ch,
+            region_ch_plan=self.region_ch_plan,
         )
         if success:
             self.proceed()

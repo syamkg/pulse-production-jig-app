@@ -42,7 +42,7 @@ device:
   manufacturer_id: 0x01
 mode_vars:
   cable_length: [1.5, 2.0]
-  region_ch: ["AU915", "AS923"]
+  region_ch_plan: ["AU915", "AS923"]
 api:
   region: ap-southeast-2
   host: https://8k3h1lqdjd.execute-api.ap-southeast-2.amazonaws.com

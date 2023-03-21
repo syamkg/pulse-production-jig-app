@@ -46,6 +46,9 @@ def parse_mode(mode: dict) -> str:
         if item == "cable_length":
             mode_text += "m"
 
+        if item == "region_ch_plan":
+            mode_text += ""
+
     return mode_text
 
 
@@ -68,7 +71,10 @@ def set_mode_values(mode: dict, window: Window):
     if settings.mode_vars:
         for key in settings.mode_vars:
             if key in mode.__dict__:
-                value = window[f"-{key.upper()}-"].get()
-                if key == "iecex_cert":
-                    value = parse_selected_iecex_cert(window[f"-{key.upper()}-"].get())
+                if key == "region_ch_plan":
+                    value = window[f"-{key.upper()}-"].GetListValues()[0]
+                else:
+                    value = window[f"-{key.upper()}-"].get()
+                    if key == "iecex_cert":
+                        value = parse_selected_iecex_cert(window[f"-{key.upper()}-"].get())
                 setattr(mode, key, value)

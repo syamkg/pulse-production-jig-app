@@ -44,16 +44,6 @@ def mode_selection_elements() -> list:
                         expand_x=True,
                         font=("Arial", 20),
                     ),
-                    sg.Combo(
-                        ["--Select one--"] + settings.mode_vars.get(key),
-                        key=f"-{key.upper()}-",
-                        default_value="--Select one--",
-                        readonly=True,
-                        background_color="white",
-                        text_color="black",
-                        expand_x=True,
-                        font=("Arial", 20),
-                    ),
                 ]
                 elements.append(element)
                 elements.append([sg.Sizer(0, 20)])
