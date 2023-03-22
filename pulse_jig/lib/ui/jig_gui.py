@@ -53,7 +53,6 @@ class JigGUI:
         self.current_status = Provisioner.Status.UNKNOWN
         self.provisioner = None
         self.provisioner_thread = None
-        self.region_ch_plan_value = None
 
     def run(self, provisioner_factory, registrar: Registrar):
         self._provisioner_factory = provisioner_factory
@@ -161,10 +160,6 @@ class JigGUI:
                 h.set_mode_values(self.provisioner.mode, self.window_mode)
                 mode_text = h.parse_mode(self.provisioner.mode)
                 self.window["-MODE-"].update(mode_text)
-
-                region_ch_plan_value = self.window_mode["-REGION_CH_PLAN-"].get()
-                self.provisioner.mode["region_ch_plan"] = region_ch_plan_value
-
                 self.window["-RESET-"].update(disabled=True)
 
                 self.window.force_focus()
@@ -198,7 +193,3 @@ class JigGUI:
 
         self.window_mode.set_cursor("none")
         self.window_mode.maximize()
-
-    def get_region_ch_plan_value(self):
-        # Return the current value of region_ch_plan_value
-        return self.region_ch_plan_value

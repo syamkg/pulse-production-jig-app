@@ -24,7 +24,7 @@ prod_firmware_as923: prod-firmware-as923.bin
 # Variables for settings.local.yaml
 # Usage: env-config
 app:
-  target: pulse_phase3
+  target: ta3k
   debug: false
   test_firmware_path: "firmware/{{ test_firmware }}"
   prod_firmware_au915_path: "firmware/{{ prod_firmware_au915 }}"

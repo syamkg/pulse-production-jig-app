@@ -8,7 +8,6 @@ import serial
 from pulse_jig.config import settings
 from .provisioner import Provisioner
 from ..jig_client import JigClient
-from ..ui.jig_gui import JigGUI
 
 logger = logging.getLogger("provisioner")
 
@@ -48,6 +47,10 @@ class PulseProvisioner(Provisioner):
                 f"{json.dumps(qr_data, separators=(',', ':'))}"
             )
 
+    @dataclass
+    class Mode(Provisioner.Mode):
+        region_ch_plan: str = ""
+
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)
         self._init_state_machine()
@@ -55,21 +58,7 @@ class PulseProvisioner(Provisioner):
         self._port = serial.Serial(baudrate=115200)
         self._port.port = dev
         self._test_firmware_path = settings.app.test_firmware_path
-        self._gui = JigGUI()
-        self.region_ch_plan = None  # initialize the attribute to None
-        # check the selected option and set the relevant ch_plan path
-        region_ch_plan = self._gui.get_region_ch_plan_value()
-        print(region_ch_plan)
-        if region_ch_plan == "AU915":
-            self._prod_firmware_path = settings.app.prod_firmware_au915_path
-            self.region_ch_plan = "AU915"
-            print(f"AU915 selected")
-        elif region_ch_plan == "AS923":
-            self._prod_firmware_path = settings.app.prod_firmware_as923_path
-            self.region_ch_plan = "AS923"
-            print(f"AS923 selected")
-        else:
-            raise RuntimeError("Invalid region")
+        self._prod_firmware_path = settings.app.prod_firmware_au915_path
         self.mode = self.Mode()
 
     def run(self):
@@ -86,6 +75,18 @@ class PulseProvisioner(Provisioner):
         self._pulse_manager.reset_device()
 
     def loading_prod_firmware(self):
+        if self.mode.region_ch_plan == "AU915":
+            self._prod_firmware_path = settings.app.prod_firmware_au915_path
+            # print(f"AU915 selected")
+        elif self.mode.region_ch_plan == "AS923":
+            self._prod_firmware_path = settings.app.prod_firmware_as923_path
+            # print(f"AS923 selected")
+        else:
+            logger.error("Invalid region selected, failed to load Production firmware")
+            self.retry()
+            return
+            # raise RuntimeError("Invalid region")
+
         if not settings.app.skip_firmware_load:
             self._pulse_manager.load_firmware(self._prod_firmware_path)
 
