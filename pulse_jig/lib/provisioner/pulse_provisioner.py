@@ -125,7 +125,7 @@ class PulseProvisioner(Provisioner):
             logs=self._ftf.log,
             test_firmware_version=self.test_firmware_version,
             prod_firmware_version=self.prod_firmware_version,
-            region_ch_plan=self.region_ch_plan,
+            region_ch_plan=self.mode.region_ch_plan,
         )
         if success:
             self.proceed()
