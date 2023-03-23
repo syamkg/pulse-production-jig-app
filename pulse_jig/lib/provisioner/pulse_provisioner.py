@@ -77,15 +77,13 @@ class PulseProvisioner(Provisioner):
     def loading_prod_firmware(self):
         if self.mode.region_ch_plan == "AU915":
             self._prod_firmware_path = settings.app.prod_firmware_au915_path
-            # print(f"AU915 selected")
+
         elif self.mode.region_ch_plan == "AS923":
             self._prod_firmware_path = settings.app.prod_firmware_as923_path
-            # print(f"AS923 selected")
         else:
             logger.error("Invalid region selected, failed to load Production firmware")
             self.retry()
             return
-            # raise RuntimeError("Invalid region")
 
         if not settings.app.skip_firmware_load:
             self._pulse_manager.load_firmware(self._prod_firmware_path)
