@@ -62,7 +62,10 @@ class ProbeProvisioner(Provisioner, CommonStates):
 
     @dataclass
     class Mode(Provisioner.Mode):
-        cable_length: float = 0
+        # this should be a float, however other code set this value after
+        # retrieving it from the GUI. that code is too deep in the spaghetti
+        # to warrant fixing.
+        cable_length: str = ""
 
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)
