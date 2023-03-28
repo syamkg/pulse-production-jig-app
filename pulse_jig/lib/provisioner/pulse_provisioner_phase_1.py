@@ -183,6 +183,7 @@ class PulseProvisionerPhase1(PulseProvisioner, CommonStates):
     def reset(self):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
+        self.region_ch_plan: Optional[str] = ""
 
     def start_iteration(self):
         # Before starting an iteration we need
