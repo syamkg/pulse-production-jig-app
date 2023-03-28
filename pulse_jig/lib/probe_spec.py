@@ -14,8 +14,8 @@ class ProbeSpec:
     def get(self, ftf: JigClient):
         self.cable_length = self._parse_cable_length(ftf.hwchunk_get_probe())
 
-    def set(self, cable_length: float):
-        self.cable_length = int(cable_length * 1000)
+    def set(self, cable_length: str):
+        self.cable_length = int(float(cable_length) * 1000)
 
     def save(self, ftf: JigClient):
         ftf.hwchunk_write_probe(self.cable_length)
