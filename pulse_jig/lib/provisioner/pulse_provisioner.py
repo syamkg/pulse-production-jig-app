@@ -82,7 +82,6 @@ class PulseProvisioner(Provisioner):
             self._prod_firmware_path = settings.app.prod_firmware_as923_path
         else:
             logger.error("Invalid region selected, failed to load Production firmware")
-            self.retry()
             return
 
         if not settings.app.skip_firmware_load:

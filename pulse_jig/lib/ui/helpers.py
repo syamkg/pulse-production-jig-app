@@ -51,12 +51,19 @@ def parse_mode(mode: dict) -> str:
 
 def validate_mode_selection_input(window: Window) -> bool:
     valid = True
-    if settings.mode_vars:
-        for key in settings.mode_vars:
-            if isinstance(settings.mode_vars.get(key), list) and window[
-                f"-{key.upper()}-"
-            ].get() not in settings.mode_vars.get(key):
-                valid = False
+    for key in settings.mode_vars:
+        if key == "region_ch_plan":
+            if window["-TARGET-"].get() == "pulse-phase3":
+                if isinstance(settings.mode_vars.get(key), list) and window[
+                    f"-{key.upper()}-"
+                ].get() not in settings.mode_vars.get(key):
+                    valid = False
+            else:
+                valid = True
+        elif isinstance(settings.mode_vars.get(key), list) and window[
+            f"-{key.upper()}-"
+        ].get() not in settings.mode_vars.get(key):
+            valid = False
     return valid
 
 

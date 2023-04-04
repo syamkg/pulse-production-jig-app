@@ -110,7 +110,6 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
         self.dev_eui: Optional[str] = None
-        self.region_ch_plan: Optional[str] = ""
 
     def submitting_provisioning_record(self):
         success = self._registrar.submit_provisioning_record(

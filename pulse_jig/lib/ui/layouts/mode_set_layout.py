@@ -71,6 +71,7 @@ def target_element():
                 text_color="black",
                 expand_x=True,
                 font=("Arial", 20),
+                enable_events=True,
             ),
         )
 

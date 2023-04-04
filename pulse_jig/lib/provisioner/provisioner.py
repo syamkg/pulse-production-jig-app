@@ -71,7 +71,6 @@ class Provisioner:
         mode: Optional["Provisioner.Mode"]
         test_firmware_version: Optional[str]
         prod_firmware_version: Optional[str]
-        region_ch_plan: Optional[str]
         # this controls whether we want to allow the user to reset the plugged in pulse manually
         pcb_reset_enabled: bool
 
@@ -135,7 +134,6 @@ class Provisioner:
                     mode=self.mode,
                     test_firmware_version=self.test_firmware_version,
                     prod_firmware_version=self.prod_firmware_version,
-                    region_ch_plan=self.region_ch_plan,
                     pcb_reset_enabled=self.pcb_reset_enabled,
                 ),
             )
