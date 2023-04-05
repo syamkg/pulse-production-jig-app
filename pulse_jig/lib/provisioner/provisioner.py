@@ -118,7 +118,6 @@ class Provisioner:
         self.mode = self.Mode()
         self.test_firmware_version: str = "0.0.0"
         self.prod_firmware_version: str = "0.0.0"
-        self.region_ch_plan: str = ""
         # this controls whether we want to allow the user to reset the plugged in pulse manually
         self.pcb_reset_enabled = False
 

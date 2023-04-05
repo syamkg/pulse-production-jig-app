@@ -53,8 +53,8 @@ settings = Dynaconf(
         Validator(
             "mode_vars.region_ch_plan",
             must_exist=True,
-            when=Validator("app.target", is_in=[Target.PULSE_PHASE_1, Target.PULSE_PHASE_2, Target.PULSE_PHASE_3]),
-            is_type_of=list,
+            when=Validator("app.target", eq=Target.PULSE_PHASE_3),
+            default=["AU915", "AS923"],
         ),
         Validator("api.region", "api.host", "api.stage", must_exist=True),
         Validator("lora.test.join_eui", "lora.test.app_key", "lora.config.join_eui", must_exist=True),

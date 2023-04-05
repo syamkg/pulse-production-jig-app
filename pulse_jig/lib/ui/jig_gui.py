@@ -67,8 +67,6 @@ class JigGUI:
             window, event, data = sg.read_all_windows(timeout=100)
             if event == sg.WIN_CLOSED:
                 window.close()
-            elif event == "-TARGET-":
-                self._update_selction(event, data)
             elif event == sg.TIMEOUT_KEY:
                 pass
             else:
@@ -94,13 +92,7 @@ class JigGUI:
         try:
             timeout = Timeout(0.1)
             while not timeout.expired:
-                if (
-                    isinstance(data, dict)
-                    and event in data
-                    and isinstance(data[event], object)
-                    and hasattr(data[event], "reset_logs")
-                    and data[event].reset_logs
-                ):
+                if data and event in data and data[event].reset_logs:
                     self.window["-LOG-"].update("")
                 else:
                     record = self._log_queue.get(block=False)
@@ -173,16 +165,6 @@ class JigGUI:
                 self.window.force_focus()
             else:
                 self.window_mode["-ERROR-"].update("Please select a value")
-
-    def _update_selction(self, event, data):
-        if event == "-TARGET-":
-            target = self.window_mode["-TARGET-"].get()
-            if target == "pulse-phase1":
-                self.window_mode["-REGION_CH_PLAN-"].update(disabled=True)
-            elif target in ["pulse-phase2", "pulse-phase3"]:
-                self.window_mode["-REGION_CH_PLAN-"].update(disabled=target != "pulse-phase3")
-            else:
-                self.window_mode["-REGION_CH_PLAN-"].update(disabled=True)
 
     def _app_window(self):
         self.window = sg.Window(
