@@ -10,11 +10,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
 
       - name: Generate version information
         run: |
-          last_tag=$(git for-each-ref refs/tags --sort=-taggerdate --count=1 --format=%\(refname:short\))
+          last_tag=$(git for-each-ref refs/tags --sort=-creatordate --count=1 --format=%\(refname:short\))
           echo "$last_tag" > PROJECT_VERSION.txt
 
       # zip the source code - we recommend naming it with

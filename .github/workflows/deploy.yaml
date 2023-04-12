@@ -11,7 +11,7 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v3
           with:
-            fetch-depth: '0'
+            fetch-depth: 0
 
         # This converts /ref/head/a/branch/name to a/branch/name
         - name: Set output
@@ -28,7 +28,7 @@ jobs:
 
         - name: Generate version information
           run: |
-            last_tag=$(git for-each-ref refs/tags --sort=-taggerdate --count=1 --format=%\(refname:short\))
+            last_tag=$(git for-each-ref refs/tags --sort=-creatordate --count=1 --format=%\(refname:short\))
             echo "$last_tag" > PROJECT_VERSION.txt
 
         # zip the source code - we recommend naming it 'source.zip'
