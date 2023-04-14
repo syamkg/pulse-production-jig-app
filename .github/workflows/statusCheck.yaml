@@ -8,9 +8,14 @@ jobs:
     steps:
       # checkout the source code
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
+
+      - name: Generate version information
+        run: |
+          last_tag=$(git for-each-ref refs/tags --sort=-creatordate --count=1 --format=%\(refname:short\))
+          echo "$last_tag" > PROJECT_VERSION.txt
 
       # zip the source code - we recommend naming it with
       # 'head sha', which is the head of the commit on the
@@ -25,7 +30,7 @@ jobs:
       # used here obtains a presigned URL from the endpoint and uses
       # it to upload the source code zip file.
       - name: Upload
-        uses: MechanicalRock/proxy-s3-upload@v1.0.3
+        uses: Woodside/proxy-s3-upload@main
         env:
           GITHUB_SECRET: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -38,7 +43,7 @@ jobs:
       # use-aws-credentials = false prevents the calls to the proxy
       # from being signed with aws-sigv4, which is not required.
       - name: Build
-        uses: MechanicalRock/aws-codebuild-run-build@v2.0.0
+        uses: Woodside/aws-codebuild-run-build@main
         env:
           AWS_REGION: ap-southeast-2
           GITHUB_SECRET: ${{ secrets.GITHUB_TOKEN }}

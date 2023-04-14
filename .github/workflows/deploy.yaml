@@ -9,14 +9,14 @@ jobs:
       steps:
         # checkout the source code
         - name: Checkout
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
-            fetch-depth: '0'
+            fetch-depth: 0
 
         # This converts /ref/head/a/branch/name to a/branch/name
         - name: Set output
           id: vars
-          run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+          run: echo "short_ref=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
         # Automatically tag repo if HEAD is not tagged
         - name: Bump version and push tag
@@ -25,6 +25,11 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             WITH_V: false
             DEFAULT_BUMP: patch
+
+        - name: Generate version information
+          run: |
+            last_tag=$(git for-each-ref refs/tags --sort=-creatordate --count=1 --format=%\(refname:short\))
+            echo "$last_tag" > PROJECT_VERSION.txt
 
         # zip the source code - we recommend naming it 'source.zip'
         - name: Bundle
@@ -41,7 +46,7 @@ jobs:
         # To trigger the pipeline, the key must match the trigger of the
         # pipeline, which is [branch]/source.zip
         - name: Upload
-          uses: MechanicalRock/proxy-s3-upload@v1.0.3
+          uses: Woodside/proxy-s3-upload@main
           env:
             GITHUB_SECRET: ${{ secrets.GITHUB_TOKEN }}
           with:
