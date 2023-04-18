@@ -96,7 +96,7 @@ class Registrar:
         logs: str,
         test_firmware_version: str,
         prod_firmware_version: str = "",
-        region_ch_plan: str = "None",
+        region_ch_plan: str = "",
     ):
         data = {
             "status": status,
@@ -108,7 +108,7 @@ class Registrar:
         if prod_firmware_version != "":
             data["provisioned_firmware_ver"] = prod_firmware_version
 
-        if region_ch_plan != "None":
+        if region_ch_plan != "":
             data["region_ch_plan"] = region_ch_plan
 
         try:
