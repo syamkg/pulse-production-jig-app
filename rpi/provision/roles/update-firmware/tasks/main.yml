@@ -12,4 +12,5 @@
     dest: "{{ firmware_dir }}"
   with_items:
     - "../../pulse_jig/firmware/{{ test_firmware }}"
-    - "../../pulse_jig/firmware/{{ prod_firmware }}"
+    - "../../pulse_jig/firmware/{{ prod_firmware_au915 }}"
+    - "../../pulse_jig/firmware/{{ prod_firmware_as923 }}"

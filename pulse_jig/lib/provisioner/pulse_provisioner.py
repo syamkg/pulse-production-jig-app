@@ -47,6 +47,10 @@ class PulseProvisioner(Provisioner):
                 f"{json.dumps(qr_data, separators=(',', ':'))}"
             )
 
+    @dataclass
+    class Mode(Provisioner.Mode):
+        region_ch_plan: str = ""
+
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar)
         self._init_state_machine()
@@ -54,7 +58,8 @@ class PulseProvisioner(Provisioner):
         self._port = serial.Serial(baudrate=115200)
         self._port.port = dev
         self._test_firmware_path = settings.app.test_firmware_path
-        self._prod_firmware_path = settings.app.prod_firmware_path
+        self._prod_firmware_au915_path = settings.app.prod_firmware_au915_path
+        self._prod_firmware_as923_path = settings.app.prod_firmware_as923_path
         self.mode = self.Mode()
 
     def run(self):
@@ -71,8 +76,18 @@ class PulseProvisioner(Provisioner):
         self._pulse_manager.reset_device()
 
     def loading_prod_firmware(self):
+        prod_firmware_path = None
+        if self.mode.region_ch_plan == "AU915":
+            prod_firmware_path = self._prod_firmware_au915_path
+        elif self.mode.region_ch_plan == "AS923":
+            prod_firmware_path = self._prod_firmware_as923_path
+        else:
+            logger.error("Invalid region selected, failed to load Production firmware")
+            self.retry()
+            return
+
         if not settings.app.skip_firmware_load:
-            self._pulse_manager.load_firmware(self._prod_firmware_path)
+            self._pulse_manager.load_firmware(prod_firmware_path)
 
         self._pf = JigClient(self._port)
         self._pulse_manager.reset_device()  # this has no effect for Phase 2 tests

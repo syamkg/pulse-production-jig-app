@@ -3,7 +3,8 @@ app:
   target: {{ app.target }}
   debug: {{ app.debug }}
   test_firmware_path: {{ app.test_firmware_path }}
-  prod_firmware_path: {{ app.prod_firmware_path }}
+  prod_firmware_au915_path: {{ app.prod_firmware_au915_path }}
+  prod_firmware_as923_path: {{ app.prod_firmware_as923_path }}
   skip_firmware_load: {{ app.skip_firmware_load }}
   hwspec_repair_mode: {{ app.hwspec_repair_mode }}
 device:
@@ -18,6 +19,9 @@ device:
 mode_vars:
 {% if mode_vars.cable_length is defined %}
   cable_length: {{ mode_vars.cable_length }}
+{% endif %}
+{% if mode_vars.region_ch_plan is defined %}
+  region_ch_plan: {{ mode_vars.region_ch_plan }}
 {% endif %}
 api:
   region: {{ api.region }}
