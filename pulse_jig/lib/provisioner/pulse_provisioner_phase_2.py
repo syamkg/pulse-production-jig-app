@@ -130,3 +130,13 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
         self.dev_eui: Optional[str] = None
+
+    def reset_device(self):
+        # self._running = False
+        self.state = States.LOADING_TEST_FIRMWARE
+        self.set_status_inprogress()
+        self.loading_test_firmware()
+        if self.state == States.LOADING_DEVICE_REGO:
+            self.loading_device_rego()
+        else:
+            self.reset_device()

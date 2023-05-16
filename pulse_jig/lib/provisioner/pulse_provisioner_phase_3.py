@@ -124,3 +124,13 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             self.proceed()
         else:
             self.retry()
+
+    def reset_device(self):
+        # self._running = False
+        self.state = States.LOADING_TEST_FIRMWARE
+        self.set_status_inprogress()
+        self.loading_test_firmware()
+        if self.state == States.LOADING_DEVICE_REGO:
+            self.loading_device_rego()
+        else:
+            self.reset_device()
