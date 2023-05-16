@@ -97,6 +97,15 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             # Read & save dev_eui for future reference
             self.dev_eui = self._ftf.lora_deveui()
 
+            # check the dev_eui read back is not 00:00:00:00:00:00:00:00
+            if self.dev_eui == "00:00:00:00:00:00:00:00":
+                # set status to fail
+                logger.info("Device EUI is invalid")
+                self.fail()
+                return
+
+            logger.info("Device EUI is valid")
+
             self._ftf.platform("prp-disable")
             self.proceed()
         except JigClientException as e:
