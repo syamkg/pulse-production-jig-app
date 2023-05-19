@@ -23,6 +23,7 @@ class States(enum.Enum):
     LOADING_TEST_FIRMWARE = enum.auto()
     WAITING_FOR_NETWORK = enum.auto()
     LOADING_DEVICE_REGO = enum.auto()
+    DEV_EUI_VALIDATION = enum.auto()
     SUBMITTING_PROVISIONING_RECORD = enum.auto()
     LOADING_PROD_FIRMWARE = enum.auto()
 
@@ -43,9 +44,10 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE, conditions="has_network")
         m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO)
+        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.DEV_EUI_VALIDATION)
         m.add_transition(
             "proceed",
-            States.LOADING_DEVICE_REGO,
+            States.DEV_EUI_VALIDATION,
             States.LOADING_PROD_FIRMWARE,
             before="set_status_passed",
             conditions="has_hwspec",
@@ -97,15 +99,6 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             # Read & save dev_eui for future reference
             self.dev_eui = self._ftf.lora_deveui()
 
-            # check the dev_eui read back is not 00:00:00:00:00:00:00:00
-            if self.dev_eui == "00:00:00:00:00:00:00:00":
-                # set status to fail
-                logger.info("Device EUI is invalid")
-                self.fail()
-                return
-
-            logger.info("Device EUI is valid")
-
             self._ftf.platform("prp-disable")
             self.proceed()
         except JigClientException as e:
@@ -114,6 +107,17 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             # We'll ask to "retry" in this case.
             logger.error(str(e))
             self.retry()
+
+    def deveui_validation(self):
+        # check the dev_eui read back is 00:00:00:00:00:00:00:00
+        # Record the info that the Device EUI is valid/invalid and
+        # proceed to next states and to update the inventory
+        if self.dev_eui == "00:00:00:00:00:00:00:00":
+            logger.info("Device EUI is invalid")
+        else:
+            logger.info("Device EUI is valid")
+
+        self.proceed()
 
     def reset(self):
         super().reset()
