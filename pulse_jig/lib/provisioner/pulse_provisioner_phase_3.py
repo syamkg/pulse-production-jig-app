@@ -23,7 +23,7 @@ class States(enum.Enum):
     LOADING_TEST_FIRMWARE = enum.auto()
     WAITING_FOR_NETWORK = enum.auto()
     LOADING_DEVICE_REGO = enum.auto()
-    DEV_EUI_VALIDATION = enum.auto()
+    RUNNING_TESTS = enum.auto()
     SUBMITTING_PROVISIONING_RECORD = enum.auto()
     LOADING_PROD_FIRMWARE = enum.auto()
 
@@ -47,13 +47,13 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         m.add_transition(
             "proceed",
             States.LOADING_DEVICE_REGO,
-            States.DEV_EUI_VALIDATION,
+            States.RUNNING_TESTS,
             before="set_status_passed",
             conditions="has_hwspec",
         )
         m.add_transition(
             "proceed",
-            States.DEV_EUI_VALIDATION,
+            States.RUNNING_TESTS,
             States.LOADING_PROD_FIRMWARE,
             before="set_status_passed",
             conditions="has_hwspec",
@@ -71,7 +71,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         m.add_transition("retry", "*", States.WAITING_FOR_SERIAL, before="set_status_retry")
 
         # On failure set status to failed and continue with the next states
-        m.add_transition("fail", States.DEV_EUI_VALIDATION, States.LOADING_PROD_FIRMWARE, before="set_status_fail")
+        m.add_transition("fail", States.RUNNING_TESTS, States.LOADING_PROD_FIRMWARE, before="set_status_fail")
 
         # On failure set state to FAILED if we can't read the hwspec (this is done implictly from loading_device_rego)
         m.add_transition("fail", "*", States.WAITING_FOR_SERIAL, before="set_status_fail")
@@ -117,7 +117,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             logger.error(str(e))
             self.retry()
 
-    def dev_eui_validation(self):
+    def running_tests(self):
         # check the dev_eui read back is 00:00:00:00:00:00:00:00
         # Record the info that the Device EUI is valid/invalid and
         # proceed to next states and to update the inventory

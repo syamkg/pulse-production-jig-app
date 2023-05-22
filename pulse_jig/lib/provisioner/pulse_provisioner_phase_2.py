@@ -23,7 +23,6 @@ class States(enum.Enum):
     LOADING_TEST_FIRMWARE = enum.auto()
     WAITING_FOR_NETWORK = enum.auto()
     LOADING_DEVICE_REGO = enum.auto()
-    DEV_EUI_VALIDATION = enum.auto()
     RUNNING_TESTS = enum.auto()
     SUBMITTING_PROVISIONING_RECORD = enum.auto()
     LOADING_PROD_FIRMWARE = enum.auto()
@@ -47,8 +46,7 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE, conditions="has_network")
         m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO)
-        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.DEV_EUI_VALIDATION, conditions="has_hwspec")
-        m.add_transition("proceed", States.DEV_EUI_VALIDATION, States.RUNNING_TESTS, conditions="has_hwspec")
+        m.add_transition("proceed", States.LOADING_DEVICE_REGO, States.RUNNING_TESTS, conditions="has_hwspec")
         m.add_transition("proceed", States.RUNNING_TESTS, States.SUBMITTING_PROVISIONING_RECORD)
         # XXX TODO this does nothing in phase 2 because it was never "plugged in" to begin with
         m.add_transition(
@@ -62,11 +60,6 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
 
         # On retry set state to RETRY and wait for the device to be removed
         m.add_transition("retry", "*", States.WAITING_FOR_PCB_REMOVAL, before="set_status_retry")
-
-        # On failure set status to failed and continue with the next states
-        m.add_transition(
-            "fail", States.DEV_EUI_VALIDATION, States.RUNNING_TESTS, before="set_status_fail", conditions="has_hwspec"
-        )
 
         # On failure set state to FAILED and submit results if there is hwspec, else prompt to remove target
         m.add_transition(
@@ -116,17 +109,6 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
             # We'll ask to "retry" in this case.
             logger.error(str(e))
             self.retry()
-
-    def dev_eui_validation(self):
-        # check the dev_eui read back is 00:00:00:00:00:00:00:00
-        # Record the info that the Device EUI is valid/invalid and
-        # proceed to next states and to update the inventory
-        if self.dev_eui == "00:00:00:00:00:00:00:00":
-            logger.info("Device EUI is invalid")
-            self.fail()
-        else:
-            logger.info("Device EUI is valid")
-            self.proceed()
 
     def running_tests(self):
         passed = self._ftf.test_self()
