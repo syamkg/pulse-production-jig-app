@@ -34,7 +34,6 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
         self.mode.target = Target.PULSE_PHASE_2
-        self.no_header_received = False
 
     def _init_state_machine(self):
         m = Machine(
@@ -80,15 +79,6 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         # only allow 'reset' button during "PCB" wait
         m.on_enter_WAITING_FOR_PCB("pcb_reset_button_enable")
         m.on_exit_WAITING_FOR_PCB("pcb_reset_button_disable")
-
-        # Start with loading test firmware when reset button is clicked when no header response received
-        m.add_transition(
-            "reload",
-            States.WAITING_FOR_PCB,
-            States.LOADING_TEST_FIRMWARE,
-            conditions=["has_network", "no_header_received"],
-            after="loading_test_firmware",
-        )
 
     # XXX TODO this is incorrectly named as it can actually only test if there is firmware over the serial (we have no PCB sense)
     def waiting_for_pcb(self):
@@ -142,6 +132,10 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         self.dev_eui: Optional[str] = None
 
     def reset_device(self):
-        self.no_header_received = True
-        self.reolad()
-        # self._pulse_manager.reset_device()
+        self._pulse_manager.reset_device()
+
+        continue_test = lambda: False
+        if self.state == States.WAITING_FOR_PCB and not self._pulse_manager.check_for_header(
+            self._port, continue_test=continue_test
+        ):
+            self.proceed()

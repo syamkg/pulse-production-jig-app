@@ -31,7 +31,6 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
         self.mode.target = Target.PULSE_PHASE_3
-        self.no_header_received = False
 
     def _init_state_machine(self):
         m = Machine(
@@ -68,15 +67,6 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
 
         # Start from the beginning if the xDot or PCB lost
         m.add_transition("device_lost", "*", States.WAITING_FOR_SERIAL)
-
-        # Start with loading test firmware when reset button is clicked when no header response received
-        m.add_transition(
-            "reload",
-            States.WAITING_FOR_PCB,
-            States.LOADING_TEST_FIRMWARE,
-            conditions=["has_network", "no_header_received"],
-            after="loading_test_firmware",
-        )
 
         m.on_exit_WAITING_FOR_PCB("reset")
         m.on_exit_WAITING_FOR_PCB("reset_logs")
@@ -136,6 +126,10 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             self.retry()
 
     def reset_device(self):
-        self.no_header_received = True
-        self.reload()
-        # self._pulse_manager.reset_device()
+        self._pulse_manager.reset_device()
+
+        continue_test = lambda: False
+        if self.state == States.WAITING_FOR_PCB and not self._pulse_manager.check_for_header(
+            self._port, continue_test=continue_test
+        ):
+            self.proceed()
