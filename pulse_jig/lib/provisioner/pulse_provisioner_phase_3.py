@@ -31,6 +31,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
         self.mode.target = Target.PULSE_PHASE_3
+        self.checking_header = True
 
     def _init_state_machine(self):
         m = Machine(
@@ -42,7 +43,9 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         # Expected working path
         m.add_transition("proceed", States.WAITING_FOR_SERIAL, States.WAITING_FOR_PCB)
         m.add_transition("proceed", States.WAITING_FOR_PCB, States.LOADING_TEST_FIRMWARE, conditions="has_network")
-        m.add_transition("proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO)
+        m.add_transition(
+            "proceed", States.LOADING_TEST_FIRMWARE, States.LOADING_DEVICE_REGO, before="_set_checking_header"
+        )
         m.add_transition(
             "proceed",
             States.LOADING_DEVICE_REGO,
@@ -78,7 +81,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         m.on_exit_WAITING_FOR_PCB("pcb_reset_button_disable")
 
     def waiting_for_pcb(self):
-        test = lambda: self.is_running()
+        test = lambda: self.is_running() and self.checking_header
         # check_for_header will block until we have a header or we've stopped running
         self._pulse_manager.check_for_header(self._port, continue_test=test)
         self.proceed()
@@ -127,9 +130,8 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
 
     def reset_device(self):
         self._pulse_manager.reset_device()
+        self.checking_header = False
+        self.proceed()
 
-        continue_test = lambda: False
-        if self.state == States.WAITING_FOR_PCB and not self._pulse_manager.check_for_header(
-            self._port, continue_test=continue_test
-        ):
-            self.proceed()
+    def _set_checking_header(self):
+        self.checking_header = True
