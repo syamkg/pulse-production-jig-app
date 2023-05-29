@@ -32,6 +32,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
         self.mode.target = Target.PULSE_PHASE_3
+        self._wait_on_header = True
 
     def _init_state_machine(self):
         m = Machine(
@@ -83,7 +84,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         m.on_exit_WAITING_FOR_PCB("pcb_reset_button_disable")
 
     def waiting_for_pcb(self):
-        test = lambda: self.is_running()
+        test = lambda: self.is_running() and self._wait_on_header
         # check_for_header will block until we have a header or we've stopped running
         self._pulse_manager.check_for_header(self._port, continue_test=test)
         self.proceed()
@@ -126,6 +127,7 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
         self.dev_eui: Optional[str] = None
+        self._wait_on_header = True
 
     def submitting_provisioning_record(self):
         success = self._registrar.submit_provisioning_record(
@@ -140,3 +142,8 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             self.proceed()
         else:
             self.retry()
+
+    def reset_device(self):
+        self._pulse_manager.reset_device()
+        self._wait_on_header = False
+        self.proceed()

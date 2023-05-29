@@ -34,6 +34,7 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
     def __init__(self, registrar, pulse_manager, dev):
         super().__init__(registrar, pulse_manager, dev)
         self.mode.target = Target.PULSE_PHASE_2
+        self._wait_on_header = True
 
     def _init_state_machine(self):
         m = Machine(
@@ -82,7 +83,7 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
 
     # XXX TODO this is incorrectly named as it can actually only test if there is firmware over the serial (we have no PCB sense)
     def waiting_for_pcb(self):
-        test = lambda: self.is_running()
+        test = lambda: self.is_running() and self._wait_on_header
         # check_for_header will block until we have a header or we've stopped running
         self._pulse_manager.check_for_header(self._port, continue_test=test)
         self.proceed()
@@ -130,3 +131,9 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         super().reset()
         self.prod_firmware_version: Optional[str] = "0.0.0"
         self.dev_eui: Optional[str] = None
+        self._wait_on_header = True
+
+    def reset_device(self):
+        self._pulse_manager.reset_device()
+        self._wait_on_header = False
+        self.proceed()
