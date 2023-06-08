@@ -144,6 +144,6 @@ class PulseProvisionerPhase3(PulseProvisioner, CommonStates):
             self.retry()
 
     def reset_device(self):
+        logger.info("Reset button pressed")
         self._pulse_manager.reset_device()
         self._wait_on_header = False
-        self.proceed()
