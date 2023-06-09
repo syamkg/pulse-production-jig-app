@@ -134,6 +134,6 @@ class PulseProvisionerPhase2(PulseProvisioner, CommonStates):
         self._wait_on_header = True
 
     def reset_device(self):
+        logger.info("Reset button pressed")
         self._pulse_manager.reset_device()
         self._wait_on_header = False
-        self.proceed()
